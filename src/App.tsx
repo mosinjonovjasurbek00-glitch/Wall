@@ -24,14 +24,21 @@ export default function App() {
         console.log("Logged in as:", user.email);
         setCheckingRole(true);
         try {
+          const isDefaultAdmin = user.email === "mosinjonovjasurbek00@gmail.com";
           const userDocRef = doc(db, 'users', user.uid);
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
-            setIsAdmin(userDoc.data().role === 'admin');
+            const currentRole = userDoc.data().role;
+            // If the email matches admin but role is not admin, update it
+            if (isDefaultAdmin && currentRole !== 'admin') {
+              await setDoc(userDocRef, { ...userDoc.data(), role: 'admin' }, { merge: true });
+              setIsAdmin(true);
+            } else {
+              setIsAdmin(currentRole === 'admin');
+            }
           } else {
             // New user, check if they are the default admin
-            const isDefaultAdmin = user.email === "mosinjonovjasurbek00@gmail.com";
             const role = isDefaultAdmin ? 'admin' : 'user';
             
             await setDoc(userDocRef, {
