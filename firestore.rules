@@ -1,0 +1,137 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: images
+    // Fields:
+    //   - url: string (required)
+    //   - name: string (required, 1-100 chars)
+    //   - description: string (optional, 0-500 chars)
+    //   - isPremium: bool (required)
+    //   - createdAt: timestamp (required)
+    //   - authorUid: string (required, matches auth.uid)
+    //
+    // Collection: users
+    // Fields:
+    //   - uid: string (required, matches document ID)
+    //   - email: string (required)
+    //   - role: string (required, 'admin' or 'user')
+    //
+    // ===============================================================
+
+    // Collection: ads
+    // Fields:
+    //   - url: string (required)
+    //   - name: string (required)
+    //   - link: string (required)
+    //   - type: string ('image' or 'video')
+    //   - position: string ('top', 'middle', 'bottom', 'modal')
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if user is an admin
+    function isAdmin() {
+      return isAuthenticated() && 
+        (
+          request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com" ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+        );
+    }
+
+    function isValidImage(data) {
+      return data.keys().hasAll(['url', 'name', 'category', 'isPremium', 'createdAt', 'authorUid']) &&
+             data.url is string &&
+             data.name is string &&
+             data.category is string &&
+             data.isPremium is bool &&
+             data.authorUid == request.auth.uid;
+    }
+
+    function isValidAd(data) {
+      return data.keys().hasAll(['url', 'name', 'link', 'type', 'position', 'createdAt']) &&
+             data.url is string &&
+             data.name is string &&
+             data.link is string &&
+             data.type in ['image', 'video'] &&
+             data.position in ['top', 'middle', 'bottom', 'modal'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.email is string &&
+             data.role in ['admin', 'user'];
+    }
+
+    function isValidLike(data) {
+      return data.keys().hasAll(['userId', 'imageId', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.imageId is string &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidCounterUpdate(imageId) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount']) &&
+             math.abs(request.resource.data.likesCount - resource.data.likesCount) == 1 &&
+             (
+               (request.resource.data.likesCount > resource.data.likesCount &&
+                !exists(/databases/$(database)/documents/likes/$(request.auth.uid + '_' + imageId)) &&
+                getAfter(/databases/$(database)/documents/likes/$(request.auth.uid + '_' + imageId)) != null) ||
+               (request.resource.data.likesCount < resource.data.likesCount &&
+                exists(/databases/$(database)/documents/likes/$(request.auth.uid + '_' + imageId)) &&
+                getAfter(/databases/$(database)/documents/likes/$(request.auth.uid + '_' + imageId)) == null)
+             );
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    match /images/{imageId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (isAuthenticated() && isValidCounterUpdate(imageId));
+    }
+
+    match /ads/{adId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isValidAd(request.resource.data);
+    }
+
+    match /likes/{likeId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+                      likeId == request.auth.uid + '_' + request.resource.data.imageId &&
+                      isValidLike(request.resource.data);
+      allow delete: if isAuthenticated() && likeId.startsWith(request.auth.uid + '_');
+    }
+
+    match /messages/{messageId} {
+      allow create: if true;
+      allow read, delete: if isAdmin();
+    }
+  }
+}

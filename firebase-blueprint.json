@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "Image": {
+      "title": "Image",
+      "description": "A gallery image document",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string", "description": "The URL of the image" },
+        "name": { "type": "string", "description": "The name of the image" },
+        "description": { "type": "string", "description": "A brief description of the image" },
+        "category": { "type": "string", "description": "The category of the wallpaper" },
+        "resolution": { "type": "string", "description": "The resolution of the wallpaper (e.g. 4K, 8K)" },
+        "isPremium": { "type": "boolean", "description": "Whether the image is premium" },
+        "deviceType": { "type": "string", "enum": ["pc", "phone"], "description": "Target device for the wallpaper" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The creation timestamp" },
+        "authorUid": { "type": "string", "description": "The UID of the admin who uploaded it" },
+        "likesCount": { "type": "number", "description": "Number of likes for this image" }
+      },
+      "required": ["url", "name", "category", "isPremium", "createdAt", "authorUid"]
+    },
+    "Like": {
+      "title": "Like",
+      "description": "A record of a user liking an image",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who liked the image" },
+        "imageId": { "type": "string", "description": "The ID of the liked image" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the like occurred" }
+      },
+      "required": ["userId", "imageId", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user profile document",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user's unique ID" },
+        "email": { "type": "string", "format": "email", "description": "The user's email" },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "The user's role" }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/images/{imageId}": {
+      "schema": "Image",
+      "description": "Collection of gallery images"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of user profiles"
+    },
+    "/likes/{likeId}": {
+      "schema": "Like",
+      "description": "Collection of image likes"
+    }
+  }
+}

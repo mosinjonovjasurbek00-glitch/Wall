@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /wallpapers/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        (request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com" ||
+         firestore.exists(/databases/ai-studio-fd2c8ba0-fd03-4731-99f9-7bdd5287f087/documents/users/$(request.auth.uid)) &&
+         firestore.get(/databases/ai-studio-fd2c8ba0-fd03-4731-99f9-7bdd5287f087/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+    match /ads/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        (request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com" ||
+         firestore.exists(/databases/ai-studio-fd2c8ba0-fd03-4731-99f9-7bdd5287f087/documents/users/$(request.auth.uid)) &&
+         firestore.get(/databases/ai-studio-fd2c8ba0-fd03-4731-99f9-7bdd5287f087/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+  }
+}
