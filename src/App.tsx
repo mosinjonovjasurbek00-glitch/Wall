@@ -153,6 +153,7 @@ export default function App() {
           setView={setView} 
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
+          imageCount={images.length}
         />
 
         <AnimatePresence>

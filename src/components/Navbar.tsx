@@ -12,9 +12,10 @@ interface NavbarProps {
   setView: (view: 'gallery' | 'admin') => void;
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
+  imageCount: number;
 }
 
-export default function Navbar({ isAdmin, view, setView, selectedCategory, setSelectedCategory }: NavbarProps) {
+export default function Navbar({ isAdmin, view, setView, selectedCategory, setSelectedCategory, imageCount }: NavbarProps) {
   const [user] = useAuthState(auth);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
@@ -31,6 +32,10 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
           <span className="font-display font-black text-xl sm:text-2xl tracking-tighter hidden xs:block">
             LUMINA<span className="text-indigo-400">WALLS</span>
           </span>
+          <div className="hidden lg:flex flex-col ml-4 pl-4 border-l border-white/10">
+            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Public Library</span>
+            <span className="text-xs font-black text-emerald-400">{imageCount} Items Synced</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">

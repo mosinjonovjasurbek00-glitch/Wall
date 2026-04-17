@@ -261,7 +261,8 @@ export default function AdminPanel() {
         deviceType,
         likesCount: 0,
         createdAt: serverTimestamp(),
-        authorUid: auth.currentUser.uid
+        authorUid: auth.currentUser.uid,
+        visibility: 'public' // Explicitly mark as public
       };
       
       console.log("AdminPanel: Attempting to save imageData to Firestore...", imageData);
