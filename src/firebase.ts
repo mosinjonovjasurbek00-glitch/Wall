@@ -17,7 +17,7 @@ const firebaseParams = {
 console.log('Firebase attempting to initialize with Project ID:', firebaseParams.projectId);
 
 const app = initializeApp(firebaseParams);
-export const db = getFirestore(app);
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || "(default)");
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();

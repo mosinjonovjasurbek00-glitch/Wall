@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
 import { collection, query, orderBy, onSnapshot, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, where } from 'firebase/firestore';
-import { Download, ExternalLink, Lock, Search, Filter, Copy, Check as CheckIcon, Eye, X as CloseIcon, Loader2, Heart, AlertCircle, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
+import { Download, ExternalLink, Lock, Search, Filter, Copy, Check as CheckIcon, Eye, X as CloseIcon, Loader2, Heart, AlertCircle, ChevronDown, ChevronUp, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 

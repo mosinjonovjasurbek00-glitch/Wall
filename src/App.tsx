@@ -28,23 +28,52 @@ export default function App() {
 
   // Fetch data immediately
   useEffect(() => {
-    const qImages = query(collection(db, 'images'), orderBy('createdAt', 'desc'));
+    const dbId = (db as any)._databaseId?.database || "(unknown)";
+    console.log(`App: Initializing data fetch with DB ID: ${dbId}`);
+    
+    const imagesRef = collection(db, 'images');
+    const qImages = query(imagesRef);
+    
+    // Faster safety timeout to prevent stuck skeleton state
+    const timeoutId = setTimeout(() => {
+      setDataLoading(prev => {
+        if (prev) {
+          console.warn("App: Data loading timed out (5s), check Firestore configuration.");
+          return false;
+        }
+        return prev;
+      });
+    }, 5000);
+
     const unsubscribeImages = onSnapshot(qImages, (snapshot) => {
-      setImages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      console.log(`App: Images snapshot received. Docs: ${snapshot.docs.length}, Metadata:`, snapshot.metadata);
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort manually in memory to ensure new uploads with null timestamps appear at top
+      docs.sort((a: any, b: any) => {
+        const timeA = a.createdAt?.toMillis?.() || Date.now();
+        const timeB = b.createdAt?.toMillis?.() || Date.now();
+        return timeB - timeA;
+      });
+      setImages(docs);
       setDataLoading(false);
+      clearTimeout(timeoutId);
     }, (error) => {
-      console.error("Images fetch error:", error);
+      console.error("App: Images fetch error:", error);
       setDataLoading(false);
+      clearTimeout(timeoutId);
     });
 
-    const qAds = query(collection(db, 'ads'), orderBy('createdAt', 'desc'));
+    const qAds = query(collection(db, 'ads'));
     const unsubscribeAds = onSnapshot(qAds, (snapshot) => {
       setAds(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      console.error("App: Ads fetch error:", error);
     });
 
     return () => {
       unsubscribeImages();
       unsubscribeAds();
+      clearTimeout(timeoutId);
     };
   }, []);
 
