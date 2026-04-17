@@ -12,49 +12,53 @@ import { Loader2, ShieldAlert, AlertTriangle, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [user, loading] = useAuthState(auth);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [firestoreAdmin, setFirestoreAdmin] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
   const [view, setView] = useState<'gallery' | 'admin'>('gallery');
   const [showContact, setShowContact] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
+  // Derive isAdmin from both Firestore role and hardcoded email for robustness
+  const isAdmin = firestoreAdmin || (user?.email === "mosinjonovjasurbek00@gmail.com");
+
   useEffect(() => {
     async function checkUserRole() {
       if (user) {
         console.log("Logged in as:", user.email);
+        const isDefaultAdmin = user.email === "mosinjonovjasurbek00@gmail.com";
         setCheckingRole(true);
+        
         try {
-          const isDefaultAdmin = user.email === "mosinjonovjasurbek00@gmail.com";
           const userDocRef = doc(db, 'users', user.uid);
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
             const currentRole = userDoc.data().role;
-            // If the email matches admin but role is not admin, update it
+            // If the email matches admin but role is not admin in DB, update it
             if (isDefaultAdmin && currentRole !== 'admin') {
               await setDoc(userDocRef, { ...userDoc.data(), role: 'admin' }, { merge: true });
-              setIsAdmin(true);
+              setFirestoreAdmin(true);
             } else {
-              setIsAdmin(currentRole === 'admin');
+              setFirestoreAdmin(currentRole === 'admin');
             }
           } else {
-            // New user, check if they are the default admin
+            // New user
             const role = isDefaultAdmin ? 'admin' : 'user';
-            
             await setDoc(userDocRef, {
               uid: user.uid,
               email: user.email,
               role: role
             });
-            setIsAdmin(isDefaultAdmin);
+            setFirestoreAdmin(isDefaultAdmin);
           }
         } catch (error) {
           console.error("Role check error:", error);
+          // If Firestore fails, we still rely on derived isAdmin (email check)
         } finally {
           setCheckingRole(false);
         }
       } else {
-        setIsAdmin(false);
+        setFirestoreAdmin(false);
         setCheckingRole(false);
         setView('gallery');
       }
