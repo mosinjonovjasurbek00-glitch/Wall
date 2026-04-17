@@ -208,24 +208,39 @@ export default function AdminPanel() {
         const uploadTask = uploadBytesResumable(storageRef, file);
 
         finalUrl = await new Promise((resolve, reject) => {
+          // 10 minute timeout for large files on potentially slow connections
           const timeout = setTimeout(() => {
             uploadTask.cancel();
-            reject(new Error("Upload timed out (120s). Please check your internet connection."));
-          }, 120000); // 120 seconds timeout
+            reject(new Error("Upload timed out (600s). This usually happens due to a slow internet connection or a firewall blocking Firebase Storage. Please try a smaller file or use a URL instead."));
+          }, 600000);
 
-          console.log("Attaching state_changed listener for image upload...");
+          let lastBytes = 0;
+          let lastUpdate = Date.now();
+
           uploadTask.on('state_changed', {
             next: (snapshot) => {
               const progress = snapshot.totalBytes > 0 
                 ? (snapshot.bytesTransferred / snapshot.totalBytes) * 100 
                 : 0;
               setUploadProgress(progress);
-              console.log(`Image upload progress update: ${progress.toFixed(2)}% (${snapshot.bytesTransferred}/${snapshot.totalBytes})`);
+              
+              if (snapshot.bytesTransferred > lastBytes) {
+                lastBytes = snapshot.bytesTransferred;
+                lastUpdate = Date.now();
+              } else if (Date.now() - lastUpdate > 30000 && progress < 100) {
+                console.warn("AdminPanel: Upload seems stalled (no bytes transferred for 30s).");
+              }
+              
+              console.log(`Image upload progress update: ${progress.toFixed(2)}% (${snapshot.bytesTransferred}/${snapshot.totalBytes}) - State: ${snapshot.state}`);
             },
             error: (error) => {
               clearTimeout(timeout);
               console.error("Storage upload error:", error);
-              reject(error);
+              if (error.code === 'storage/unauthorized') {
+                reject(new Error("Permission Denied: Your email might not be authorized to upload to Storage. Please check storage.rules or ensure you are logged in as admin."));
+              } else {
+                reject(error);
+              }
             },
             complete: () => {
               clearTimeout(timeout);
@@ -650,8 +665,8 @@ export default function AdminPanel() {
                 {uploadProgress !== null && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      <span>{uploadProgress > 0 ? 'Uploading...' : 'Starting...'}</span>
-                      <span>{uploadProgress > 0 ? `${Math.round(uploadProgress)}%` : '0%'}</span>
+                      <span>{uploadProgress === 100 ? 'Finishing...' : uploadProgress > 0 ? 'Uploading...' : 'Initializing...'}</span>
+                      <span>{Math.round(uploadProgress)}%</span>
                     </div>
                     <div className="h-1.5 glass rounded-full overflow-hidden">
                       <motion.div 
@@ -661,6 +676,9 @@ export default function AdminPanel() {
                         className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
                       />
                     </div>
+                    {uploadProgress === 0 && submitting && (
+                      <p className="text-[10px] text-amber-400 text-center animate-pulse">If progress stays at 0%, check your connection or try a smaller file.</p>
+                    )}
                   </div>
                 )}
                 {error && (

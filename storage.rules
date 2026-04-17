@@ -3,8 +3,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     function isAdmin() {
       return request.auth != null && 
-        (request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com" ||
-         firestore.get(/databases/ai-studio-fd2c8ba0-fd03-4731-99f9-7bdd5287f087/documents/users/$(request.auth.uid)).data.role == 'admin');
+        (request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com");
     }
 
     match /wallpapers/{allPaths=**} {

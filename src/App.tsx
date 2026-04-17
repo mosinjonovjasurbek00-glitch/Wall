@@ -48,10 +48,11 @@ export default function App() {
     }, 15000);
 
     const unsubscribeImages = onSnapshot(qImages, (snapshot) => {
-      console.log(`App: Images snapshot received. Docs: ${snapshot.docs.length}, PendingWrites: ${snapshot.metadata.hasPendingWrites}`);
+      const dbId = (db as any)._databaseId?.database || "(default)";
+      console.log(`App: Images snapshot received for DB: ${dbId}. Docs: ${snapshot.docs.length}, Metadata:`, snapshot.metadata);
       
       if (snapshot.docs.length === 0 && !snapshot.metadata.fromCache) {
-        console.log("App: Database is empty (fully synced).");
+        console.warn(`App: Images collection is EMPTY in Firestore database: ${dbId}`);
       }
 
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
