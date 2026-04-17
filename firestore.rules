@@ -1,107 +1,50 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: images
-    // Fields:
-    //   - url: string (required)
-    //   - name: string (required, 1-100 chars)
-    //   - description: string (optional, 0-500 chars)
-    //   - isPremium: bool (required)
-    //   - createdAt: timestamp (required)
-    //   - authorUid: string (required, matches auth.uid)
-    //
-    // Collection: users
-    // Fields:
-    //   - uid: string (required, matches document ID)
-    //   - email: string (required)
-    //   - role: string (required, 'admin' or 'user')
-    //
-    // ===============================================================
-
-    // Collection: ads
-    // Fields:
-    //   - url: string (required)
-    //   - name: string (required)
-    //   - link: string (required)
-    //   - type: string ('image' or 'video')
-    //   - position: string ('top', 'middle', 'bottom', 'modal')
-    //   - createdAt: timestamp (required)
-    //
-    // ===============================================================
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
 
     // ===============================================================
     // Helper Functions
     // ===============================================================
     
-    // 1. Check if the user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // 2. Check if user owns the resource
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // 3. Robust Admin Check
     function isAdmin() {
       return isAuthenticated() && 
         (
           request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com" ||
           (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-          // Fallback for case sensitivity or minor mismatches
-          request.auth.token.email.lower().matches("mosinjonovjasurbek00@gmail\\.com$")
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phoneNumber in ['+998901234567', '+998950752686'])
         );
     }
 
-    function isValidImage(data) {
-      return data.keys().hasAll(['url', 'name', 'category', 'isPremium', 'createdAt', 'authorUid']) &&
-             data.url is string &&
-             data.name is string &&
+    function isValidAnime(data) {
+      return data.keys().hasAll(['title', 'posterUrl', 'category', 'type', 'createdAt', 'authorUid']) &&
+             data.title is string && data.title.size() <= 200 &&
+             data.posterUrl is string &&
              data.category is string &&
-             data.isPremium is bool &&
+             data.type in ['movie', 'series'] &&
              data.authorUid == request.auth.uid;
     }
 
-    function isValidAd(data) {
-      return data.keys().hasAll(['url', 'name', 'link', 'type', 'position', 'createdAt']) &&
-             data.url is string &&
-             data.name is string &&
-             data.link is string &&
-             data.type in ['image', 'video'] &&
-             data.position in ['top', 'middle', 'bottom', 'modal'] &&
+    function isValidEpisode(data) {
+      return data.keys().hasAll(['animeId', 'episodeNumber', 'videoUrl', 'createdAt']) &&
+             data.animeId is string &&
+             data.episodeNumber is number &&
+             data.videoUrl is string &&
              data.createdAt is timestamp;
-    }
-
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email', 'role']) &&
-             data.email is string &&
-             data.role in ['admin', 'user'];
-    }
-
-    function isValidLike(data) {
-      return data.keys().hasAll(['userId', 'imageId', 'createdAt']) &&
-             data.userId == request.auth.uid &&
-             data.imageId is string &&
-             data.createdAt is timestamp;
-    }
-
-    function isValidCounterUpdate(imageId) {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount']) &&
-             math.abs(request.resource.data.likesCount - resource.data.likesCount) == 1 &&
-             (
-               (request.resource.data.likesCount > resource.data.likesCount &&
-                !exists(/databases/$(database)/documents/likes/$(request.auth.uid + '_' + imageId)) &&
-                getAfter(/databases/$(database)/documents/likes/$(request.auth.uid + '_' + imageId)) != null) ||
-               (request.resource.data.likesCount < resource.data.likesCount &&
-                exists(/databases/$(database)/documents/likes/$(request.auth.uid + '_' + imageId)) &&
-                getAfter(/databases/$(database)/documents/likes/$(request.auth.uid + '_' + imageId)) == null)
-             );
     }
 
     // ===============================================================
@@ -110,27 +53,33 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create, update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      // Allow creation if the user is authenticated (matching their own UID)
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      // Allow update for role change by admin, or user updating their own profile (preventing self-promotion to admin)
+      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
       allow delete: if isAdmin();
     }
 
-    match /images/{imageId} {
+    match /anime/{animeId} {
       allow read: if true;
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || (isAuthenticated() && isValidCounterUpdate(imageId));
+      allow create, delete: if isAdmin() && isValidAnime(request.resource.data);
+      allow update: if isAdmin();
+
+      match /episodes/{episodeId} {
+        allow read: if true;
+        allow create, update, delete: if isAdmin() && isValidEpisode(request.resource.data);
+      }
     }
 
     match /ads/{adId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin() && isValidAd(request.resource.data);
+      allow create, update, delete: if isAdmin();
     }
 
-    match /likes/{likeId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && 
-                      likeId == request.auth.uid + '_' + request.resource.data.imageId &&
-                      isValidLike(request.resource.data);
-      allow delete: if isAuthenticated() && likeId.startsWith(request.auth.uid + '_');
+    match /watchlist/{id} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
     match /messages/{messageId} {

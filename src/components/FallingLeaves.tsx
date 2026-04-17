@@ -1,61 +1,70 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Leaf {
   id: number;
   x: number;
-  delay: number;
-  duration: number;
+  y: number;
   size: number;
   rotation: number;
+  duration: number;
+  delay: number;
+  horizontalMovement: number;
 }
 
-export const FallingLeaves: React.FC = () => {
-  const [stars, setStars] = useState<Leaf[]>([]);
+export const FallingLeaves = () => {
+  const [leaves, setLeaves] = useState<Leaf[]>([]);
 
   useEffect(() => {
-    const newStars = Array.from({ length: 80 }).map((_, i) => ({
+    // Generate constant count of leaves
+    const initialLeaves = Array.from({ length: 25 }, (_, i) => ({
       id: i,
-      x: Math.random() * 100, // percentage
-      delay: Math.random() * 20,
-      duration: 10 + Math.random() * 15,
-      size: 1 + Math.random() * 3,
+      x: Math.random() * 100,
+      y: -20,
+      size: Math.random() * 10 + 10,
       rotation: Math.random() * 360,
+      duration: Math.random() * 10 + 10,
+      delay: Math.random() * 5,
+      horizontalMovement: Math.random() * 100 - 50,
     }));
-    setStars(newStars);
+    setLeaves(initialLeaves);
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      {stars.map((star) => (
+    <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
+      {leaves.map((leaf) => (
         <motion.div
-          key={star.id}
-          initial={{ y: -20, x: `${star.x}%`, rotate: star.rotation, opacity: 0 }}
+          key={leaf.id}
+          initial={{ 
+            opacity: 0, 
+            y: '-10vh', 
+            x: `${leaf.x}vw`,
+            rotate: leaf.rotation 
+          }}
           animate={{
+            opacity: [0, 1, 1, 0],
             y: '110vh',
-            rotate: star.rotation + 360,
-            opacity: [0, 0.8, 0.8, 0],
+            x: `${leaf.x + (leaf.horizontalMovement / 10)}vw`,
+            rotate: leaf.rotation + 360
           }}
           transition={{
-            duration: star.duration,
+            duration: leaf.duration,
             repeat: Infinity,
-            delay: star.delay,
-            ease: "linear",
+            delay: leaf.delay,
+            ease: "linear"
           }}
-          style={{
-            position: 'absolute',
-            width: star.size,
-            height: star.size,
-          }}
+          className="absolute"
+          style={{ width: leaf.size, height: leaf.size }}
         >
-          <div 
-            className="w-full h-full bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.9)] animate-pulse"
-            style={{
-              filter: `blur(${Math.random() * 0.5}px)`,
-            }}
-          />
+          {/* Sakura Petal Shape */}
+          <div className="w-full h-full bg-pink-300/40 rounded-full shadow-[0_0_10px_rgba(244,114,182,0.3)]">
+            <div className="w-1/2 h-1/2 bg-pink-400/20 rounded-full translate-x-1/2 translate-y-1/2" />
+          </div>
         </motion.div>
       ))}
+      
+      {/* Immersive radial gradient overlays for mood */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900/10 via-transparent to-pink-900/10" />
     </div>
   );
 };

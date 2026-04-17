@@ -1,58 +1,79 @@
 {
   "entities": {
-    "Image": {
-      "title": "Image",
-      "description": "A gallery image document",
+    "Anime": {
+      "title": "Anime",
+      "description": "An anime series or movie document",
       "type": "object",
       "properties": {
-        "url": { "type": "string", "description": "The URL of the image" },
-        "name": { "type": "string", "description": "The name of the image" },
-        "description": { "type": "string", "description": "A brief description of the image" },
-        "category": { "type": "string", "description": "The category of the wallpaper" },
-        "resolution": { "type": "string", "description": "The resolution of the wallpaper (e.g. 4K, 8K)" },
-        "isPremium": { "type": "boolean", "description": "Whether the image is premium" },
-        "deviceType": { "type": "string", "enum": ["pc", "phone"], "description": "Target device for the wallpaper" },
-        "createdAt": { "type": "string", "format": "date-time", "description": "The creation timestamp" },
-        "authorUid": { "type": "string", "description": "The UID of the admin who uploaded it" },
-        "likesCount": { "type": "number", "description": "Number of likes for this image" }
+        "title": { "type": "string", "description": "The title of the anime" },
+        "posterUrl": { "type": "string", "description": "URL of the poster/thumbnail" },
+        "description": { "type": "string", "description": "Summary of the anime" },
+        "category": { "type": "string", "description": "The primary genre" },
+        "rating": { "type": "number", "description": "User rating (0-10)" },
+        "year": { "type": "number", "description": "Release year" },
+        "type": { "type": "string", "enum": ["movie", "series"], "description": "Type of content" },
+        "status": { "type": "string", "enum": ["ongoing", "finished"], "description": "Current status" },
+        "episodesCount": { "type": "number", "description": "Total episodes" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Upload timestamp" },
+        "authorUid": { "type": "string", "description": "Admin UID" },
+        "views": { "type": "number", "description": "Total view count" }
       },
-      "required": ["url", "name", "category", "isPremium", "createdAt", "authorUid"]
+      "required": ["title", "posterUrl", "category", "type", "createdAt", "authorUid"]
     },
-    "Like": {
-      "title": "Like",
-      "description": "A record of a user liking an image",
+    "Episode": {
+      "title": "Episode",
+      "description": "A single anime episode",
       "type": "object",
       "properties": {
-        "userId": { "type": "string", "description": "The UID of the user who liked the image" },
-        "imageId": { "type": "string", "description": "The ID of the liked image" },
-        "createdAt": { "type": "string", "format": "date-time", "description": "When the like occurred" }
+        "animeId": { "type": "string", "description": "ID of parent anime" },
+        "episodeNumber": { "type": "number", "description": "Episode sequence" },
+        "title": { "type": "string", "description": "Episode title (optional)" },
+        "videoUrl": { "type": "string", "description": "URL to play the episode" },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "imageId", "createdAt"]
+      "required": ["animeId", "episodeNumber", "videoUrl", "createdAt"]
+    },
+    "Watchlist": {
+      "title": "Watchlist",
+      "description": "A user's saved anime",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "User UID" },
+        "animeId": { "type": "string", "description": "Anime UID" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When added" }
+      },
+      "required": ["userId", "animeId", "createdAt"]
     },
     "User": {
       "title": "User",
-      "description": "A user profile document",
+      "description": "User profile",
       "type": "object",
       "properties": {
-        "uid": { "type": "string", "description": "The user's unique ID" },
-        "email": { "type": "string", "format": "email", "description": "The user's email" },
-        "role": { "type": "string", "enum": ["admin", "user"], "description": "The user's role" }
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "username": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
       },
-      "required": ["uid", "email", "role"]
+      "required": ["uid", "role"]
     }
   },
   "firestore": {
-    "/images/{imageId}": {
-      "schema": "Image",
-      "description": "Collection of gallery images"
+    "/anime/{animeId}": {
+      "schema": "Anime",
+      "description": "Database of anime titles"
+    },
+    "/anime/{animeId}/episodes/{episodeId}": {
+      "schema": "Episode",
+      "description": "Collection of episodes for a specific anime"
     },
     "/users/{userId}": {
       "schema": "User",
-      "description": "Collection of user profiles"
+      "description": "User profiles"
     },
-    "/likes/{likeId}": {
-      "schema": "Like",
-      "description": "Collection of image likes"
+    "/watchlist/{watchlistId}": {
+      "schema": "Watchlist",
+      "description": "User personal watchlists"
     }
   }
 }
