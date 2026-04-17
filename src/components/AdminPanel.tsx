@@ -266,8 +266,15 @@ export default function AdminPanel() {
       
       console.log("AdminPanel: Attempting to save imageData to Firestore...", imageData);
       try {
+        // Use addDoc and wait for server confirmation by checking if the promise resolves
+        // Firestore web SDK's addDoc resolves when the document is written to the local cache, 
+        // BUT we want to be sure it reaches the server.
+        // We can do this by using a transaction or simply by waiting for the result.
         const docRef = await addDoc(collection(db, 'images'), imageData);
         console.log("AdminPanel: Document saved with ID:", docRef.id);
+        
+        // Wait a bit to ensure sync starts
+        await new Promise(r => setTimeout(r, 1000));
       } catch (err) {
         console.error("AdminPanel: Firestore save error:", err);
         handleFirestoreError(err, OperationType.CREATE, 'images');

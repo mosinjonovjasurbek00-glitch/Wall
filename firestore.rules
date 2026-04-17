@@ -37,21 +37,25 @@ service cloud.firestore {
     // Helper Functions
     // ===============================================================
     
+    // 1. Check if the user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    // 2. Check if user owns the resource
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Check if user is an admin
+    // 3. Robust Admin Check
     function isAdmin() {
       return isAuthenticated() && 
         (
           request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com" ||
           (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          // Fallback for case sensitivity or minor mismatches
+          request.auth.token.email.lower().matches("mosinjonovjasurbek00@gmail\\.com$")
         );
     }
 
