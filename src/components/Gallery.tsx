@@ -20,14 +20,11 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
     },
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Firestore Non-Critical Error: ', JSON.stringify(errInfo));
 }
 
 import { CATEGORIES } from '../constants';
@@ -64,11 +61,12 @@ interface AdDoc {
 interface GalleryProps {
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
+  images: ImageDoc[];
+  ads: AdDoc[];
+  loading: boolean;
 }
 
-export default function Gallery({ selectedCategory, setSelectedCategory }: GalleryProps) {
-  const [images, setImages] = useState<ImageDoc[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function Gallery({ selectedCategory, setSelectedCategory, images, ads, loading }: GalleryProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [deviceFilter, setDeviceFilter] = useState<'pc' | 'phone'>('pc');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -79,7 +77,6 @@ export default function Gallery({ selectedCategory, setSelectedCategory }: Galle
   const [currentPage, setCurrentPage] = useState(1);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showAuthError, setShowAuthError] = useState(false);
-  const [ads, setAds] = useState<AdDoc[]>([]);
   const [showAdModal, setShowAdModal] = useState<AdDoc | null>(null);
   const [pendingPreview, setPendingPreview] = useState<ImageDoc | null>(null);
   const itemsPerPage = 9;
@@ -90,23 +87,6 @@ export default function Gallery({ selectedCategory, setSelectedCategory }: Galle
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const q = query(collection(db, 'images'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as ImageDoc[];
-      setImages(docs);
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'images');
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -125,18 +105,6 @@ export default function Gallery({ selectedCategory, setSelectedCategory }: Galle
 
     return () => unsubscribe();
   }, [auth.currentUser]);
-
-  useEffect(() => {
-    const q = query(collection(db, 'ads'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as AdDoc[];
-      setAds(docs);
-    });
-    return () => unsubscribe();
-  }, []);
 
   const filteredImages = images.filter(img => {
     const matchesSearch = img.name.toLowerCase().includes(searchTerm.toLowerCase()) || 

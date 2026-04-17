@@ -2,31 +2,57 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import Navbar from './components/Navbar';
 import Gallery from './components/Gallery';
 import AdminPanel from './components/AdminPanel';
 import ContactForm from './components/ContactForm';
 import { FallingLeaves } from './components/FallingLeaves';
-import { Loader2, ShieldAlert, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Loader2, ShieldAlert } from 'lucide-react';
 
 export default function App() {
   const [user, loading] = useAuthState(auth);
   const [firestoreAdmin, setFirestoreAdmin] = useState(false);
-  const [checkingRole, setCheckingRole] = useState(true);
+  const [checkingRole, setCheckingRole] = useState(false);
   const [view, setView] = useState<'gallery' | 'admin'>('gallery');
   const [showContact, setShowContact] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  
+  // High-level data state to prevent disappearing images during login
+  const [images, setImages] = useState<any[]>([]);
+  const [ads, setAds] = useState<any[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   // Derive isAdmin from both Firestore role and hardcoded email for robustness
   const isAdmin = firestoreAdmin || (user?.email === "mosinjonovjasurbek00@gmail.com");
 
+  // Fetch data immediately
   useEffect(() => {
-    async function checkUserRole() {
+    const qImages = query(collection(db, 'images'), orderBy('createdAt', 'desc'));
+    const unsubscribeImages = onSnapshot(qImages, (snapshot) => {
+      setImages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setDataLoading(false);
+    }, (error) => {
+      console.error("Images fetch error:", error);
+      setDataLoading(false);
+    });
+
+    const qAds = query(collection(db, 'ads'), orderBy('createdAt', 'desc'));
+    const unsubscribeAds = onSnapshot(qAds, (snapshot) => {
+      setAds(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    return () => {
+      unsubscribeImages();
+      unsubscribeAds();
+    };
+  }, []);
+
+  useEffect(() => {
+    async function syncUserRole() {
       if (user) {
-        console.log("Logged in as:", user.email);
         const isDefaultAdmin = user.email === "mosinjonovjasurbek00@gmail.com";
-        setCheckingRole(true);
+        // No need to setCheckingRole(true) here as we already derived isAdmin
         
         try {
           const userDocRef = doc(db, 'users', user.uid);
@@ -34,7 +60,6 @@ export default function App() {
           
           if (userDoc.exists()) {
             const currentRole = userDoc.data().role;
-            // If the email matches admin but role is not admin in DB, update it
             if (isDefaultAdmin && currentRole !== 'admin') {
               await setDoc(userDocRef, { ...userDoc.data(), role: 'admin' }, { merge: true });
               setFirestoreAdmin(true);
@@ -42,7 +67,6 @@ export default function App() {
               setFirestoreAdmin(currentRole === 'admin');
             }
           } else {
-            // New user
             const role = isDefaultAdmin ? 'admin' : 'user';
             await setDoc(userDocRef, {
               uid: user.uid,
@@ -52,22 +76,18 @@ export default function App() {
             setFirestoreAdmin(isDefaultAdmin);
           }
         } catch (error) {
-          console.error("Role check error:", error);
-          // If Firestore fails, we still rely on derived isAdmin (email check)
-        } finally {
-          setCheckingRole(false);
+          console.error("Role sync error:", error);
         }
       } else {
         setFirestoreAdmin(false);
-        setCheckingRole(false);
         setView('gallery');
       }
     }
 
-    checkUserRole();
+    syncUserRole();
   }, [user]);
 
-  if (loading || checkingRole) {
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <div className="relative">
@@ -101,6 +121,9 @@ export default function App() {
           <Gallery 
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
+            images={images}
+            ads={ads}
+            loading={dataLoading}
           />
         ) : isAdmin ? (
           <AdminPanel />

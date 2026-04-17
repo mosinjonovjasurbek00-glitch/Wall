@@ -34,66 +34,64 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          {user && (
-            <div className="relative">
-              <button
-                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                className={cn(
-                  "glass-button flex items-center gap-2 px-3 sm:px-4 py-2 transition-all border",
-                  isCategoryOpen 
-                    ? "bg-indigo-600/20 border-indigo-500 text-white" 
-                    : "bg-white/10 border-white/10 text-slate-200 hover:bg-white/20"
-                )}
-              >
-                <span className="text-xs sm:text-sm font-medium">{selectedCategory === 'All' ? 'Categories' : selectedCategory}</span>
-                {isCategoryOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+              className={cn(
+                "glass-button flex items-center gap-2 px-3 sm:px-4 py-2 transition-all border",
+                isCategoryOpen 
+                  ? "bg-indigo-600/20 border-indigo-500 text-white" 
+                  : "bg-white/10 border-white/10 text-slate-200 hover:bg-white/20"
+              )}
+            >
+              <span className="text-xs sm:text-sm font-medium">{selectedCategory === 'All' ? 'Categories' : selectedCategory}</span>
+              {isCategoryOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
 
-              <AnimatePresence>
-                {isCategoryOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-[60]" 
-                      onClick={() => setIsCategoryOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="fixed sm:absolute top-[100px] sm:top-full left-6 right-6 sm:left-auto sm:right-0 z-[70] bg-slate-950/95 backdrop-blur-2xl rounded-2xl p-4 shadow-2xl border border-white/10 sm:w-[450px] max-h-[60vh] overflow-y-auto custom-scrollbar"
-                    >
-                      <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1">
-                        {CATEGORIES.map((cat) => (
-                          <button
-                            key={cat}
-                            onClick={() => {
-                              setSelectedCategory(cat);
-                              setIsCategoryOpen(false);
-                            }}
+            <AnimatePresence>
+              {isCategoryOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-[60]" 
+                    onClick={() => setIsCategoryOpen(false)}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="fixed sm:absolute top-[100px] sm:top-full left-6 right-6 sm:left-auto sm:right-0 z-[70] bg-slate-950/95 backdrop-blur-2xl rounded-2xl p-4 shadow-2xl border border-white/10 sm:w-[450px] max-h-[60vh] overflow-y-auto custom-scrollbar"
+                  >
+                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1">
+                      {CATEGORIES.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            setSelectedCategory(cat);
+                            setIsCategoryOpen(false);
+                          }}
+                          className={cn(
+                            "flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all group",
+                            selectedCategory === cat 
+                              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" 
+                              : "text-slate-200 hover:bg-white/10 hover:text-white"
+                          )}
+                        >
+                          <span>{cat}</span>
+                          <ChevronRight 
+                            size={14} 
                             className={cn(
-                              "flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all group",
-                              selectedCategory === cat 
-                                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" 
-                                : "text-slate-200 hover:bg-white/10 hover:text-white"
-                            )}
-                          >
-                            <span>{cat}</span>
-                            <ChevronRight 
-                              size={14} 
-                              className={cn(
-                                "transition-transform group-hover:translate-x-1",
-                                selectedCategory === cat ? "text-white" : "text-slate-600"
-                              )} 
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
+                              "transition-transform group-hover:translate-x-1",
+                              selectedCategory === cat ? "text-white" : "text-slate-600"
+                            )} 
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
 
           {user ? (
             <>
