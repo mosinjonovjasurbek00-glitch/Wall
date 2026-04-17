@@ -50,6 +50,7 @@ async function startServer() {
     if (!phoneNumber) return res.status(400).json({ error: "Phone number required" });
 
     try {
+      console.log("Sending OTP to:", phoneNumber);
       const response = await axios.post(
         "https://gatewayapi.telegram.org/sendVerificationMessage",
         {
@@ -64,9 +65,10 @@ async function startServer() {
           }
         }
       );
+      console.log("Telegram Send Response:", response.data);
       res.json(response.data);
     } catch (error: any) {
-      console.error("Telegram Send OTP error:", error.response?.data || error.message);
+      console.error("Telegram Send OTP error details:", error.response?.data || error.message);
       res.status(error.response?.status || 500).json(error.response?.data || { error: "Failed to send OTP" });
     }
   });
@@ -77,8 +79,9 @@ async function startServer() {
     if (!phoneNumber || !requestId || !code) return res.status(400).json({ error: "Missing parameters" });
 
     try {
+      console.log("Verifying OTP:", { phoneNumber, requestId, code });
       const response = await axios.post(
-        "https://gatewayapi.telegram.org/checkVerificationCode",
+        "https://gatewayapi.telegram.org/checkVerificationStatus",
         {
           phone_number: phoneNumber,
           request_id: requestId,
@@ -91,6 +94,7 @@ async function startServer() {
           }
         }
       );
+      console.log("Telegram Verify Response:", response.data);
       res.json(response.data);
     } catch (error: any) {
       console.error("Telegram Verify OTP error:", error.response?.data || error.message);
