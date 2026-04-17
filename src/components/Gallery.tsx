@@ -68,7 +68,7 @@ interface GalleryProps {
 
 export default function Gallery({ selectedCategory, setSelectedCategory, images, ads, loading }: GalleryProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [deviceFilter, setDeviceFilter] = useState<'pc' | 'phone'>('pc');
+  const [deviceFilter, setDeviceFilter] = useState<'all' | 'pc' | 'phone'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<ImageDoc | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -110,7 +110,7 @@ export default function Gallery({ selectedCategory, setSelectedCategory, images,
     const matchesSearch = img.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          img.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || img.category === selectedCategory;
-    const matchesDevice = img.deviceType === deviceFilter;
+    const matchesDevice = deviceFilter === 'all' || img.deviceType === deviceFilter;
     const matchesFavorites = !showFavorites || userLikes.has(img.id);
     return matchesSearch && matchesCategory && matchesDevice && matchesFavorites;
   });
@@ -292,7 +292,7 @@ export default function Gallery({ selectedCategory, setSelectedCategory, images,
               <span className="hidden xs:inline">Favorites</span>
             </button>
             <div className="w-px bg-white/10 mx-1 my-1.5 shrink-0" />
-            {(['pc', 'phone'] as const).map((d) => (
+            {(['all', 'pc', 'phone'] as const).map((d) => (
               <button
                 key={d}
                 onClick={() => setDeviceFilter(d)}
@@ -301,7 +301,7 @@ export default function Gallery({ selectedCategory, setSelectedCategory, images,
                   deviceFilter === d ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-white"
                 )}
               >
-                {d === 'phone' ? 'iPhone' : 'PC'}
+                {d === 'all' ? 'All' : d === 'phone' ? 'iPhone' : 'PC'}
               </button>
             ))}
           </div>

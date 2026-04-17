@@ -190,8 +190,8 @@ export default function AdminPanel() {
       let finalUrl = url;
 
       if (uploadType === 'file' && file) {
-        if (file.size > 10 * 1024 * 1024) {
-          throw new Error("File size too large. Maximum 10MB allowed.");
+        if (file.size > 20 * 1024 * 1024) {
+          throw new Error("File size too large. Maximum 20MB allowed.");
         }
 
         const storageRef = ref(storage, `wallpapers/${Date.now()}_${file.name}`);
@@ -200,8 +200,8 @@ export default function AdminPanel() {
         finalUrl = await new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
             uploadTask.cancel();
-            reject(new Error("Upload timed out. Please try again."));
-          }, 60000); // 60 seconds timeout
+            reject(new Error("Upload timed out (120s). Please check your internet connection."));
+          }, 120000); // 120 seconds timeout
 
           console.log("Attaching state_changed listener for image upload...");
           uploadTask.on('state_changed', {
