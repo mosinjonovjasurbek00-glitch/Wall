@@ -4,25 +4,17 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../firebase-applet-config.json';
 
-const getEnv = (key: string, fallback: string) => {
-  const val = import.meta.env[key];
-  return (val && val.trim() !== "") ? val : fallback;
-};
-
+// Explicit configuration from the user to fix the invalid-api-key error
 const firebaseParams = {
-  apiKey: getEnv('VITE_FIREBASE_API_KEY', firebaseConfig.apiKey),
-  authDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN', firebaseConfig.authDomain),
-  projectId: getEnv('VITE_FIREBASE_PROJECT_ID', firebaseConfig.projectId),
-  storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET', firebaseConfig.storageBucket),
-  messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID', firebaseConfig.messagingSenderId),
-  appId: getEnv('VITE_FIREBASE_APP_ID', firebaseConfig.appId),
+  apiKey: "AIzaSyCnFetX9GW7iqnFuRl5cMQbyYGNmXuzaFI",
+  authDomain: "gen-lang-client-0911911936.firebaseapp.com",
+  projectId: "gen-lang-client-0911911936",
+  storageBucket: "gen-lang-client-0911911936.firebasestorage.app",
+  messagingSenderId: "235617616943",
+  appId: "1:235617616943:web:df5c9565895d0783acf2da",
 };
 
-console.log('Firebase initialized with Project ID:', firebaseParams.projectId);
-
-if (!firebaseParams.apiKey || firebaseParams.apiKey.includes('TODO')) {
-  console.error('CRITICAL: Firebase API Key is missing or invalid!');
-}
+console.log('Firebase attempting to initialize with Project ID:', firebaseParams.projectId);
 
 const app = initializeApp(firebaseParams);
 export const db = getFirestore(app);
