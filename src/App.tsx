@@ -8,7 +8,8 @@ import Gallery from './components/Gallery';
 import AdminPanel from './components/AdminPanel';
 import ContactForm from './components/ContactForm';
 import { FallingLeaves } from './components/FallingLeaves';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { Loader2, ShieldAlert, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [user, loading] = useAuthState(auth);
