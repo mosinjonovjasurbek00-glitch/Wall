@@ -108,15 +108,22 @@ export default function AdminPanel() {
   const resolutions = ['HD', 'Full HD', '2K', '4K', '5K', '8K'];
 
   useEffect(() => {
-    const q = query(collection(db, 'images'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'images')); // Removed orderBy to avoid index issues
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as ImageDoc[];
+      // Sort in memory
+      docs.sort((a: any, b: any) => {
+        const timeA = a.createdAt?.toMillis?.() || Date.now();
+        const timeB = b.createdAt?.toMillis?.() || Date.now();
+        return timeB - timeA;
+      });
       setImages(docs);
       setLoading(false);
     }, (err) => {
+      console.error("AdminPanel: Images fetch error:", err);
       handleFirestoreError(err, OperationType.LIST, 'images');
       setLoading(false);
     });

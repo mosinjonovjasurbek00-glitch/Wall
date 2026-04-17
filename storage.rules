@@ -4,7 +4,7 @@ service firebase.storage {
     function isAdmin() {
       return request.auth != null && 
         (request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com" ||
-         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin');
+         firestore.get(/databases/ai-studio-fd2c8ba0-fd03-4731-99f9-7bdd5287f087/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     match /wallpapers/{allPaths=**} {
