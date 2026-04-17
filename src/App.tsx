@@ -22,9 +22,10 @@ export default function App() {
   const [images, setImages] = useState<any[]>([]);
   const [ads, setAds] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Derive isAdmin from both Firestore role and hardcoded email for robustness
-  const isAdmin = firestoreAdmin || (user?.email === "mosinjonovjasurbek00@gmail.com");
+  const isAdmin = firestoreAdmin || (user?.email?.toLowerCase() === "mosinjonovjasurbek00@gmail.com");
 
   // Fetch data immediately
   useEffect(() => {
@@ -34,19 +35,24 @@ export default function App() {
     const imagesRef = collection(db, 'images');
     const qImages = query(imagesRef);
     
-    // Faster safety timeout to prevent stuck skeleton state
+    // Increased safety timeout to 15s for slow cold starts or data syncing
     const timeoutId = setTimeout(() => {
       setDataLoading(prev => {
         if (prev) {
-          console.warn("App: Data loading timed out (5s), check Firestore configuration.");
+          console.warn("App: Data loading timed out (15s), likely slow connection or syncing issues.");
           return false;
         }
         return prev;
       });
-    }, 5000);
+    }, 15000);
 
     const unsubscribeImages = onSnapshot(qImages, (snapshot) => {
-      console.log(`App: Images snapshot received. Docs: ${snapshot.docs.length}, Metadata:`, snapshot.metadata);
+      console.log(`App: Images snapshot received. Docs: ${snapshot.docs.length}, PendingWrites: ${snapshot.metadata.hasPendingWrites}`);
+      
+      if (snapshot.docs.length === 0 && !snapshot.metadata.fromCache) {
+        console.log("App: Database is empty (fully synced).");
+      }
+
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       // Sort manually in memory to ensure new uploads with null timestamps appear at top
       docs.sort((a: any, b: any) => {
@@ -56,9 +62,11 @@ export default function App() {
       });
       setImages(docs);
       setDataLoading(false);
+      setFetchError(null);
       clearTimeout(timeoutId);
     }, (error) => {
       console.error("App: Images fetch error:", error);
+      setFetchError(error.message || "Failed to load images");
       setDataLoading(false);
       clearTimeout(timeoutId);
     });
@@ -80,7 +88,7 @@ export default function App() {
   useEffect(() => {
     async function syncUserRole() {
       if (user) {
-        const isDefaultAdmin = user.email === "mosinjonovjasurbek00@gmail.com";
+        const isDefaultAdmin = user.email.toLowerCase() === "mosinjonovjasurbek00@gmail.com";
         // No need to setCheckingRole(true) here as we already derived isAdmin
         
         try {
@@ -144,6 +152,28 @@ export default function App() {
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
         />
+
+        <AnimatePresence>
+          {fetchError && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-24 left-6 right-6 z-40 bg-red-500/20 backdrop-blur-md border border-red-500/30 p-4 rounded-2xl flex items-center justify-between gap-4 max-w-2xl mx-auto"
+            >
+              <div className="flex items-center gap-3 text-red-400">
+                <AlertCircle size={20} />
+                <p className="text-sm font-medium">Connection Error: {fetchError}</p>
+              </div>
+              <button 
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-colors shrink-0"
+              >
+                Retry
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         <main>
         {view === 'gallery' ? (

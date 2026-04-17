@@ -110,6 +110,8 @@ export default function AdminPanel() {
   useEffect(() => {
     const q = query(collection(db, 'images')); // Removed orderBy to avoid index issues
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log(`AdminPanel: Snapshot received. Docs: ${snapshot.docs.length}, FromCache: ${snapshot.metadata.fromCache}, PendingWrites: ${snapshot.metadata.hasPendingWrites}`);
+      
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -198,9 +200,10 @@ export default function AdminPanel() {
 
       if (uploadType === 'file' && file) {
         if (file.size > 20 * 1024 * 1024) {
-          throw new Error("File size too large. Maximum 20MB allowed.");
+          throw new Error(`File size too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum 20MB allowed.`);
         }
 
+        console.log(`AdminPanel: Starting storage upload for ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)...`);
         const storageRef = ref(storage, `wallpapers/${Date.now()}_${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -246,10 +249,12 @@ export default function AdminPanel() {
         authorUid: auth.currentUser.uid
       };
       
-      console.log("Attempting to upload image:", imageData);
+      console.log("AdminPanel: Attempting to save imageData to Firestore...", imageData);
       try {
-        await addDoc(collection(db, 'images'), imageData);
+        const docRef = await addDoc(collection(db, 'images'), imageData);
+        console.log("AdminPanel: Document saved with ID:", docRef.id);
       } catch (err) {
+        console.error("AdminPanel: Firestore save error:", err);
         handleFirestoreError(err, OperationType.CREATE, 'images');
       }
 
