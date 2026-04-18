@@ -17,7 +17,7 @@ export const FallingLeaves = () => {
 
   useEffect(() => {
     // Generate constant count of leaves
-    const initialLeaves = Array.from({ length: 25 }, (_, i) => ({
+    const initialLeaves = Array.from({ length: 40 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: -20,
@@ -31,7 +31,7 @@ export const FallingLeaves = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden">
       {leaves.map((leaf) => (
         <motion.div
           key={leaf.id}

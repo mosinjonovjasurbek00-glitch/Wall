@@ -50,6 +50,7 @@ export default function AdminPanel() {
   const [rating, setRating] = useState(8.5);
   const [year, setYear] = useState(new Date().getFullYear());
   const [contentType, setContentType] = useState<'movie' | 'series'>('series');
+  const [isBanner, setIsBanner] = useState(false);
 
   // Episode Form State
   const [epNumber, setEpNumber] = useState(1);
@@ -105,11 +106,13 @@ export default function AdminPanel() {
       await addDoc(collection(db, 'anime'), {
         title, posterUrl: finalPosterUrl, description, category, rating, year,
         type: contentType, views: 0, createdAt: serverTimestamp(),
-        authorUid: auth.currentUser?.uid
+        authorUid: auth.currentUser?.uid,
+        isBanner
       });
 
       setTitle(''); setPosterUrl(''); setPosterFile(null); setDescription('');
       setCategory('Action'); setRating(8.5); setYear(new Date().getFullYear());
+      setIsBanner(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
@@ -217,6 +220,13 @@ export default function AdminPanel() {
                   <div className="grid grid-cols-2 gap-4">
                     <input type="number" step="0.1" placeholder="Reyting" className="glass-input" value={rating} onChange={e => setRating(Number(e.target.value))} />
                     <input type="number" placeholder="Yil" className="glass-input" value={year} onChange={e => setYear(Number(e.target.value))} />
+                  </div>
+
+                  <div className="flex items-center gap-3 p-4 glass rounded-2xl cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setIsBanner(!isBanner)}>
+                     <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", isBanner ? "bg-indigo-600 border-indigo-500 shadow-lg shadow-indigo-500/30" : "border-white/10")}>
+                        {isBanner && <Check size={14} className="text-white" />}
+                     </div>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Bannerga qo'yish</span>
                   </div>
 
                   {uploadProgress !== null && (

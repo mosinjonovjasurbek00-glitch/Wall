@@ -63,11 +63,18 @@ export default function App() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-[#020202]">
         <motion.div 
-          animate={{ scale: [1, 1.1, 1], opacity: [1, 0.5, 1] }} 
+          animate={{ scale: [1, 1.1, 1], opacity: [1, 0.8, 1] }} 
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-20 h-20 bg-indigo-600 rounded-3xl"
-        />
-        <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px]">Loading Animem.uz...</p>
+          className="w-24 h-24 bg-indigo-600 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(79,70,229,0.3)] border-2 border-indigo-500/20"
+        >
+          <img 
+            src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
+            alt="Loading..."
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        </motion.div>
+        <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px] animate-pulse">Loading Animem.uz...</p>
       </div>
     );
   }
@@ -103,7 +110,7 @@ export default function App() {
         )}
       </AnimatePresence>
       
-      <main className="relative z-10">
+      <main className="relative z-10 pt-20 sm:pt-28">
       {view === 'gallery' ? (
         <AnimePortal 
           selectedCategory={selectedCategory}
@@ -127,8 +134,18 @@ export default function App() {
 
       <footer className="py-24 px-12 lg:px-24 border-t border-white/5 bg-black/50 backdrop-blur-2xl relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="flex flex-col gap-4 text-center md:text-left">
-            <span className="text-3xl font-black tracking-tighter italic uppercase">Animem<span className="text-indigo-500">.uz</span></span>
+          <div className="flex flex-col gap-6 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-4">
+              <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10">
+                <img 
+                  src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
+                  alt="Footer Logo" 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <span className="text-3xl font-black tracking-tighter italic uppercase">Animem<span className="text-indigo-500">.uz</span></span>
+            </div>
             <p className="text-slate-500 text-sm max-w-sm font-medium leading-relaxed">Eng so'nggi va qaynoq animelar faqat bizda. Professional streaming tajribasi.</p>
           </div>
           <div className="flex gap-12 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">

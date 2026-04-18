@@ -36,35 +36,40 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
   }, [user]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[100] px-6 py-8 font-sans">
-      <div className="max-w-7xl mx-auto glass rounded-full px-10 py-3.5 flex items-center justify-between border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+    <nav className="fixed top-0 left-0 right-0 z-[100] px-4 sm:px-6 py-4 sm:py-8 font-sans">
+      <div className="max-w-7xl mx-auto glass rounded-full px-4 sm:px-10 py-2.5 sm:py-3.5 flex items-center justify-between border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
         <div 
-          className="flex items-center gap-4 cursor-pointer group"
+          className="flex items-center gap-3 sm:gap-4 cursor-pointer group"
           onClick={() => setView('gallery')}
         >
-          <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.5)] group-hover:scale-110 transition-transform ring-4 ring-indigo-500/20">
-            <Play size={20} fill="white" className="ml-1" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.5)] group-hover:scale-110 transition-transform ring-4 ring-indigo-500/20 overflow-hidden">
+            <img 
+              src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
+              alt="Logo" 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
           </div>
           <div className="flex flex-col">
-            <span className="font-black text-2xl tracking-tighter italic leading-none">
+            <span className="font-black text-lg sm:text-2xl tracking-tighter italic leading-none">
               ANIMEM<span className="text-indigo-400">.UZ</span>
             </span>
-            <span className="text-[8px] font-black text-slate-500 tracking-[0.4em] uppercase mt-1">Database</span>
+            <span className="hidden sm:block text-[8px] font-black text-slate-500 tracking-[0.4em] uppercase mt-1">Database</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <div className="relative">
             <button
               onClick={() => setIsCategoryOpen(!isCategoryOpen)}
               className={cn(
-                "px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all border",
+                "px-4 sm:px-8 py-2.5 sm:py-3 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all border",
                 isCategoryOpen 
                   ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
                   : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
               )}
             >
-              <span>{selectedCategory === 'All' ? 'JANRLAR' : selectedCategory.toUpperCase()}</span>
+              <span>{selectedCategory === 'All' ? 'JANRLAR' : (selectedCategory.length > 8 ? selectedCategory.substring(0, 8) + '...' : selectedCategory.toUpperCase())}</span>
             </button>
 
             <AnimatePresence>

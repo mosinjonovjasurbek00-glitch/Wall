@@ -4,19 +4,55 @@ import path from "path";
 import { fileURLToPath } from "url";
 import axios from "axios";
 import dotenv from "dotenv";
+import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
+import firebaseConfig from "./firebase-applet-config.json" with { type: "json" };
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// CRITICAL: Force the project ID into the environment to prevent the SDK 
+// from defaulting to the internal AI Studio project.
+process.env.GOOGLE_CLOUD_PROJECT = firebaseConfig.projectId;
+process.env.GCLOUD_PROJECT = firebaseConfig.projectId;
+
+console.log(`DEBUG: Project ID from config: ${firebaseConfig.projectId}`);
+
+// Initialize Firebase Admin
+if (admin.apps.length === 0) {
+  try {
+    console.log(`Initializing Firebase Admin for project: ${firebaseConfig.projectId}`);
+    admin.initializeApp({
+      projectId: firebaseConfig.projectId
+    });
+  } catch (e: any) {
+    console.error("Firebase Admin initialization failed:", e.message);
+  }
+}
+
+// Access services with robust database ID resolution
+const getDbAdmin = (databaseId?: string) => {
+  const configDbId = firebaseConfig.firestoreDatabaseId;
+  const targetId = databaseId || configDbId;
+  
+  console.log(`DEBUG: Target Database ID: ${targetId || "(default)"}, Project: ${firebaseConfig.projectId}`);
+  
+  if (targetId && targetId !== "(default)") {
+    return getFirestore(targetId);
+  }
+  return getFirestore();
+};
+
+const getAuthAdmin = () => getAuth();
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   app.use(express.json());
-
-  const TELEGRAM_GATEWAY_TOKEN = process.env.TELEGRAM_GATEWAY_API_KEY || "AAGLOAAA8LUpoOALxkhqzB3NTQ8JPdXNShGuw9ZR6g-J4Q";
 
   // Proxy route to handle CORS-free downloads
   app.get("/api/proxy-image", async (req, res) => {
@@ -41,64 +77,6 @@ async function startServer() {
       res.send(Buffer.from(response.data));
     } catch (error: any) {
       res.status(500).send("Proxy error");
-    }
-  });
-
-  // Telegram Gateway: Send Verification Message
-  app.post("/api/telegram/send-otp", async (req, res) => {
-    const { phoneNumber } = req.body;
-    if (!phoneNumber) return res.status(400).json({ error: "Phone number required" });
-
-    try {
-      console.log("Sending OTP to:", phoneNumber);
-      const response = await axios.post(
-        "https://gatewayapi.telegram.org/sendVerificationMessage",
-        {
-          phone_number: phoneNumber,
-          code_length: 6,
-          ttl: 300 // 5 minutes
-        },
-        {
-          headers: {
-            "Authorization": `Bearer ${TELEGRAM_GATEWAY_TOKEN}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-      console.log("Telegram Send Response:", response.data);
-      res.json(response.data);
-    } catch (error: any) {
-      console.error("Telegram Send OTP error details:", error.response?.data || error.message);
-      res.status(error.response?.status || 500).json(error.response?.data || { error: "Failed to send OTP" });
-    }
-  });
-
-  // Telegram Gateway: Check Verification Code
-  app.post("/api/telegram/verify-otp", async (req, res) => {
-    const { phoneNumber, requestId, code } = req.body;
-    if (!phoneNumber || !requestId || !code) return res.status(400).json({ error: "Missing parameters" });
-
-    try {
-      console.log("Verifying OTP:", { phoneNumber, requestId, code });
-      const response = await axios.post(
-        "https://gatewayapi.telegram.org/checkVerificationStatus",
-        {
-          phone_number: phoneNumber,
-          request_id: requestId,
-          code: code
-        },
-        {
-          headers: {
-            "Authorization": `Bearer ${TELEGRAM_GATEWAY_TOKEN}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-      console.log("Telegram Verify Response:", response.data);
-      res.json(response.data);
-    } catch (error: any) {
-      console.error("Telegram Verify OTP error:", error.response?.data || error.message);
-      res.status(error.response?.status || 500).json(error.response?.data || { error: "Failed to verify OTP" });
     }
   });
 
