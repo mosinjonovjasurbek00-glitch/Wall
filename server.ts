@@ -38,8 +38,6 @@ const getDbAdmin = (databaseId?: string) => {
   const configDbId = firebaseConfig.firestoreDatabaseId;
   const targetId = databaseId || configDbId;
   
-  console.log(`DEBUG: Target Database ID: ${targetId || "(default)"}, Project: ${firebaseConfig.projectId}`);
-  
   if (targetId && targetId !== "(default)") {
     return getFirestore(targetId);
   }
@@ -47,6 +45,8 @@ const getDbAdmin = (databaseId?: string) => {
 };
 
 const getAuthAdmin = () => getAuth();
+
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY || "6LdkE74sAAAAANTFKWhL2DL3m5RJNcbaTGoYeUmi";
 
 async function startServer() {
   const app = express();
@@ -77,6 +77,32 @@ async function startServer() {
       res.send(Buffer.from(response.data));
     } catch (error: any) {
       res.status(500).send("Proxy error");
+    }
+  });
+
+  // --- Authentication Routes ---
+  
+  // Verify reCaptcha token
+  app.post("/api/verify-captcha", async (req, res) => {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, error: "Token topilmadi" });
+
+    try {
+      const response = await axios.post(
+        `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET_KEY}&response=${token}`,
+        {},
+        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+      );
+
+      if (response.data.success) {
+        res.json({ success: true });
+      } else {
+        console.error("reCaptcha Verification Failed:", response.data);
+        res.status(400).json({ success: false, error: "reCaptcha tasdiqlashdan o'tmadi" });
+      }
+    } catch (error: any) {
+      console.error("reCaptcha API Error:", error.message);
+      res.status(500).json({ success: false, error: "Serverda xatolik yuz berdi" });
     }
   });
 
