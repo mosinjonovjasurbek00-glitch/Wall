@@ -46,7 +46,7 @@ const getDbAdmin = (databaseId?: string) => {
 
 const getAuthAdmin = () => getAuth();
 
-const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "1x0000000000000000000000000000000AA"; // Test secret
+const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "0x4AAAAAAAC_bAlapuWFHvvqINSi4K6ynElk";
 
 async function startServer() {
   const app = express();

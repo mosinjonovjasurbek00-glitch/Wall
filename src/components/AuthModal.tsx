@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import axios from 'axios';
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"; // Test key
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAAC_bA66fwl1XqLkD";
 
 interface AuthModalProps {
   onSuccess: () => void;
