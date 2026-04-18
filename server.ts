@@ -46,7 +46,7 @@ const getDbAdmin = (databaseId?: string) => {
 
 const getAuthAdmin = () => getAuth();
 
-const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY || "6LdkE74sAAAAANTFKWhL2DL3m5RJNcbaTGoYeUmi";
+const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "1x0000000000000000000000000000000AA"; // Test secret
 
 async function startServer() {
   const app = express();
@@ -82,27 +82,40 @@ async function startServer() {
 
   // --- Authentication Routes ---
   
-  // Verify reCaptcha token
-  app.post("/api/verify-captcha", async (req, res) => {
+  // Verify Turnstile token
+  app.post("/api/verify-turnstile", async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ success: false, error: "Token topilmadi" });
 
     try {
+      const params = new URLSearchParams();
+      params.append('secret', TURNSTILE_SECRET_KEY);
+      params.append('response', token);
+
       const response = await axios.post(
-        `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET_KEY}&response=${token}`,
-        {},
-        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        params.toString(),
+        { 
+          headers: { 
+            "Content-Type": "application/x-www-form-urlencoded" 
+          } 
+        }
       );
 
       if (response.data.success) {
+        console.log("Turnstile Verified Successfully");
         res.json({ success: true });
       } else {
-        console.error("reCaptcha Verification Failed:", response.data);
-        res.status(400).json({ success: false, error: "reCaptcha tasdiqlashdan o'tmadi" });
+        console.error("Turnstile Verification Failed:", response.data);
+        res.status(400).json({ 
+          success: false, 
+          error: "Turnstile tasdiqlashdan o'tmadi",
+          codes: response.data['error-codes'] 
+        });
       }
     } catch (error: any) {
-      console.error("reCaptcha API Error:", error.message);
-      res.status(500).json({ success: false, error: "Serverda xatolik yuz berdi" });
+      console.error("Turnstile API Error:", error.message);
+      res.status(500).json({ success: false, error: "Serverda Turnstile tekshirishda xatolik yuz berdi" });
     }
   });
 

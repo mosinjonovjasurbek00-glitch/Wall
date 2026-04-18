@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { auth, db, loginWithGoogle, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendEmailVerification, syncUserToFirestore, signInWithCustomToken } from '../firebase';
 import { Mail, Lock, User, Loader2, X, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import ReCAPTCHA from "react-google-recaptcha";
+import { Turnstile } from '@marsidev/react-turnstile';
+import axios from 'axios';
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LdkE74sAAAAAB09k01o5LfHBKobDQ2JQ9AwVNPt";
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"; // Test key
 
 interface AuthModalProps {
   onSuccess: () => void;
@@ -17,8 +18,7 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<React.ReactNode | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Form states
   const [email, setEmail] = useState('');
@@ -46,29 +46,24 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!captchaToken) {
-      setError("Iltimos, reCaptcha-ni tasdiqlang.");
+    if (!turnstileToken) {
+      setError("Iltimos, bot emasligingizni tasdiqlang (Turnstile).");
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      // 1. Verify captcha on server first
-      const verifyRes = await axios.post('/api/verify-captcha', { token: captchaToken });
+      // 1. Verify Turnstile token on server
+      const verifyRes = await axios.post('/api/verify-turnstile', { token: turnstileToken });
       if (!verifyRes.data.success) {
-        throw new Error("Captcha tasdiqlanmadi.");
+        throw new Error("Turnstile tasdiqlanmadi.");
       }
 
-      // 2. Proceed with login
       const result = await signInWithEmailAndPassword(auth, email, password);
       await syncUserToFirestore(result.user);
       onSuccess();
     } catch (err: any) {
       console.error("Login error:", err);
-      // Reset captcha on error
-      recaptchaRef.current?.reset();
-      setCaptchaToken(null);
-      
       const errMsg = err.response?.data?.error || err.message;
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError("Email yoki parol noto'g'ri.");
@@ -86,20 +81,19 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
       setError("Parollar mos kelmadi.");
       return;
     }
-    if (!captchaToken) {
-      setError("Iltimos, reCaptcha-ni tasdiqlang.");
+    if (!turnstileToken) {
+      setError("Iltimos, bot emasligingizni tasdiqlang (Turnstile).");
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      // 1. Verify captcha on server first
-      const verifyRes = await axios.post('/api/verify-captcha', { token: captchaToken });
+      // 1. Verify Turnstile token on server
+      const verifyRes = await axios.post('/api/verify-turnstile', { token: turnstileToken });
       if (!verifyRes.data.success) {
-        throw new Error("Captcha tasdiqlanmadi.");
+        throw new Error("Turnstile tasdiqlanmadi.");
       }
 
-      // 2. Proceed with registration
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
       
@@ -113,17 +107,12 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
       onSuccess();
     } catch (err: any) {
       console.error("Register error:", err);
-      // Reset captcha on error
-      recaptchaRef.current?.reset();
-      setCaptchaToken(null);
-
-      const errMsg = err.response?.data?.error || err.message;
       if (err.code === 'auth/email-already-in-use') {
         setError("Ushbu email bilan allaqachon ro'yxatdan o'tilgan.");
       } else if (err.code === 'auth/operation-not-allowed') {
         setError("Tizimda xatolik yuz berdi. Email/Password yoqilmagan bo'lishi mumkin.");
       } else {
-        setError(errMsg || "Ro'yxatdan o'tishda xatolik yuz berdi.");
+        setError("Ro'yxatdan o'tishda xatolik yuz berdi.");
       }
     } finally {
       setLoading(false);
@@ -238,11 +227,14 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
                 )}
 
                 <div className="flex justify-center py-2">
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    onChange={onCaptchaChange}
-                    theme="dark"
+                  <Turnstile 
+                    siteKey={TURNSTILE_SITE_KEY} 
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                    options={{
+                      theme: 'dark'
+                    }}
                   />
                 </div>
 
