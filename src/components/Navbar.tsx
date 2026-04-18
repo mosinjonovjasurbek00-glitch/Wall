@@ -1,6 +1,6 @@
 import { auth, logout } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { LogOut, LayoutDashboard, Film, Play, User } from 'lucide-react';
+import { LogOut, LayoutDashboard, Film, Play, User, Globe } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -58,56 +58,17 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
           </div>
         </div>
 
+        <a 
+          href="https://4kluminawalls.vercel.app/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-all group"
+        >
+          <Globe size={12} className="text-indigo-400 group-hover:rotate-12 transition-transform" />
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">4kLuminaWalls</span>
+        </a>
+
         <div className="flex items-center gap-2 sm:gap-4">
-          <div className="relative">
-            <button
-              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-              className={cn(
-                "px-4 sm:px-8 py-2.5 sm:py-3 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] transition-all border",
-                isCategoryOpen 
-                  ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
-                  : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
-              )}
-            >
-              <span>{selectedCategory === 'All' ? 'JANRLAR' : (selectedCategory.length > 8 ? selectedCategory.substring(0, 8) + '...' : selectedCategory.toUpperCase())}</span>
-            </button>
-
-            <AnimatePresence>
-              {isCategoryOpen && (
-                <>
-                  <div className="fixed inset-0 z-[60]" onClick={() => setIsCategoryOpen(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                    className="absolute top-full right-0 mt-6 z-[70] bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-[0_30px_60px_rgba(0,0,0,0.8)] w-80 max-h-[70vh] overflow-y-auto custom-scrollbar"
-                  >
-                    <div className="grid grid-cols-1 gap-2">
-                       <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4 ml-2">Filtlash</p>
-                      {CATEGORIES.map((cat) => (
-                        <button
-                          key={cat}
-                          onClick={() => {
-                            setSelectedCategory(cat);
-                            setIsCategoryOpen(false);
-                          }}
-                          className={cn(
-                            "flex items-center justify-between px-5 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all",
-                            selectedCategory === cat 
-                              ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" 
-                              : "text-slate-400 hover:bg-white/5 hover:text-white"
-                          )}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
-
           <div className="h-8 w-px bg-white/10 mx-2 hidden sm:block" />
 
           {user ? (

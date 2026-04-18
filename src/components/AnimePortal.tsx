@@ -117,104 +117,112 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
 
   return (
     <div className="min-h-screen bg-[#020202] text-white">
-      {/* Cinematic Hero */}
-      {!loading && featuredAnime && !selectedCategory && !searchTerm && !showWatchlistOnly && (
+      {/* Cinematic Hero - Main Banner (Redesigned to match request) */}
+      {!loading && featuredAnime && (selectedCategory === 'All') && !searchTerm && !showWatchlistOnly && (
         <div className="px-4 sm:px-6 lg:px-12 pt-6 sm:pt-10 pb-4">
-          <div className="relative h-[60vh] sm:h-[65vh] md:h-[75vh] w-full rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden group">
+          <div className="relative h-[60vh] sm:h-[65vh] md:h-[75vh] w-full rounded-[2rem] sm:rounded-[3rem] overflow-hidden bg-[#0A0A0A] border border-white/[0.03] shadow-2xl">
             <AnimatePresence mode="wait">
               <motion.div 
                 key={featuredAnime.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 1 }}
-                className="absolute inset-0"
+                transition={{ duration: 0.8 }}
+                className="absolute inset-0 flex flex-col md:flex-row items-center justify-center md:justify-between px-6 sm:px-12 md:px-20 py-8 md:py-12 gap-6 md:gap-12"
               >
-                {/* Background Blur Image */}
-                <div className="absolute inset-0">
-                   <img src={featuredAnime.posterUrl} className="w-full h-full object-cover blur-3xl opacity-20 scale-110" referrerPolicy="no-referrer" />
-                   <div className="absolute inset-0 bg-[#020202]/40" />
-                </div>
-                
-                {/* Main Content Area */}
-                <div className="absolute inset-0 flex flex-col lg:flex-row items-center justify-between px-6 sm:px-8 md:px-20 py-8 sm:py-12 gap-6 sm:gap-12">
-                  <div className="flex-1 space-y-4 sm:space-y-6 md:space-y-8 z-10 max-w-2xl text-center lg:text-left">
-                    <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
-                      <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3 mb-4 sm:mb-6">
-                        <span className="bg-indigo-600/20 border border-indigo-500/40 px-3 sm:px-5 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] text-indigo-400">
-                          {featuredAnime.category}
-                        </span>
-                        <span className="bg-white/5 border border-white/10 px-3 sm:px-5 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] text-slate-400">
-                          {featuredAnime.year}
-                        </span>
-                         <span className="bg-white/5 border border-white/10 px-3 sm:px-5 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] text-indigo-300">
-                          {featuredAnime.type === 'movie' ? 'Film' : 'Serial'}
-                        </span>
-                      </div>
-                      
-                      <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.1] mb-4 sm:mb-6 uppercase">
-                        {featuredAnime.title}
-                      </h1>
-                      
-                      <p className="text-xs sm:text-sm md:text-base text-slate-300 line-clamp-2 sm:line-clamp-3 md:line-clamp-4 font-medium max-w-xl leading-relaxed mx-auto lg:mx-0">
-                        {featuredAnime.description}
-                      </p>
-                      
-                      <div className="flex items-center justify-center lg:justify-start gap-4 sm:gap-6 mt-6 sm:mt-10">
-                        <button 
-                          onClick={() => handleOpenAnime(featuredAnime)}
-                          className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 sm:px-10 md:px-14 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl font-black text-[10px] sm:text-xs md:text-sm uppercase tracking-widest transition-all flex items-center gap-2 sm:gap-3 active:scale-95 shadow-lg shadow-indigo-600/20"
-                        >
-                          <Play size={16} sm:size={20} fill="currentColor" /> TOMOSHA
-                        </button>
-                        <button 
-                          onClick={(e) => handleWatchlist(e, featuredAnime.id)}
-                          className={cn(
-                            "p-3 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl border transition-all active:scale-95 group",
-                            watchlist.has(featuredAnime.id) ? "bg-pink-600 border-pink-500 shadow-xl" : "bg-white/5 border-white/10 hover:bg-white/10"
-                          )}
-                        >
-                          <Heart size={16} sm:size={20} fill={watchlist.has(featuredAnime.id) ? "currentColor" : "none"} className={cn(watchlist.has(featuredAnime.id) ? "text-white" : "text-white/40 group-hover:text-white")} />
-                        </button>
-                      </div>
-                    </motion.div>
-                  </div>
+                {/* Visual Background Element (Subtle) */}
+                <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
 
+                {/* Left Side: Content */}
+                <div className="flex-1 z-10 space-y-4 sm:space-y-6 md:space-y-8 text-center md:text-left">
                   <motion.div 
-                    initial={{ opacity: 0, scale: 0.9, x: 30 }} 
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    className="hidden lg:block w-[30%] aspect-[2/3] z-10"
+                    initial={{ opacity: 0, y: 30 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
                   >
-                    <div className="w-full h-full rounded-[2.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.8)] border border-white/10">
-                      <img src={featuredAnime.posterUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter leading-tight mb-4 md:mb-8 uppercase text-white">
+                      {featuredAnime.title}
+                    </h1>
+
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 mb-4 md:mb-8">
+                       <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                          {featuredAnime.category}
+                       </span>
+                       <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          {featuredAnime.type === 'movie' ? 'Film' : 'Serial'}
+                       </span>
+                       <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          {featuredAnime.year}
+                       </span>
+                    </div>
+
+                    <p className="hidden sm:block text-xs sm:text-sm md:text-base text-slate-400 line-clamp-2 md:line-clamp-4 font-medium max-w-2xl leading-relaxed mb-6 md:mb-12">
+                      {featuredAnime.description}
+                    </p>
+
+                    <div className="flex items-center justify-center md:justify-start gap-4 md:gap-6">
+                      <button 
+                         onClick={() => handleOpenAnime(featuredAnime)}
+                         className="group relative flex items-center gap-2 md:gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-6 sm:px-10 md:px-14 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl font-black text-[10px] sm:text-xs md:text-sm uppercase tracking-widest transition-all active:scale-95 overflow-hidden"
+                      >
+                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                         <Play size={16} fill="currentColor" className="relative z-10 md:w-5 md:h-5" /> 
+                         <span className="relative z-10">Tomosha</span>
+                         {/* Glow effect */}
+                         <div className="absolute inset-0 shadow-[0_0_40px_rgba(79,70,229,0.4)] rounded-3xl" />
+                      </button>
+                      
+                      <button 
+                        onClick={(e) => handleWatchlist(e, featuredAnime.id)}
+                        className={cn(
+                          "p-3 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl border transition-all active:scale-95 group backdrop-blur-md",
+                          watchlist.has(featuredAnime.id) ? "bg-pink-600 border-pink-500 shadow-xl" : "bg-white/5 border-white/10 hover:bg-white/10"
+                        )}
+                      >
+                        <Heart size={16} fill={watchlist.has(featuredAnime.id) ? "currentColor" : "none"} className={cn("md:w-5 md:h-5", watchlist.has(featuredAnime.id) ? "text-white" : "text-white/40 group-hover:text-white")} />
+                      </button>
                     </div>
                   </motion.div>
                 </div>
+
+                {/* Right Side: Poster Image */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9, x: 40 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="w-[120px] sm:w-[200px] md:w-[320px] lg:w-[380px] aspect-[2/3] z-10 flex-shrink-0"
+                >
+                  <div className="w-full h-full rounded-[1.5rem] sm:rounded-[3rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/5 group-hover:border-indigo-500/30 transition-colors">
+                    <img 
+                      src={featuredAnime.posterUrl} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                      referrerPolicy="no-referrer" 
+                    />
+                  </div>
+                </motion.div>
               </motion.div>
             </AnimatePresence>
 
-            {/* Pagination Indicators */}
+            {/* Redesigned Pagination Indicators */}
             {bannerAnime.length > 1 && (
-              <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center gap-2">
+              <div className="absolute bottom-12 left-0 right-0 z-30 flex justify-center gap-3">
                 {bannerAnime.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setBannerIndex(i)}
                     className={cn(
-                      "h-1 transition-all rounded-full",
-                      i === bannerIndex ? "w-10 bg-indigo-500" : "w-2 bg-white/20 hover:bg-white/40"
+                      "transition-all duration-300 rounded-full",
+                      i === bannerIndex 
+                        ? "w-10 h-2 bg-indigo-500" 
+                        : "w-2 h-2 bg-white/20 hover:bg-white/40"
                     )}
                   />
                 ))}
               </div>
             )}
-            
-            {/* Background Texture Overlay */}
-            <div className="absolute inset-0 bg-[#020202]/10 pointer-events-none" />
           </div>
         </div>
       )}
-
       {/* Grid Content */}
       <div className={cn("px-6 sm:px-12 lg:px-24 py-12 relative z-10", (!featuredAnime || selectedCategory !== 'All' || searchTerm || showWatchlistOnly) && "pt-12 sm:pt-20")}>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
@@ -335,58 +343,46 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] flex items-center justify-center sm:p-4 md:p-10"
+            className="fixed inset-0 z-[200] flex items-center justify-center sm:p-4 md:p-10"
           >
-            <div className="absolute inset-0 bg-black/98 backdrop-blur-xl" onClick={() => setSelectedAnime(null)} />
+            <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl" onClick={() => setSelectedAnime(null)} />
             
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 40 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              className="relative max-w-7xl w-full h-full sm:h-[90vh] rounded-none sm:rounded-[3rem] overflow-hidden border-0 sm:border border-white/10 flex flex-col shadow-none sm:shadow-[0_0_150px_rgba(0,0,0,1)] bg-[#050505]"
+              className="relative max-w-7xl w-full h-full sm:h-auto sm:max-h-[95vh] rounded-none sm:rounded-[3rem] overflow-hidden border-0 sm:border border-white/10 flex flex-col shadow-none sm:shadow-[0_0_200px_rgba(0,0,0,1)] bg-[#080808]"
             >
-              {/* Header / Breadcrumbs */}
-              <div className="px-6 sm:px-10 py-4 sm:py-6 border-b border-white/5 flex items-center justify-between bg-black/40 backdrop-blur-md sticky top-0 z-[140]">
-                <div className="flex items-center gap-3 sm:gap-6 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 overflow-hidden">
-                   <button 
-                    onClick={() => setSelectedAnime(null)} 
-                    className="flex items-center gap-2 text-white hover:text-indigo-400 transition-all bg-white/5 hover:bg-white/10 px-3 sm:px-4 py-2 sm:py-2 rounded-xl border border-white/5 whitespace-nowrap"
-                   >
-                     <ArrowLeft size={16} /> ORQAGA
-                   </button>
-                   <div className="hidden sm:block h-4 w-[1px] bg-white/10 mx-2" />
-                   <button onClick={() => setSelectedAnime(null)} className="hidden md:block hover:text-white transition-colors">BOSH SAHIFA</button>
-                   <ChevronRight size={14} className="hidden md:block text-slate-800" />
-                   <span className="text-slate-300 truncate max-w-[100px] sm:max-w-[150px]">{selectedAnime.title}</span>
-                   <ChevronRight size={14} className="text-slate-800" />
-                   <span className="text-indigo-400 whitespace-nowrap">{currentEpisode ? `${currentEpisode.episodeNumber}-QISM` : 'TANLASH'}</span>
-                </div>
-                <button 
-                  onClick={() => setSelectedAnime(null)} 
-                  className="p-2 text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-full shrink-0 ml-4"
-                >
-                  <CloseIcon size={20} />
-                </button>
-              </div>
+              {/* Floating Close Button */}
+              <button 
+                onClick={() => setSelectedAnime(null)} 
+                className="absolute top-6 right-6 z-[250] p-3 text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-full border border-white/5 flex items-center justify-center active:scale-90"
+              >
+                <CloseIcon size={24} />
+              </button>
 
               <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
                 {/* Left Side: Player & Info */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-10 space-y-6 sm:space-y-8 pb-32 lg:pb-10">
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-10 space-y-6">
                   
-                  {/* Dubbing Selection */}
-                  <div className="glass rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Dublyaj:</span>
+                  {/* Simplified Dubbing Selection */}
+                  <div className="flex items-center gap-4">
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">DUBLYAJ:</span>
                      <div className="flex gap-2">
-                        <button className="flex-1 sm:flex-none justify-center bg-indigo-600 px-5 py-2.5 rounded-full text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-600/30">
-                           <Check size={12} /> O'ZBEKCHA
-                        </button>
-                        <button className="flex-1 sm:flex-none justify-center bg-white/5 hover:bg-white/10 px-5 py-2.5 rounded-full text-[10px] font-black uppercase text-slate-400 transition-all border border-white/5">
-                           YAPONCHA
+                        <button className="bg-indigo-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-600/30 text-white">
+                           <Check size={12} /> 日本語
                         </button>
                      </div>
                   </div>
 
                   {/* Video Player Area */}
-                  <div className="aspect-video bg-black rounded-2xl sm:rounded-[2.5rem] overflow-hidden relative shadow-2xl border border-white/5 group">
+                  <div className="aspect-video bg-black rounded-2xl sm:rounded-[2rem] overflow-hidden relative shadow-2xl border border-white/5 group">
+                    {/* Anime Title Overlay */}
+                    <div className="absolute top-6 left-6 z-20 pointer-events-none">
+                      <h3 className="text-white/80 font-black text-xs sm:text-sm uppercase tracking-widest drop-shadow-lg">
+                        {selectedAnime.title}
+                      </h3>
+                    </div>
+
                     {currentEpisode ? (
                        (() => {
                          let url = currentEpisode.videoUrl.trim();
@@ -419,37 +415,12 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                       </div>
                     )}
                   </div>
-
-                  {/* Anime Details */}
-                  <div className="space-y-6">
-                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <h2 className="text-3xl sm:text-4xl lg:text-6xl font-black uppercase tracking-tighter leading-none">{selectedAnime.title}</h2>
-                        <div className="flex">
-                          <div className="bg-amber-400 px-4 sm:px-5 py-2 rounded-2xl text-black font-black text-[10px] sm:text-xs flex items-center gap-2">
-                            <Star size={14} fill="currentColor" className="sm:w-4 sm:h-4" /> {selectedAnime.rating} (Reyting)
-                          </div>
-                        </div>
-                     </div>
-                     <div className="flex flex-wrap gap-x-6 gap-y-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] items-center">
-                       <span className="text-indigo-400">{selectedAnime.category}</span>
-                       <span className="hidden sm:block w-1.5 h-1.5 bg-slate-800 rounded-full" />
-                       <span>{selectedAnime.year} YIL</span>
-                       <span className="hidden sm:block w-1.5 h-1.5 bg-slate-800 rounded-full" />
-                       <span>{selectedAnime.type === 'movie' ? 'Film' : 'Serial'}</span>
-                     </div>
-                     <p className="text-slate-400 text-xs sm:text-sm font-medium leading-relaxed max-w-4xl">
-                       {selectedAnime.description}
-                     </p>
-                  </div>
                 </div>
 
                 {/* Right Side: Episode List (Sidebar) */}
-                <div className="w-full lg:w-[26rem] bg-black/40 backdrop-blur-3xl border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col h-[50vh] lg:h-auto">
-                  <div className="p-6 sm:p-8 border-b border-white/5 flex items-center justify-between">
-                     <h3 className="text-lg sm:text-xl font-black uppercase tracking-tighter flex items-center gap-3">
-                       <Sparkles className="text-indigo-500" size={18} sm:size={20} /> Qismlar
-                     </h3>
-                     <span className="text-[10px] font-black text-slate-600 sm:hidden uppercase tracking-widest">{episodes.length} TA</span>
+                <div className="w-full lg:w-[26rem] bg-white/[0.01] border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col h-[40vh] lg:h-auto">
+                  <div className="px-8 pt-8 pb-4">
+                     <h3 className="text-2xl font-black uppercase tracking-tighter">Qismlar</h3>
                   </div>
                   
                   <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar">
@@ -461,41 +432,28 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                           key={ep.id}
                           onClick={() => setCurrentEpisode(ep)}
                           className={cn(
-                            "w-full text-left p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border transition-all flex items-center gap-3 sm:gap-4 group",
+                            "w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4",
                             currentEpisode?.id === ep.id 
-                              ? "bg-indigo-600/10 border-indigo-600/40 shadow-xl shadow-indigo-600/5" 
-                              : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
+                              ? "bg-indigo-600/10 border-indigo-600/40 shadow-lg" 
+                              : "bg-white/5 border-white/5 hover:bg-white/10"
                           )}
                         >
                           <div className={cn(
-                            "w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center font-black text-[10px] sm:text-xs shrink-0 transition-transform group-hover:scale-105",
-                            currentEpisode?.id === ep.id ? "bg-indigo-600 text-white" : "bg-white/5 text-slate-500"
+                            "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0",
+                            currentEpisode?.id === ep.id ? "bg-indigo-600 text-white" : "bg-white/10 text-slate-400"
                           )}>
                             {ep.episodeNumber}
                           </div>
                           <div className="flex-1 min-w-0">
-                             <h4 className={cn("font-black text-[11px] sm:text-[12px] uppercase truncate", currentEpisode?.id === ep.id ? "text-indigo-400" : "text-white")}>
-                              {ep.title || `${ep.episodeNumber}-Qism`}
+                             <h4 className={cn("font-black text-[12px] uppercase truncate", currentEpisode?.id === ep.id ? "text-indigo-400" : "text-white")}>
+                              {ep.title || `${ep.episodeNumber}-qism`}
                              </h4>
-                             <p className="text-[8px] sm:text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1">Animem.uz Original (TV)</p>
+                             <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1">TV</p>
                           </div>
-                          {currentEpisode?.id === ep.id && <Activity size={12} className="text-indigo-500 animate-pulse sm:w-[14px] sm:h-[14px]" />}
+                          {currentEpisode?.id === ep.id && <Activity size={12} className="text-indigo-500 animate-pulse" />}
                         </button>
                       ))
                     )}
-                  </div>
-
-                  <div className="p-6 sm:p-8 border-t border-white/5 mt-auto">
-                     <button 
-                      onClick={(e) => handleWatchlist(e, selectedAnime.id)}
-                      className={cn(
-                        "w-full py-4 sm:py-5 rounded-2xl sm:rounded-3xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest border flex items-center justify-center gap-3 transition-all",
-                        watchlist.has(selectedAnime.id) ? "bg-pink-600 border-pink-500 shadow-xl" : "bg-white/5 border-white/10 hover:bg-white/10"
-                      )}
-                    >
-                      <Heart size={16} sm:size={18} fill={watchlist.has(selectedAnime.id) ? "currentColor" : "none"} />
-                      {watchlist.has(selectedAnime.id) ? "O'chirish" : "Saqlash"}
-                    </button>
                   </div>
                 </div>
               </div>

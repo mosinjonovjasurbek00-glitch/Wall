@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../firebase';
-import { collection, addDoc, deleteDoc, doc, query, onSnapshot, serverTimestamp, where, updateDoc, getDocs, orderBy } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, query, onSnapshot, serverTimestamp, where, updateDoc, getDocs, orderBy, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as LinkIcon, MessageSquare, Star, Clock, Play, List, ChevronRight, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -148,20 +148,78 @@ export default function AdminPanel() {
   };
 
   const handleDeleteAnime = async (id: string) => {
-    if (window.confirm("Animenı o'chirishni tasdiqlaysizmi?")) {
-      await deleteDoc(doc(db, 'anime', id));
+    if (window.confirm("Animenı o'chirishni tasdiqlaysizmi? Barcha epizodlar ham o'chiriladi!")) {
+      try {
+        setSubmitting(true);
+        // Delete episodes subcollection first
+        const episodesRef = collection(db, 'anime', id, 'episodes');
+        const episodesSnap = await getDocs(episodesRef);
+        
+        const batch = writeBatch(db);
+        episodesSnap.forEach((episodeDoc) => {
+          batch.delete(episodeDoc.ref);
+        });
+        
+        // Delete the main anime doc
+        batch.delete(doc(db, 'anime', id));
+        
+        await batch.commit();
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } catch (err: any) {
+        console.error("Delete error:", err);
+        setError("O'chirishda xatolik yuz berdi: " + (err.message || 'Unknown error'));
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
   const handleDeleteEpisode = async (id: string) => {
     if (!selectedAnimeForEpisodes) return;
     if (window.confirm("Epizodni o'chirishni tasdiqlaysizmi?")) {
-      await deleteDoc(doc(db, 'anime', selectedAnimeForEpisodes.id, 'episodes', id));
+      try {
+        setSubmitting(true);
+        await deleteDoc(doc(db, 'anime', selectedAnimeForEpisodes.id, 'episodes', id));
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } catch (err: any) {
+        console.error("Episode delete error:", err);
+        setError("Epizodni o'chirishda xatolik: " + (err.message || 'Unknown error'));
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
   return (
     <div className="pt-32 pb-20 px-6 max-w-7xl mx-auto font-sans relative z-10">
+      {/* Feedback Messages */}
+      <AnimatePresence>
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 backdrop-blur-md text-white px-6 py-4 rounded-2xl flex items-center gap-3 shadow-2xl border border-red-500/20"
+          >
+            <AlertCircle size={20} />
+            <span className="text-xs font-black uppercase tracking-widest">{error}</span>
+            <button onClick={() => setError(null)} className="ml-2 hover:bg-white/10 p-1 rounded-full"><X size={16} /></button>
+          </motion.div>
+        )}
+        {success && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-indigo-600/90 backdrop-blur-md text-white px-6 py-4 rounded-2xl flex items-center gap-3 shadow-2xl border border-indigo-500/20"
+          >
+            <Check size={20} />
+            <span className="text-xs font-black uppercase tracking-widest">Amal muvaffaqiyatli bajarildi</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex glass p-1 rounded-2xl mb-10 w-fit mx-auto gap-1">
         <button
           onClick={() => { setActiveTab('anime'); setSelectedAnimeForEpisodes(null); }}
@@ -262,7 +320,7 @@ export default function AdminPanel() {
                           </button>
                         </div>
                       </div>
-                      <button onClick={() => handleDeleteAnime(anime.id)} className="p-2 text-slate-700 hover:text-red-400">
+                      <button onClick={() => handleDeleteAnime(anime.id)} className="p-2 text-white/30 hover:text-red-500 transition-colors">
                         <Trash2 size={18} />
                       </button>
                     </div>

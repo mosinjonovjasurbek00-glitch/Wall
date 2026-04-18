@@ -62,12 +62,13 @@ service cloud.firestore {
 
     match /anime/{animeId} {
       allow read: if true;
-      allow create, delete: if isAdmin() && isValidAnime(request.resource.data);
-      allow update: if isAdmin();
+      allow create: if isAdmin() && isValidAnime(request.resource.data);
+      allow delete, update: if isAdmin();
 
       match /episodes/{episodeId} {
         allow read: if true;
-        allow create, update, delete: if isAdmin() && isValidEpisode(request.resource.data);
+        allow create, update: if isAdmin() && isValidEpisode(request.resource.data);
+        allow delete: if isAdmin();
       }
     }
 

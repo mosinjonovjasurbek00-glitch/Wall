@@ -31,7 +31,7 @@ export const FallingLeaves = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-50">
       {leaves.map((leaf) => (
         <motion.div
           key={leaf.id}

@@ -7,7 +7,7 @@ import Navbar from './components/Navbar';
 import AnimePortal from './components/AnimePortal';
 import AdminPanel from './components/AdminPanel';
 import ContactForm from './components/ContactForm';
-import { Loader2, ShieldAlert, AlertCircle } from 'lucide-react';
+import { Loader2, ShieldAlert, AlertCircle, Send, Globe, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FallingLeaves } from './components/FallingLeaves';
 import { AuthModal } from './components/AuthModal';
@@ -18,6 +18,7 @@ export default function App() {
   const [view, setView] = useState<'gallery' | 'admin'>('gallery');
   const [showContact, setShowContact] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showPartnerBanner, setShowPartnerBanner] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   
   const [animeList, setAnimeList] = useState<any[]>([]);
@@ -82,6 +83,37 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#020202] selection:bg-indigo-500/30 font-sans overflow-x-hidden">
       <FallingLeaves />
+
+      <AnimatePresence>
+        {showPartnerBanner && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-[#121212] backdrop-blur-3xl border-b border-white/5 relative z-[110]"
+          >
+            <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
+              <a 
+                href="https://4kluminawalls.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 group"
+              >
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-indigo-600 transition-colors">
+                  <Globe size={14} className="text-indigo-400 group-hover:text-white" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:text-white transition-colors">4kLuminaWalls</span>
+              </a>
+              <button 
+                onClick={() => setShowPartnerBanner(false)}
+                className="text-slate-500 hover:text-white transition-colors p-1"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       <Navbar 
         isAdmin={isAdmin} 
@@ -110,7 +142,7 @@ export default function App() {
         )}
       </AnimatePresence>
       
-      <main className="relative z-10 pt-20 sm:pt-28">
+      <main className="relative pt-20 sm:pt-28">
       {view === 'gallery' ? (
         <AnimePortal 
           selectedCategory={selectedCategory}
@@ -148,8 +180,13 @@ export default function App() {
             </div>
             <p className="text-slate-500 text-sm max-w-sm font-medium leading-relaxed">Eng so'nggi va qaynoq animelar faqat bizda. Professional streaming tajribasi.</p>
           </div>
-          <div className="flex gap-12 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
-            <a href="#" className="hover:text-white transition-colors">Maxfiylik bo'limi</a>
+          <div className="flex items-center gap-6 sm:gap-12 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+            <a href="https://4kluminawalls.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
+              <Globe size={14} /> PARTNER
+            </a>
+            <a href="https://t.me/animem_uz1" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full hover:bg-indigo-600 hover:text-white transition-all border border-white/5">
+              <Send size={16} /> TELEGRAM
+            </a>
             <button onClick={() => setShowContact(true)} className="hover:text-white transition-colors uppercase">Bog'lanish</button>
           </div>
         </div>
