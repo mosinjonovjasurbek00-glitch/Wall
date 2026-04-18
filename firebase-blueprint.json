@@ -56,6 +56,20 @@
         "role": { "type": "string", "enum": ["admin", "user"] }
       },
       "required": ["uid", "role"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A contact message from a user",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "contact": { "type": "string", "description": "Telegram or Phone" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["new", "read", "resolved"] }
+      },
+      "required": ["name", "email", "contact", "message", "createdAt"]
     }
   },
   "firestore": {
@@ -74,6 +88,10 @@
     "/watchlist/{watchlistId}": {
       "schema": "Watchlist",
       "description": "User personal watchlists"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Inbound contact form messages"
     }
   }
 }

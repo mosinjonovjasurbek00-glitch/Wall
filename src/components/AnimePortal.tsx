@@ -281,25 +281,19 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                 className="group relative cursor-pointer"
                 onClick={() => handleOpenAnime(anime)}
               >
-                <div className="aspect-[2/3] rounded-2xl sm:rounded-3xl overflow-hidden relative glass border-white/5 group-hover:border-indigo-500/50 transition-all duration-500">
+                <div className="aspect-[2/3] rounded-2xl sm:rounded-[3rem] overflow-hidden relative glass border-white/5 group-hover:border-indigo-500/50 transition-all duration-500 shadow-2xl">
                   <img src={anime.posterUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" loading="lazy" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/90 via-indigo-900/40 to-transparent opacity-0 sm:group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 sm:p-6">
-                    <div className="translate-y-4 sm:group-hover:translate-y-0 transition-transform duration-500">
-                      <h3 className="font-black text-xs sm:text-sm uppercase tracking-tighter mb-1.5 sm:mb-2 leading-tight">{anime.title}</h3>
-                      <div className="flex items-center justify-between text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                        <span>{anime.year}</span>
-                        <div className="flex items-center gap-1 text-amber-400">
-                          <Star size={10} fill="currentColor" /> {anime.rating}
-                        </div>
-                      </div>
+                  {/* Hover Overlay - Simplified as info is now below */}
+                  <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center p-6">
+                    <div className="scale-75 group-hover:scale-100 transition-transform duration-500 h-16 w-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20">
+                       <Play size={24} fill="white" className="ml-1 text-white" />
                     </div>
                   </div>
 
-                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-col gap-2">
-                    <span className="bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full text-[7px] sm:text-[8px] font-black uppercase tracking-widest border border-white/10">
+                  <div className="absolute top-3 left-3 sm:top-5 sm:left-5 flex flex-col gap-2">
+                    <span className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full text-[7px] sm:text-[9px] font-black uppercase tracking-widest border border-white/10 text-white">
                       {anime.type === 'movie' ? 'Film' : 'Serial'}
                     </span>
                   </div>
@@ -307,20 +301,27 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                   <button 
                     onClick={(e) => handleWatchlist(e, anime.id)}
                     className={cn(
-                      "absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 sm:p-2 rounded-lg sm:rounded-xl backdrop-blur-md border transition-all",
-                      watchlist.has(anime.id) ? "bg-pink-600 border-pink-500 text-white opacity-100" : "bg-black/40 border-white/10 text-white opacity-0 group-hover:opacity-100"
+                      "absolute top-3 right-3 sm:top-5 sm:right-5 p-2 sm:p-2.5 rounded-xl backdrop-blur-md border transition-all",
+                      watchlist.has(anime.id) ? "bg-pink-600 border-pink-500 text-white opacity-100 shadow-lg shadow-pink-600/30" : "bg-black/60 border-white/10 text-white opacity-0 group-hover:opacity-100"
                     )}
                   >
-                    <Heart size={12} className="sm:w-[14px] sm:h-[14px]" fill={watchlist.has(anime.id) ? "currentColor" : "none"} />
+                    <Heart size={14} className="sm:w-[16px] sm:h-[16px]" fill={watchlist.has(anime.id) ? "currentColor" : "none"} />
                   </button>
                 </div>
-                {/* Mobile Title View */}
-                <div className="mt-3 sm:hidden px-1">
-                   <h3 className="font-bold text-[10px] uppercase truncate text-slate-200">{anime.title}</h3>
-                   <div className="flex items-center gap-2 mt-0.5">
-                     <span className="text-[8px] text-slate-500 font-bold">{anime.year}</span>
-                     <div className="flex items-center gap-0.5 text-amber-500 text-[8px] font-bold">
-                        <Star size={8} fill="currentColor" /> {anime.rating}
+                
+                {/* Unified Title & View Count (Always Visible) */}
+                <div className="mt-4 px-2">
+                   <h3 className="font-black text-xs sm:text-[13px] uppercase tracking-tight truncate text-white group-hover:text-indigo-400 transition-colors leading-tight">{anime.title}</h3>
+                   <div className="flex items-center justify-between mt-2">
+                     <div className="flex items-center gap-3">
+                       <span className="text-[9px] text-slate-600 font-black tracking-widest">{anime.year}</span>
+                       <div className="flex items-center gap-1.5 text-amber-500 text-[10px] font-black">
+                          <Star size={12} fill="currentColor" /> {anime.rating}
+                       </div>
+                     </div>
+                     <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-[0.1em]">
+                        <Eye size={12} className="text-indigo-500/50" />
+                        <span>{anime.views || 0}</span>
                      </div>
                    </div>
                 </div>

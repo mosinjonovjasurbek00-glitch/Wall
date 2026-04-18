@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../firebase';
 import { collection, addDoc, deleteDoc, doc, query, onSnapshot, serverTimestamp, where, updateDoc, getDocs, orderBy, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as LinkIcon, MessageSquare, Star, Clock, Play, List, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as LinkIcon, MessageSquare, Star, Clock, Play, List, ChevronRight, ArrowLeft, Send, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { CATEGORIES } from '../constants';
@@ -29,11 +29,32 @@ interface EpisodeDoc {
   createdAt: any;
 }
 
+interface MessageDoc {
+  id: string;
+  name: string;
+  email: string;
+  contact: string;
+  message: string;
+  status: 'new' | 'read' | 'resolved';
+  createdAt: any;
+}
+
+interface UserDoc {
+  id: string;
+  uid: string;
+  email: string;
+  username: string;
+  role: 'admin' | 'user';
+}
+
 export default function AdminPanel() {
   const [animeList, setAnimeList] = useState<AnimeDoc[]>([]);
-  const [activeTab, setActiveTab] = useState<'anime' | 'episodes' | 'messages'>('anime');
+  const [activeTab, setActiveTab] = useState<'anime' | 'episodes' | 'messages' | 'admins'>('anime');
   const [selectedAnimeForEpisodes, setSelectedAnimeForEpisodes] = useState<AnimeDoc | null>(null);
   const [episodes, setEpisodes] = useState<EpisodeDoc[]>([]);
+  const [messages, setMessages] = useState<MessageDoc[]>([]);
+  const [users, setUsers] = useState<UserDoc[]>([]);
+  const [userSearch, setUserSearch] = useState('');
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -74,11 +95,31 @@ export default function AdminPanel() {
     const q = query(collection(db, 'anime'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AnimeDoc[];
-      setAnimeList(docs.sort((a, b) => b.createdAt?.toMillis?.() - a.createdAt?.toMillis?.()));
+      setAnimeList(docs.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'messages') {
+      const q = query(collection(db, 'messages'), orderBy('createdAt', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as MessageDoc[]);
+      });
+      return () => unsubscribe();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'admins') {
+      const q = query(collection(db, 'users'), where('role', '==', 'admin'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserDoc[]);
+      });
+      return () => unsubscribe();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (!selectedAnimeForEpisodes) {
@@ -218,6 +259,77 @@ export default function AdminPanel() {
     });
   };
 
+  const handleDeleteMessage = (id: string) => {
+    setConfirmModal({
+      show: true,
+      title: "Xabarni o'chirish",
+      message: "Ushbu xabarni o'chirishni tasdiqlaysizmi?",
+      onConfirm: async () => {
+        try {
+          setSubmitting(true);
+          setConfirmModal(prev => ({ ...prev, show: false }));
+          await deleteDoc(doc(db, 'messages', id));
+          setSuccess(true);
+          setTimeout(() => setSuccess(false), 3000);
+        } catch (err: any) {
+          setError("Xabarni o'chirishda xatolik");
+        } finally {
+          setSubmitting(false);
+        }
+      }
+    });
+  };
+
+  const handleAddAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userSearch) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const q = query(collection(db, 'users'), where('email', '==', userSearch.trim().toLowerCase()));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        throw new Error("Bunday email bilan foydalanuvchi topilmadi");
+      }
+      
+      const userToPromote = snap.docs[0];
+      await updateDoc(userToPromote.ref, { role: 'admin' });
+      
+      setUserSearch('');
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.message || "Admin qo'shishda xatolik");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRemoveAdmin = (userId: string, email: string) => {
+    if (email === "mosinjonovjasurbek00@gmail.com") {
+      setError("Asosiy adminni o'chirib bo'lmaydi");
+      return;
+    }
+    setConfirmModal({
+      show: true,
+      title: "Adminlikdan olish",
+      message: "Ushbu foydalanuvchini adminlikdan olib tashlamoqchimisiz?",
+      onConfirm: async () => {
+        try {
+          setSubmitting(true);
+          setConfirmModal(prev => ({ ...prev, show: false }));
+          await updateDoc(doc(db, 'users', userId), { role: 'user' });
+          setSuccess(true);
+          setTimeout(() => setSuccess(false), 3000);
+        } catch (err: any) {
+          setError("Adminni o'chirishda xatolik");
+        } finally {
+          setSubmitting(false);
+        }
+      }
+    });
+  };
+
   return (
     <div className="pt-32 pb-20 px-6 max-w-7xl mx-auto font-sans relative z-10">
       {/* Feedback Messages */}
@@ -308,6 +420,24 @@ export default function AdminPanel() {
         >
           <List size={16} /> Epizodlar
         </button>
+        <button
+          onClick={() => setActiveTab('messages')}
+          className={cn(
+            "px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all",
+            activeTab === 'messages' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
+          )}
+        >
+          <MessageSquare size={16} /> Xabarlar
+        </button>
+        <button
+          onClick={() => setActiveTab('admins')}
+          className={cn(
+            "px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all",
+            activeTab === 'admins' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
+          )}
+        >
+          <User size={16} /> Adminlar
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
@@ -379,7 +509,7 @@ export default function AdminPanel() {
                       <img src={anime.posterUrl} className="w-16 h-24 object-cover rounded-xl" />
                       <div className="flex-1 min-w-0">
                         <h3 className="font-black text-sm uppercase truncate">{anime.title}</h3>
-                        <p className="text-[10px] text-slate-500 uppercase font-black">{anime.category} • {anime.year}</p>
+                        <p className="text-[10px] text-slate-500 uppercase font-black">{anime.category} • {anime.year} • {anime.views || 0} ko'rishlar</p>
                         <div className="flex gap-2 mt-2">
                           <button 
                             onClick={() => { setSelectedAnimeForEpisodes(anime); setActiveTab('episodes'); }}
@@ -481,6 +611,143 @@ export default function AdminPanel() {
                 </button>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {activeTab === 'messages' && (
+          <motion.div 
+            key="messages-tab"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="glass rounded-3xl p-8 sm:p-12"
+          >
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="text-3xl font-black uppercase tracking-tighter">Foydalanuvchi Xabarlari</h2>
+              <div className="bg-indigo-600/20 px-4 py-2 rounded-xl border border-indigo-500/20">
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{messages.length} ta xabar</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {messages.map(msg => (
+                <div key={msg.id} className="glass rounded-[2rem] p-8 relative group border border-white/5 hover:border-indigo-500/30 transition-all">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-indigo-500 border border-white/10">
+                        {msg.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 className="font-black text-sm uppercase tracking-tight">{msg.name}</h4>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{msg.email}</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleDeleteMessage(msg.id)}
+                      className="p-3 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                  
+                  <div className="bg-black/20 p-6 rounded-2xl border border-white/5 mb-6">
+                    <p className="text-slate-300 text-xs font-medium leading-relaxed">{msg.message}</p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 text-indigo-400">
+                      <Send size={12} />
+                      <span>{msg.contact}</span>
+                    </div>
+                    <span className="text-slate-600">{msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleDateString() : 'Yaqinda'}</span>
+                  </div>
+                </div>
+              ))}
+              
+              {messages.length === 0 && (
+                <div className="col-span-full py-20 text-center glass rounded-3xl border-dashed border-2 border-white/5">
+                  <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-xs">Hozircha xabarlar yo'q</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'admins' && (
+          <motion.div 
+            key="admins-tab"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-10"
+          >
+            <div className="lg:col-span-1">
+              <div className="glass rounded-[2.5rem] p-8 sm:p-10 sticky top-32 border border-white/10">
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">Admin Qo'shish</h2>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-8">Foydalanuvchini email orqali qidiring</p>
+                
+                <form onSubmit={handleAddAdmin} className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Email Manzili</label>
+                    <input 
+                      type="email" 
+                      placeholder="foydalanuvchi@gmail.com" 
+                      className="glass-input w-full h-14" 
+                      value={userSearch} 
+                      onChange={e => setUserSearch(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                  
+                  <button type="submit" disabled={submitting} className="glass-button-primary w-full py-5 flex items-center justify-center gap-3">
+                    {submitting ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
+                    <span className="text-[10px] font-black uppercase tracking-widest">ADMIN TAYINLASH</span>
+                  </button>
+                </form>
+
+                <div className="mt-10 p-6 bg-indigo-600/10 rounded-2xl border border-indigo-500/20">
+                  <div className="flex items-center gap-3 text-indigo-400 mb-3">
+                    <AlertCircle size={16} />
+                    <span className="text-[9px] font-black uppercase tracking-widest">Eslatma</span>
+                  </div>
+                  <p className="text-[9px] text-slate-400 font-medium leading-relaxed normal-case">
+                    Foydalanuvchini admin qilishdan oldin, u kamida bir marta saytga kirgan bo'lishi kerak.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2">
+              <div className="glass rounded-[2.5rem] p-8 sm:p-12 border border-white/5">
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-10">Adminlar Ro'yxati</h2>
+                
+                <div className="space-y-4">
+                  {users.map(u => (
+                    <div key={u.id} className="glass rounded-2xl p-4 sm:p-6 flex items-center justify-between group border border-white/5 hover:border-indigo-500/20 transition-all">
+                      <div className="flex items-center gap-5">
+                        <div className="w-12 h-12 bg-indigo-600/10 rounded-xl flex items-center justify-center border border-indigo-500/20">
+                          <User size={24} className="text-indigo-500" />
+                        </div>
+                        <div>
+                          <h4 className="font-black text-sm uppercase tracking-tight">@{u.username}</h4>
+                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{u.email}</p>
+                        </div>
+                      </div>
+                      
+                      {u.email !== "mosinjonovjasurbek00@gmail.com" && (
+                        <button 
+                          onClick={() => handleRemoveAdmin(u.id, u.email)}
+                          className="p-3 text-slate-700 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                          title="Adminlikdan olish"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -12,6 +12,7 @@ interface ContactFormProps {
 export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [contact, setContact] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -26,6 +27,7 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
       await addDoc(collection(db, 'messages'), {
         name,
         email,
+        contact,
         message,
         createdAt: serverTimestamp(),
         status: 'new'
@@ -33,6 +35,7 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
       setSuccess(true);
       setName('');
       setEmail('');
+      setContact('');
       setMessage('');
       setTimeout(() => {
         setSuccess(false);
@@ -40,7 +43,7 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
       }, 3000);
     } catch (err: any) {
       console.error("Message send error:", err);
-      setError("Failed to send message. Please try again.");
+      setError("Xabar yuborishda xatolik. Iltimos qaytadan urinib ko'ring.");
     } finally {
       setSubmitting(false);
     }
@@ -49,90 +52,115 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/90 backdrop-blur-md"
           />
           
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-lg glass rounded-3xl shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto custom-scrollbar"
+            className="relative w-full max-w-lg glass rounded-[2.5rem] shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto custom-scrollbar"
           >
-            <div className="p-8">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-display font-bold">Contact Us</h2>
+            <div className="p-8 sm:p-12">
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex flex-col">
+                  <h2 className="text-3xl font-black uppercase tracking-tighter italic">Bog'lanish</h2>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1">Sizning taklif va shikoyatlaringiz</p>
+                </div>
                 <button 
                   onClick={onClose}
-                  className="p-2 text-slate-400 hover:text-white transition-colors"
+                  className="p-3 text-slate-500 hover:text-white hover:bg-white/5 rounded-full transition-all"
                 >
                   <X size={24} />
                 </button>
               </div>
 
               {success ? (
-                <div className="py-12 text-center">
-                  <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle className="text-green-400 w-10 h-10" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">Message Sent!</h3>
-                  <p className="text-slate-400">Thank you for reaching out. We'll get back to you soon.</p>
+                <div className="py-16 text-center">
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="w-24 h-24 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto mb-8"
+                  >
+                    <CheckCircle className="text-indigo-400 w-12 h-12" />
+                  </motion.div>
+                  <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 italic">Xabar Yuborildi!</h3>
+                  <p className="text-slate-400 text-sm font-medium uppercase tracking-widest leading-relaxed">Tez orada adminlarimiz siz bilan bog'lanishadi. Rahmat!</p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Ismingiz</label>
+                      <input 
+                        type="text" 
+                        required 
+                        className="glass-input w-full h-14" 
+                        placeholder="Masalan: Jasur"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Email</label>
+                      <input 
+                        type="email" 
+                        required 
+                        className="glass-input w-full h-14" 
+                        placeholder="misol@gmail.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2">Your Name</label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Telegram yoki Telefon</label>
                     <input 
                       type="text" 
                       required 
-                      className="glass-input w-full" 
-                      placeholder="John Doe"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      className="glass-input w-full h-14" 
+                      placeholder="@username yoki +998..."
+                      value={contact}
+                      onChange={(e) => setContact(e.target.value)}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2">Email Address</label>
-                    <input 
-                      type="email" 
-                      required 
-                      className="glass-input w-full" 
-                      placeholder="john@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-400 mb-2">Message</label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Xabar matni</label>
                     <textarea 
                       required 
-                      className="glass-input w-full h-32 resize-none" 
-                      placeholder="How can we help you?"
+                      className="glass-input w-full h-40 resize-none py-5" 
+                      placeholder="Qanday taklif yoki muammongiz bor?"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                     />
                   </div>
 
                   {error && (
-                    <div className="text-red-400 text-sm bg-red-500/10 p-3 rounded-xl border border-red-500/20">
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-500/10 p-4 rounded-2xl border border-red-500/20"
+                    >
                       {error}
-                    </div>
+                    </motion.div>
                   )}
 
                   <button 
                     type="submit" 
                     disabled={submitting}
-                    className="glass-button-primary w-full flex items-center justify-center gap-2 py-4"
+                    className="glass-button-primary w-full flex items-center justify-center gap-4 py-6 shadow-2xl shadow-indigo-600/20 group"
                   >
-                    {submitting ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
-                    {submitting ? 'Sending...' : 'Send Message'}
+                    {submitting ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">{submitting ? 'YUBORILMOQDA...' : 'XABARNI YUBORISH'}</span>
                   </button>
                 </form>
               )}
