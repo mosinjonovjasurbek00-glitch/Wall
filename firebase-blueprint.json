@@ -70,6 +70,18 @@
         "status": { "type": "string", "enum": ["new", "read", "resolved"] }
       },
       "required": ["name", "email", "contact", "message", "createdAt"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "User comment on an anime",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "username", "content", "createdAt"]
     }
   },
   "firestore": {
@@ -80,6 +92,10 @@
     "/anime/{animeId}/episodes/{episodeId}": {
       "schema": "Episode",
       "description": "Collection of episodes for a specific anime"
+    },
+    "/anime/{animeId}/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "User comments for a specific anime"
     },
     "/users/{userId}": {
       "schema": "User",

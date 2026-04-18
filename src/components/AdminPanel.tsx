@@ -56,6 +56,9 @@ export default function AdminPanel() {
   const [users, setUsers] = useState<UserDoc[]>([]);
   const [userSearch, setUserSearch] = useState('');
   
+  const [editingAnime, setEditingAnime] = useState<AnimeDoc | null>(null);
+  const [editingEpisode, setEditingEpisode] = useState<EpisodeDoc | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,6 +139,36 @@ export default function AdminPanel() {
     return () => unsubscribe();
   }, [selectedAnimeForEpisodes]);
 
+  useEffect(() => {
+    if (editingAnime) {
+      setTitle(editingAnime.title);
+      setPosterUrl(editingAnime.posterUrl);
+      setDescription(editingAnime.description || '');
+      setCategory(editingAnime.category);
+      setRating(editingAnime.rating);
+      setYear(editingAnime.year);
+      setContentType(editingAnime.type || 'series');
+      // @ts-ignore
+      setIsBanner(editingAnime.isBanner || false);
+    } else {
+      setTitle(''); setPosterUrl(''); setPosterFile(null); setDescription('');
+      setCategory('Action'); setRating(8.5); setYear(new Date().getFullYear());
+      setIsBanner(false);
+    }
+  }, [editingAnime]);
+
+  useEffect(() => {
+    if (editingEpisode) {
+      setEpNumber(editingEpisode.episodeNumber);
+      setEpTitle(editingEpisode.title || '');
+      setEpVideoUrl(editingEpisode.videoUrl);
+    } else {
+      setEpNumber(episodes.length + 1);
+      setEpTitle('');
+      setEpVideoUrl('');
+    }
+  }, [editingEpisode, episodes.length]);
+
   const handlePosterUpload = async (file: File): Promise<string> => {
     const storageRef = ref(storage, `posters/${Date.now()}_${file.name}`);
     const uploadTask = uploadBytesResumable(storageRef, file);
@@ -157,12 +190,24 @@ export default function AdminPanel() {
       if (posterFile) finalPosterUrl = await handlePosterUpload(posterFile);
       if (!finalPosterUrl) throw new Error("Poster required.");
 
-      await addDoc(collection(db, 'anime'), {
+      const animeData = {
         title, posterUrl: finalPosterUrl, description, category, rating, year,
-        type: contentType, views: 0, createdAt: serverTimestamp(),
+        type: contentType, 
         authorUid: auth.currentUser?.uid,
-        isBanner
-      });
+        isBanner,
+        updatedAt: serverTimestamp()
+      };
+
+      if (editingAnime) {
+        await updateDoc(doc(db, 'anime', editingAnime.id), animeData);
+        setEditingAnime(null);
+      } else {
+        await addDoc(collection(db, 'anime'), {
+          ...animeData,
+          views: 0,
+          createdAt: serverTimestamp()
+        });
+      }
 
       setTitle(''); setPosterUrl(''); setPosterFile(null); setDescription('');
       setCategory('Action'); setRating(8.5); setYear(new Date().getFullYear());
@@ -182,13 +227,24 @@ export default function AdminPanel() {
     if (!selectedAnimeForEpisodes) return;
     setSubmitting(true);
     try {
-      await addDoc(collection(db, 'anime', selectedAnimeForEpisodes.id, 'episodes'), {
+      const epData = {
         animeId: selectedAnimeForEpisodes.id,
         episodeNumber: epNumber,
         title: epTitle,
         videoUrl: epVideoUrl,
-        createdAt: serverTimestamp()
-      });
+        updatedAt: serverTimestamp()
+      };
+
+      if (editingEpisode) {
+        await updateDoc(doc(db, 'anime', selectedAnimeForEpisodes.id, 'episodes', editingEpisode.id), epData);
+        setEditingEpisode(null);
+      } else {
+        await addDoc(collection(db, 'anime', selectedAnimeForEpisodes.id, 'episodes'), {
+          ...epData,
+          createdAt: serverTimestamp()
+        });
+      }
+      
       setEpNumber(prev => prev + 1);
       setEpTitle('');
       setEpVideoUrl('');
@@ -451,7 +507,12 @@ export default function AdminPanel() {
           >
             <div className="lg:col-span-1">
               <div className="glass rounded-3xl p-8 sticky top-32">
-                <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">Yangi Anime</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-black uppercase tracking-tighter">{editingAnime ? "Tahrirlash" : "Yangi Anime"}</h2>
+                  {editingAnime && (
+                    <button onClick={() => setEditingAnime(null)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">Bekor qilish</button>
+                  )}
+                </div>
                 <form onSubmit={handleAnimeSubmit} className="space-y-4">
                   <input type="text" placeholder="Anime Sarlavhasi" className="glass-input w-full" value={title} onChange={e => setTitle(e.target.value)} required />
                   <textarea placeholder="Tavsif" className="glass-input w-full h-24" value={description} onChange={e => setDescription(e.target.value)} />
@@ -517,6 +578,12 @@ export default function AdminPanel() {
                           >
                             Epizodlar
                           </button>
+                          <button 
+                            onClick={() => setEditingAnime(anime)}
+                            className="bg-white/5 text-white/50 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter hover:bg-white/10 hover:text-white transition-all"
+                          >
+                            Tahrirlash
+                          </button>
                         </div>
                       </div>
                       <button 
@@ -552,7 +619,12 @@ export default function AdminPanel() {
                       <ArrowLeft size={14} /> ORQAGA
                     </button>
                     <h2 className="text-xl font-black uppercase tracking-tighter mb-2">{selectedAnimeForEpisodes.title}</h2>
-                    <p className="text-[10px] text-indigo-400 font-black mb-6 uppercase">YANGI EPIZOD QO'SHISH</p>
+                    <div className="flex justify-between items-center mb-6">
+                      <p className="text-[10px] text-indigo-400 font-black uppercase">{editingEpisode ? "EPIZODNI TAHRIRLASH" : "YANGI EPIZOD QO'SHISH"}</p>
+                      {editingEpisode && (
+                        <button onClick={() => setEditingEpisode(null)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">Bekor qilish</button>
+                      )}
+                    </div>
                     
                     <form onSubmit={handleEpisodeSubmit} className="space-y-4">
                       <input type="number" placeholder="Epizod Raqami" className="glass-input w-full" value={epNumber} onChange={e => setEpNumber(Number(e.target.value))} required />
@@ -582,13 +654,21 @@ export default function AdminPanel() {
                               <p className="text-[8px] text-slate-500 uppercase tracking-widest truncate max-w-xs">{ep.videoUrl}</p>
                             </div>
                           </div>
-                          <button 
-                            onClick={() => handleDeleteEpisode(ep.id)} 
-                            disabled={submitting}
-                            className="p-2 text-white/20 hover:text-red-500 transition-colors disabled:opacity-50"
-                          >
-                            {submitting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
-                          </button>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => setEditingEpisode(ep)}
+                              className="p-2 text-white/20 hover:text-indigo-400 transition-colors"
+                            >
+                              <LinkIcon size={16} className="rotate-45" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteEpisode(ep.id)} 
+                              disabled={submitting}
+                              className="p-2 text-white/20 hover:text-red-500 transition-colors disabled:opacity-50"
+                            >
+                              {submitting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                            </button>
+                          </div>
                         </div>
                       ))}
                       {episodes.length === 0 && (

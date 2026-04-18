@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { initializeFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeFirestore, doc, setDoc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../firebase-applet-config.json';
 
@@ -38,3 +38,20 @@ export const loginWithGoogle = async () => {
     await syncUserToFirestore(result.user);
     return result;
 };
+
+// Test connection on boot as recommended
+async function testConnection() {
+  try {
+    // Attempting a simple read to check connectivity
+    await getDocFromServer(doc(db, '_connection_test_', 'check'));
+    console.log('Firebase connection successful');
+  } catch (error: any) {
+    if (error.code === 'unavailable') {
+      console.error("Firestore is unavailable. This may be due to network restrictions or incorrect database ID.");
+      console.error("Using Database ID:", firebaseConfig.firestoreDatabaseId || "(default)");
+    } else {
+      console.error("Firebase connection test failed:", error);
+    }
+  }
+}
+testConnection();

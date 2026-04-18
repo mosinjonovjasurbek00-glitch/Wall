@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth } from '../firebase';
-import { collection, query, orderBy, onSnapshot, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs } from 'firebase/firestore';
-import { Play, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft } from 'lucide-react';
+import { db, auth, loginWithGoogle } from '../firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { collection, query, orderBy, onSnapshot, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs, addDoc } from 'firebase/firestore';
+import { Play, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { CATEGORIES } from '../constants';
@@ -29,6 +30,14 @@ interface EpisodeDoc {
   createdAt: any;
 }
 
+interface CommentDoc {
+  id: string;
+  userId: string;
+  username: string;
+  content: string;
+  createdAt: any;
+}
+
 interface AnimePortalProps {
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
@@ -37,11 +46,16 @@ interface AnimePortalProps {
 }
 
 export default function AnimePortal({ selectedCategory, setSelectedCategory, animeList, loading }: AnimePortalProps) {
+  const [user] = useAuthState(auth);
   const [searchTerm, setSearchTerm] = useState('');
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
   const [selectedAnime, setSelectedAnime] = useState<AnimeDoc | null>(null);
+  const [modalMode, setModalMode] = useState<'details' | 'player'>('details');
   const [episodes, setEpisodes] = useState<EpisodeDoc[]>([]);
   const [currentEpisode, setCurrentEpisode] = useState<EpisodeDoc | null>(null);
+  const [comments, setComments] = useState<CommentDoc[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
   const [showWatchlistOnly, setShowWatchlistOnly] = useState(false);
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -92,6 +106,50 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     return matchesSearch && matchesCategory && matchesWatchlist;
   });
 
+  useEffect(() => {
+    if (!selectedAnime || modalMode !== 'details') {
+      setComments([]);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'anime', selectedAnime.id, 'comments'),
+      orderBy('createdAt', 'desc')
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CommentDoc[]);
+    });
+    return () => unsubscribe();
+  }, [selectedAnime, modalMode]);
+
+  const handlePostComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !selectedAnime || !newComment.trim()) return;
+    setSubmittingComment(true);
+    try {
+      await addDoc(collection(db, 'anime', selectedAnime.id, 'comments'), {
+        userId: user.uid,
+        username: user.displayName || user.email?.split('@')[0] || 'Foydalanuvchi',
+        content: newComment.trim(),
+        createdAt: serverTimestamp()
+      });
+      setNewComment('');
+    } catch (err) {
+      console.error("Comment error:", err);
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!selectedAnime) return;
+    try {
+      await deleteDoc(doc(db, 'anime', selectedAnime.id, 'comments', commentId));
+    } catch (err) {
+      console.error("Delete comment error:", err);
+    }
+  };
+
   const handleWatchlist = async (e: React.MouseEvent, animeId: string) => {
     e.stopPropagation();
     if (!auth.currentUser) return;
@@ -108,16 +166,19 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     }
   };
 
-  const handleOpenAnime = (anime: AnimeDoc) => {
+  const handleOpenAnime = (anime: AnimeDoc, mode: 'details' | 'player' = 'details') => {
     setSelectedAnime(anime);
+    setModalMode(mode);
     setCurrentEpisode(null);
     setEpisodes([]);
-    setDoc(doc(db, 'anime', anime.id), { views: increment(1) }, { merge: true });
+    if (mode === 'player') {
+      setDoc(doc(db, 'anime', anime.id), { views: increment(1) }, { merge: true });
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#020202] text-white">
-      {/* Cinematic Hero - Main Banner (Redesigned to match request) */}
+      {/* ... Hero Section remains mostly the same, but we update the button ... */}
       {!loading && featuredAnime && (selectedCategory === 'All') && !searchTerm && !showWatchlistOnly && (
         <div className="px-4 sm:px-6 lg:px-12 pt-6 sm:pt-10 pb-4">
           <div className="relative h-[60vh] sm:h-[65vh] md:h-[75vh] w-full rounded-[2rem] sm:rounded-[3rem] overflow-hidden bg-[#0A0A0A] border border-white/[0.03] shadow-2xl">
@@ -162,12 +223,12 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
 
                     <div className="flex items-center justify-center md:justify-start gap-4 md:gap-6">
                       <button 
-                         onClick={() => handleOpenAnime(featuredAnime)}
+                         onClick={() => handleOpenAnime(featuredAnime, 'details')}
                          className="group relative flex items-center gap-2 md:gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-6 sm:px-10 md:px-14 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl font-black text-[10px] sm:text-xs md:text-sm uppercase tracking-widest transition-all active:scale-95 overflow-hidden"
                       >
                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                          <Play size={16} fill="currentColor" className="relative z-10 md:w-5 md:h-5" /> 
-                         <span className="relative z-10">Tomosha</span>
+                         <span className="relative z-10">Ma'lumot</span>
                          {/* Glow effect */}
                          <div className="absolute inset-0 shadow-[0_0_40px_rgba(79,70,229,0.4)] rounded-3xl" />
                       </button>
@@ -337,127 +398,284 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
         )}
       </div>
 
-      {/* Episode / Player Modal */}
+      {/* Unified Detail & Player Modal */}
       <AnimatePresence>
         {selectedAnime && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center sm:p-4 md:p-10"
+            className="fixed inset-0 z-[200] flex items-center justify-center"
           >
             <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl" onClick={() => setSelectedAnime(null)} />
             
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 40 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              className="relative max-w-7xl w-full h-full sm:h-auto sm:max-h-[95vh] rounded-none sm:rounded-[3rem] overflow-hidden border-0 sm:border border-white/10 flex flex-col shadow-none sm:shadow-[0_0_200px_rgba(0,0,0,1)] bg-[#080808]"
+              className={cn(
+                "relative max-w-7xl w-full h-full sm:h-auto sm:max-h-[95vh] rounded-none sm:rounded-[3rem] overflow-hidden border-0 sm:border border-white/10 flex flex-col shadow-none sm:shadow-[0_0_200px_rgba(0,0,0,1)] bg-[#080808] transition-all duration-500",
+                modalMode === 'details' ? "sm:max-w-5xl" : "sm:max-w-7xl"
+              )}
             >
-              {/* Floating Close Button */}
               <button 
                 onClick={() => setSelectedAnime(null)} 
-                className="absolute top-6 right-6 z-[250] p-3 text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-full border border-white/5 flex items-center justify-center active:scale-90"
+                className="absolute top-6 right-6 z-[300] p-3 text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-full border border-white/5 flex items-center justify-center active:scale-90"
               >
                 <CloseIcon size={24} />
               </button>
 
-              <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-                {/* Left Side: Player & Info */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-10 space-y-6">
-                  
-                  {/* Simplified Dubbing Selection */}
-                  <div className="flex items-center gap-4">
-                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">DUBLYAJ:</span>
-                     <div className="flex gap-2">
-                        <button className="bg-indigo-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-600/30 text-white">
-                           <Check size={12} /> 日本語
-                        </button>
-                     </div>
-                  </div>
+              <AnimatePresence mode="wait">
+                {modalMode === 'details' ? (
+                  <motion.div 
+                    key="details-view"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="flex flex-col md:flex-row p-6 sm:p-12 md:p-20 gap-10 md:gap-16 items-center md:items-start relative overflow-y-auto custom-scrollbar"
+                  >
+                    {/* Background atmosphere for details */}
+                    <div className="absolute top-0 right-0 w-full h-full bg-indigo-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
 
-                  {/* Video Player Area */}
-                  <div className="aspect-video bg-black rounded-2xl sm:rounded-[2rem] overflow-hidden relative shadow-2xl border border-white/5 group">
-                    {/* Anime Title Overlay */}
-                    <div className="absolute top-6 left-6 z-20 pointer-events-none">
-                      <h3 className="text-white/80 font-black text-xs sm:text-sm uppercase tracking-widest drop-shadow-lg">
-                        {selectedAnime.title}
-                      </h3>
+                    {/* Left: Poster and Buttons */}
+                    <div className="w-full sm:w-[280px] md:w-[320px] flex-shrink-0 z-10 space-y-4">
+                       <div className="aspect-[2/3] rounded-[2rem] overflow-hidden shadow-2xl border border-white/10">
+                          <img src={selectedAnime.posterUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                       </div>
+                       
+                       <div className="space-y-3">
+                          <button 
+                            onClick={(e) => handleWatchlist(e, selectedAnime.id)}
+                            className={cn(
+                              "w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95",
+                              watchlist.has(selectedAnime.id) 
+                                ? "bg-pink-600 text-white shadow-lg shadow-pink-600/20" 
+                                : "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                            )}
+                          >
+                             <Heart size={16} fill={watchlist.has(selectedAnime.id) ? "currentColor" : "none"} />
+                             {watchlist.has(selectedAnime.id) ? "SAQLANGAN" : "SAQLASH"}
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
+                              setModalMode('player');
+                              setDoc(doc(db, 'anime', selectedAnime.id), { views: increment(1) }, { merge: true });
+                            }}
+                            className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
+                          >
+                             <Play size={16} fill="white" />
+                             KO'RISH
+                          </button>
+                       </div>
                     </div>
 
-                    {currentEpisode ? (
-                       (() => {
-                         let url = currentEpisode.videoUrl.trim();
-                         if (url.startsWith('<iframe')) {
-                           const srcMatch = url.match(/src=["']([^"']+)["']/);
-                           if (srcMatch) url = srcMatch[1];
-                         }
-                         if (url.startsWith('//')) url = 'https:' + url;
-                         const isDirectVideo = url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi)$/) || url.includes('stream') || url.includes('/file/');
-
-                         if (isDirectVideo) {
-                           return <video controls className="w-full h-full object-contain" key={url} playsInline autoPlay><source src={url} type="video/mp4" /></video>;
-                         }
+                    {/* Right: Info */}
+                    <div className="flex-1 z-10 space-y-8 text-center md:text-left pt-4">
+                       <div>
+                         <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter uppercase mb-6 leading-tight">
+                           {selectedAnime.title}
+                         </h2>
                          
-                         let embedUrl = url;
-                         if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                           embedUrl = url.replace('watch?v=', 'embed/');
-                         } else if (url.includes('ok.ru/video/')) {
-                           embedUrl = url.replace('ok.ru/video/', 'ok.ru/videoembed/');
-                         }
+                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-8">
+                            <span className="bg-indigo-600 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white">TV</span>
+                            <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400">TUGALLANGAN</span>
+                            <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400">{selectedAnime.year}</span>
+                            <div className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                               <Eye size={12} className="text-indigo-400" /> {selectedAnime.views || 0}
+                            </div>
+                            <div className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-amber-500 flex items-center gap-2">
+                               <Star size={12} fill="currentColor" /> {selectedAnime.rating}
+                            </div>
+                         </div>
+                       </div>
 
-                         return <iframe src={embedUrl} className="w-full h-full border-none" allowFullScreen allow="autoplay; encrypted-media" />;
-                       })()
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-indigo-950/20 to-black p-6 text-center">
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-indigo-600/20 rounded-full flex items-center justify-center animate-pulse">
-                          <Play size={32} className="sm:w-10 sm:h-10 text-indigo-500 ml-1.5 sm:ml-2" />
-                        </div>
-                        <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">Epizodni tanlang</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                       <div className="space-y-4">
+                          <p className="text-slate-400 text-sm sm:text-base font-medium leading-relaxed">
+                            {selectedAnime.description}
+                          </p>
+                          <button className="text-indigo-400 font-black text-[10px] uppercase tracking-widest hover:text-indigo-300 transition-colors">
+                            Ko'proq o'qish
+                          </button>
+                       </div>
 
-                {/* Right Side: Episode List (Sidebar) */}
-                <div className="w-full lg:w-[26rem] bg-white/[0.01] border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col h-[40vh] lg:h-auto">
-                  <div className="px-8 pt-8 pb-4">
-                     <h3 className="text-2xl font-black uppercase tracking-tighter">Qismlar</h3>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar">
-                    {loadingEpisodes ? (
-                      <div className="flex justify-center p-10"><Loader2 className="animate-spin text-indigo-500" /></div>
-                    ) : (
-                      episodes.map(ep => (
-                        <button
-                          key={ep.id}
-                          onClick={() => setCurrentEpisode(ep)}
-                          className={cn(
-                            "w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4",
-                            currentEpisode?.id === ep.id 
-                              ? "bg-indigo-600/10 border-indigo-600/40 shadow-lg" 
-                              : "bg-white/5 border-white/5 hover:bg-white/10"
+                       {/* Comments Section */}
+                       <div className="pt-10 border-t border-white/5 space-y-8">
+                          <div className="flex items-center gap-3">
+                             <MessageSquare size={20} className="text-indigo-500" />
+                             <h3 className="text-xl font-black uppercase tracking-tighter">Fikrlar ({comments.length})</h3>
+                          </div>
+
+                          {user ? (
+                            <form onSubmit={handlePostComment} className="relative">
+                               <textarea 
+                                 placeholder="Fikringizni qoldiring..." 
+                                 className="glass-input w-full min-h-[100px] py-4 pr-16 bg-white/[0.02]"
+                                 value={newComment}
+                                 onChange={e => setNewComment(e.target.value)}
+                                 required
+                               />
+                               <button 
+                                 disabled={submittingComment || !newComment.trim()}
+                                 className="absolute bottom-4 right-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-600/30"
+                               >
+                                 {submittingComment ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                               </button>
+                            </form>
+                          ) : (
+                            <div className="glass p-6 rounded-2xl flex items-center justify-between gap-4 border-dashed border-white/10">
+                               <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500">Fikr qoldirish uchun tizimga kiring</p>
+                               <button 
+                                 onClick={loginWithGoogle}
+                                 className="bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                               >
+                                 KIRISH
+                               </button>
+                            </div>
                           )}
-                        >
-                          <div className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0",
-                            currentEpisode?.id === ep.id ? "bg-indigo-600 text-white" : "bg-white/10 text-slate-400"
-                          )}>
-                            {ep.episodeNumber}
+
+                          <div className="space-y-4">
+                             {comments.map(comment => (
+                               <div key={comment.id} className="glass p-5 rounded-2xl relative group">
+                                  <div className="flex justify-between items-start mb-2">
+                                     <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 bg-indigo-600/20 rounded-lg flex items-center justify-center">
+                                           <User size={12} className="text-indigo-500" />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">{comment.username}</span>
+                                     </div>
+                                     {(user?.uid === comment.userId || user?.uid === 'mosinjonovjasurbek00@gmail.com') && (
+                                       <button 
+                                         onClick={() => handleDeleteComment(comment.id)}
+                                         className="opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-500 transition-all"
+                                       >
+                                         <Trash2 size={14} />
+                                       </button>
+                                     )}
+                                  </div>
+                                  <p className="text-xs text-slate-300 font-medium leading-relaxed">{comment.content}</p>
+                               </div>
+                             ))}
+                             {comments.length === 0 && (
+                               <p className="text-center py-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 italic">Hali fikrlar yo'q</p>
+                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                             <h4 className={cn("font-black text-[12px] uppercase truncate", currentEpisode?.id === ep.id ? "text-indigo-400" : "text-white")}>
-                              {ep.title || `${ep.episodeNumber}-qism`}
-                             </h4>
-                             <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1">TV</p>
+                       </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="player-view"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="flex-1 flex flex-col lg:flex-row overflow-hidden relative"
+                  >
+                    {/* Back to Details Button */}
+                    <button 
+                      onClick={() => setModalMode('details')}
+                      className="absolute top-6 left-6 z-[300] flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors bg-black/40 px-4 py-2 rounded-xl border border-white/5"
+                    >
+                      <ArrowLeft size={16} /> MA'LUMOT
+                    </button>
+
+                    {/* Left Side: Player & Info */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-10 pt-20 sm:pt-24 space-y-6">
+                      
+                      {/* Simplified Dubbing Selection */}
+                      <div className="flex items-center gap-4">
+                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">DUBLYAJ:</span>
+                         <div className="flex gap-2">
+                            <button className="bg-indigo-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-600/30 text-white">
+                               <Check size={12} /> 日本語
+                            </button>
+                         </div>
+                      </div>
+
+                      {/* Video Player Area */}
+                      <div className="aspect-video bg-black rounded-2xl sm:rounded-[2rem] overflow-hidden relative shadow-2xl border border-white/5 group">
+                        {/* Anime Title Overlay */}
+                        <div className="absolute top-6 left-6 z-20 pointer-events-none">
+                          <h3 className="text-white/80 font-black text-xs sm:text-sm uppercase tracking-widest drop-shadow-lg">
+                            {selectedAnime.title}
+                          </h3>
+                        </div>
+
+                        {currentEpisode ? (
+                           (() => {
+                             let url = currentEpisode.videoUrl.trim();
+                             if (url.startsWith('<iframe')) {
+                               const srcMatch = url.match(/src=["']([^"']+)["']/);
+                               if (srcMatch) url = srcMatch[1];
+                             }
+                             if (url.startsWith('//')) url = 'https:' + url;
+                             const isDirectVideo = url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi)$/) || url.includes('stream') || url.includes('/file/');
+
+                             if (isDirectVideo) {
+                               return <video controls className="w-full h-full object-contain" key={url} playsInline autoPlay><source src={url} type="video/mp4" /></video>;
+                             }
+                             
+                             let embedUrl = url;
+                             if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                               embedUrl = url.replace('watch?v=', 'embed/');
+                             } else if (url.includes('ok.ru/video/')) {
+                               embedUrl = url.replace('ok.ru/video/', 'ok.ru/videoembed/');
+                             }
+
+                             return <iframe src={embedUrl} className="w-full h-full border-none" allowFullScreen allow="autoplay; encrypted-media" />;
+                           })()
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-indigo-950/20 to-black p-6 text-center">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-indigo-600/20 rounded-full flex items-center justify-center animate-pulse">
+                              <Play size={32} className="sm:w-10 sm:h-10 text-indigo-500 ml-1.5 sm:ml-2" />
+                            </div>
+                            <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">Epizodni tanlang</p>
                           </div>
-                          {currentEpisode?.id === ep.id && <Activity size={12} className="text-indigo-500 animate-pulse" />}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Side: Episode List (Sidebar) */}
+                    <div className="w-full lg:w-[26rem] bg-white/[0.01] border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col h-[40vh] lg:h-auto">
+                      <div className="px-8 pt-8 pb-4">
+                         <h3 className="text-2xl font-black uppercase tracking-tighter">Qismlar</h3>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar">
+                        {loadingEpisodes ? (
+                          <div className="flex justify-center p-10"><Loader2 className="animate-spin text-indigo-500" /></div>
+                        ) : (
+                          episodes.map(ep => (
+                            <button
+                              key={ep.id}
+                              onClick={() => setCurrentEpisode(ep)}
+                              className={cn(
+                                "w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4",
+                                currentEpisode?.id === ep.id 
+                                  ? "bg-indigo-600/10 border-indigo-600/40 shadow-lg" 
+                                  : "bg-white/5 border-white/5 hover:bg-white/10"
+                              )}
+                            >
+                              <div className={cn(
+                                "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0",
+                                currentEpisode?.id === ep.id ? "bg-indigo-600 text-white" : "bg-white/10 text-slate-400"
+                              )}>
+                                {ep.episodeNumber}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                 <h4 className={cn("font-black text-[12px] uppercase truncate", currentEpisode?.id === ep.id ? "text-indigo-400" : "text-white")}>
+                                  {ep.title || `${ep.episodeNumber}-qism`}
+                                 </h4>
+                                 <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1">TV</p>
+                              </div>
+                              {currentEpisode?.id === ep.id && <Activity size={12} className="text-indigo-500 animate-pulse" />}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </motion.div>
         )}
