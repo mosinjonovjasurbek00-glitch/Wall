@@ -65,7 +65,7 @@ export default function App() {
         <motion.div 
           animate={{ scale: [1, 1.1, 1], opacity: [1, 0.8, 1] }} 
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-24 h-24 bg-indigo-600 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(79,70,229,0.3)] border-2 border-indigo-500/20"
+          className="w-24 h-24 bg-indigo-600 rounded-full overflow-hidden shadow-[0_0_50px_rgba(79,70,229,0.3)] border-2 border-indigo-500/20"
         >
           <img 
             src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
@@ -136,7 +136,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col gap-6 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-4">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10">
+              <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10">
                 <img 
                   src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
                   alt="Footer Logo" 
