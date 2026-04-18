@@ -13,7 +13,7 @@ interface AuthModalProps {
 
 export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode | null>(null);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -24,7 +24,22 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
     } catch (err: any) {
       console.error("Google Login Error:", err);
       if (err.code === 'auth/unauthorized-domain') {
-        setError(`Xatolik: Ushbu domen ruxsat etilganlar ro'yxatida yo'q. Firebase Console-ga kiring va "${window.location.hostname}" domenini qo'shing.`);
+        const hostname = window.location.hostname;
+        const projectId = "stone-dispatch-477517-k6";
+        setError(
+          <div className="text-left space-y-3">
+            <p className="font-black text-red-500 uppercase tracking-widest text-center">Xatolik: Domen ruxsat etilmagan</p>
+            <div className="text-[9px] text-slate-300 normal-case font-medium space-y-2 bg-black/40 p-3 rounded-xl border border-white/5">
+              <p>Ushbu domen ({hostname}) Firebase-da ro'yxatga olinmagan. Muammoni echish uchun:</p>
+              <ol className="list-decimal ml-4 space-y-1">
+                <li><a href={`https://console.firebase.google.com/project/${projectId}/authentication/settings`} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Firebase Console-ga kiring</a></li>
+                <li>"Authorized domains" (Ruxsat etilgan domenlar) bo'limini toping</li>
+                <li><b>Add domain</b> tugmasini bosing</li>
+                <li>Mana bu domenni nusxalab qo'shing: <code className="bg-white/10 px-1 rounded">{hostname}</code></li>
+              </ol>
+            </div>
+          </div>
+        );
       } else {
         setError("Google orqali kirishda xatolik. Iltimos, yana bir bor urinib ko'ring.");
       }
@@ -63,7 +78,11 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
             <span className="text-xs font-black uppercase tracking-widest transition-colors">Google orqali kirish</span>
           </button>
 
-          {error && <p className="text-red-400 text-[10px] text-center font-black italic uppercase tracking-widest bg-red-500/10 py-3 rounded-xl border border-red-500/20 w-full">{error}</p>}
+          {error && (
+            <div className="text-red-400 bg-red-500/10 p-4 rounded-2xl border border-red-500/20 w-full">
+              {error}
+            </div>
+          )}
           
           {loading && (
             <div className="flex justify-center">
