@@ -58,16 +58,6 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
           </div>
         </div>
 
-        <a 
-          href="https://4kluminawalls.vercel.app/" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-all group"
-        >
-          <Globe size={12} className="text-indigo-400 group-hover:rotate-12 transition-transform" />
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">4kLuminaWalls</span>
-        </a>
-
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="h-8 w-px bg-white/10 mx-2 hidden sm:block" />
 
