@@ -320,8 +320,12 @@ export default function AdminPanel() {
                           </button>
                         </div>
                       </div>
-                      <button onClick={() => handleDeleteAnime(anime.id)} className="p-2 text-white/30 hover:text-red-500 transition-colors">
-                        <Trash2 size={18} />
+                      <button 
+                        onClick={() => handleDeleteAnime(anime.id)} 
+                        disabled={submitting}
+                        className="p-2 text-white/30 hover:text-red-500 transition-colors disabled:opacity-50"
+                      >
+                        {submitting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                       </button>
                     </div>
                   ))}
@@ -379,8 +383,12 @@ export default function AdminPanel() {
                               <p className="text-[8px] text-slate-500 uppercase tracking-widest truncate max-w-xs">{ep.videoUrl}</p>
                             </div>
                           </div>
-                          <button onClick={() => handleDeleteEpisode(ep.id)} className="p-2 text-slate-700 hover:text-red-400">
-                            <Trash2 size={18} />
+                          <button 
+                            onClick={() => handleDeleteEpisode(ep.id)} 
+                            disabled={submitting}
+                            className="p-2 text-white/20 hover:text-red-500 transition-colors disabled:opacity-50"
+                          >
+                            {submitting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                           </button>
                         </div>
                       ))}
