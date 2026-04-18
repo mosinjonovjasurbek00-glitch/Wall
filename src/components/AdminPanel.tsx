@@ -41,6 +41,19 @@ export default function AdminPanel() {
   const [success, setSuccess] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
+  // Confirmation state
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+
   // Anime Form State
   const [title, setTitle] = useState('');
   const [posterUrl, setPosterUrl] = useState('');
@@ -147,49 +160,62 @@ export default function AdminPanel() {
     }
   };
 
-  const handleDeleteAnime = async (id: string) => {
-    if (window.confirm("Animenı o'chirishni tasdiqlaysizmi? Barcha epizodlar ham o'chiriladi!")) {
-      try {
-        setSubmitting(true);
-        // Delete episodes subcollection first
-        const episodesRef = collection(db, 'anime', id, 'episodes');
-        const episodesSnap = await getDocs(episodesRef);
-        
-        const batch = writeBatch(db);
-        episodesSnap.forEach((episodeDoc) => {
-          batch.delete(episodeDoc.ref);
-        });
-        
-        // Delete the main anime doc
-        batch.delete(doc(db, 'anime', id));
-        
-        await batch.commit();
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
-      } catch (err: any) {
-        console.error("Delete error:", err);
-        setError("O'chirishda xatolik yuz berdi: " + (err.message || 'Unknown error'));
-      } finally {
-        setSubmitting(false);
+  const handleDeleteAnime = (id: string) => {
+    setConfirmModal({
+      show: true,
+      title: "Animeni o'chirish",
+      message: "Animenı o'chirishni tasdiqlaysizmi? Barcha epizodlar ham o'chiriladi!",
+      onConfirm: async () => {
+        try {
+          setSubmitting(true);
+          setConfirmModal(prev => ({ ...prev, show: false }));
+          
+          // Delete episodes subcollection first
+          const episodesRef = collection(db, 'anime', id, 'episodes');
+          const episodesSnap = await getDocs(episodesRef);
+          
+          const batch = writeBatch(db);
+          episodesSnap.forEach((episodeDoc) => {
+            batch.delete(episodeDoc.ref);
+          });
+          
+          // Delete the main anime doc
+          batch.delete(doc(db, 'anime', id));
+          
+          await batch.commit();
+          setSuccess(true);
+          setTimeout(() => setSuccess(false), 3000);
+        } catch (err: any) {
+          console.error("Delete error:", err);
+          setError("O'chirishda xatolik yuz berdi: " + (err.message || 'Unknown error'));
+        } finally {
+          setSubmitting(false);
+        }
       }
-    }
+    });
   };
 
-  const handleDeleteEpisode = async (id: string) => {
+  const handleDeleteEpisode = (id: string) => {
     if (!selectedAnimeForEpisodes) return;
-    if (window.confirm("Epizodni o'chirishni tasdiqlaysizmi?")) {
-      try {
-        setSubmitting(true);
-        await deleteDoc(doc(db, 'anime', selectedAnimeForEpisodes.id, 'episodes', id));
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
-      } catch (err: any) {
-        console.error("Episode delete error:", err);
-        setError("Epizodni o'chirishda xatolik: " + (err.message || 'Unknown error'));
-      } finally {
-        setSubmitting(false);
+    setConfirmModal({
+      show: true,
+      title: "Epizodni o'chirish",
+      message: "Epizodni o'chirishni tasdiqlaysizmi?",
+      onConfirm: async () => {
+        try {
+          setSubmitting(true);
+          setConfirmModal(prev => ({ ...prev, show: false }));
+          await deleteDoc(doc(db, 'anime', selectedAnimeForEpisodes.id, 'episodes', id));
+          setSuccess(true);
+          setTimeout(() => setSuccess(false), 3000);
+        } catch (err: any) {
+          console.error("Episode delete error:", err);
+          setError("Epizodni o'chirishda xatolik: " + (err.message || 'Unknown error'));
+        } finally {
+          setSubmitting(false);
+        }
       }
-    }
+    });
   };
 
   return (
@@ -220,6 +246,49 @@ export default function AdminPanel() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {confirmModal.show && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center px-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative glass rounded-3xl p-8 max-w-sm w-full border border-white/10 shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                <Trash2 size={32} className="text-red-500" />
+              </div>
+              <h3 className="text-xl font-black uppercase tracking-tighter text-center mb-2">{confirmModal.title}</h3>
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest text-center mb-8 leading-relaxed">
+                {confirmModal.message}
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
+                  className="glass-button py-4 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  BEKOR QILISH
+                </button>
+                <button 
+                  onClick={confirmModal.onConfirm}
+                  className="bg-red-600 hover:bg-red-500 text-white rounded-2xl py-4 text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-red-600/20"
+                >
+                  O'CHIRISH
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="flex glass p-1 rounded-2xl mb-10 w-fit mx-auto gap-1">
         <button
           onClick={() => { setActiveTab('anime'); setSelectedAnimeForEpisodes(null); }}
