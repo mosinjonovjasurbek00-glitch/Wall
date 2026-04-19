@@ -58,6 +58,14 @@ service cloud.firestore {
              data.content.size() <= 1000;
     }
 
+    function isValidNotification(data) {
+      return data.keys().hasAll(['type', 'title', 'message', 'animeId', 'createdAt']) &&
+             data.type in ['anime', 'episode'] &&
+             data.title is string && data.title.size() <= 200 &&
+             data.message is string && data.message.size() <= 500 &&
+             data.animeId is string;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -107,7 +115,8 @@ service cloud.firestore {
 
     match /public_notifications/{notificationId} {
       allow read: if true;
-      allow create, delete: if isAdmin();
+      allow create: if isAdmin() && isValidNotification(request.resource.data);
+      allow delete: if isAdmin();
       allow update: if false;
     }
   }
