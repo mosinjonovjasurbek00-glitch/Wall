@@ -201,7 +201,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
       {/* ... Hero Section remains mostly the same, but we update the button ... */}
       {!loading && featuredAnime && (selectedCategory === 'All') && !searchTerm && !showWatchlistOnly && (
         <div className="px-4 sm:px-6 lg:px-12 pt-6 sm:pt-10 pb-4">
-          <div className="relative h-[40vh] sm:h-[45vh] md:h-[50vh] w-full rounded-[2rem] sm:rounded-[3rem] overflow-hidden bg-[#0A0A0A] border border-white/[0.03] shadow-2xl">
+          <div className="relative min-h-[480px] h-[70vh] md:h-[50vh] w-full rounded-[2rem] sm:rounded-[3rem] overflow-hidden bg-[#0A0A0A] border border-white/[0.03] shadow-2xl">
             <AnimatePresence mode="wait">
               <motion.div 
                 key={featuredAnime.id}
@@ -209,7 +209,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8 }}
-                className="absolute inset-0 flex flex-col md:flex-row items-center justify-center md:justify-between px-6 sm:px-12 md:px-20 py-1 md:py-3 gap-1 md:gap-4"
+                className="absolute inset-0 flex flex-col md:flex-row items-center justify-center md:justify-between px-6 sm:px-12 md:px-20 py-8 md:py-4 gap-6 md:gap-6"
               >
                 {/* Visual Background Element (Subtle) */}
                 <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
@@ -268,10 +268,10 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
 
                 {/* Right Side: Poster Image */}
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.9, x: 40 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="max-h-full aspect-[2/3] z-10 flex-shrink-0 flex items-center"
+                  className="h-[180px] sm:h-[220px] md:h-full aspect-[2/3] z-10 flex-shrink-0 flex items-center"
                 >
                   <div className="h-full rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/5 group-hover:border-indigo-500/30 transition-colors">
                     <img 

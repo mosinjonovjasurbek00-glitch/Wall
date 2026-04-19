@@ -93,13 +93,13 @@ export default function NotificationMenu() {
       <button
         onClick={toggleMenu}
         className={cn(
-          "w-12 h-12 rounded-full flex items-center justify-center transition-all relative border",
+          "w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all relative border",
           isOpen ? "bg-indigo-600 border-indigo-500 text-white" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
         )}
       >
-        <Bell size={20} />
+        <Bell size={16} className="sm:w-5 sm:h-5" />
         {hasNew && notifications.length > 0 && (
-          <span className="absolute top-3 right-3 w-3 h-3 bg-red-500 border-2 border-[#020202] rounded-full animate-bounce" />
+          <span className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 border-2 border-[#020202] rounded-full animate-bounce" />
         )}
       </button>
 
