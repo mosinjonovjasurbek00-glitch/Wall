@@ -201,7 +201,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
       {/* ... Hero Section remains mostly the same, but we update the button ... */}
       {!loading && featuredAnime && (selectedCategory === 'All') && !searchTerm && !showWatchlistOnly && (
         <div className="px-4 sm:px-6 lg:px-12 pt-6 sm:pt-10 pb-4">
-          <div className="relative h-[60vh] sm:h-[65vh] md:h-[75vh] w-full rounded-[2rem] sm:rounded-[3rem] overflow-hidden bg-[#0A0A0A] border border-white/[0.03] shadow-2xl">
+          <div className="relative h-[40vh] sm:h-[45vh] md:h-[50vh] w-full rounded-[2rem] sm:rounded-[3rem] overflow-hidden bg-[#0A0A0A] border border-white/[0.03] shadow-2xl">
             <AnimatePresence mode="wait">
               <motion.div 
                 key={featuredAnime.id}
@@ -209,23 +209,23 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8 }}
-                className="absolute inset-0 flex flex-col md:flex-row items-center justify-center md:justify-between px-6 sm:px-12 md:px-20 py-8 md:py-12 gap-6 md:gap-12"
+                className="absolute inset-0 flex flex-col md:flex-row items-center justify-center md:justify-between px-6 sm:px-12 md:px-20 py-1 md:py-3 gap-1 md:gap-4"
               >
                 {/* Visual Background Element (Subtle) */}
                 <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
 
                 {/* Left Side: Content */}
-                <div className="flex-1 z-10 space-y-4 sm:space-y-6 md:space-y-8 text-center md:text-left">
+                <div className="flex-1 z-10 space-y-1 sm:space-y-1.5 md:space-y-2 text-center md:text-left">
                   <motion.div 
                     initial={{ opacity: 0, y: 30 }} 
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter leading-tight mb-4 md:mb-8 uppercase text-white">
+                    <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black tracking-tighter leading-none mb-1 uppercase text-white">
                       {featuredAnime.title}
                     </h1>
 
-                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 mb-4 md:mb-8">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-1 sm:gap-2 mb-1 md:mb-2">
                        <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-indigo-400">
                           {featuredAnime.category}
                        </span>
@@ -237,30 +237,30 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                        </span>
                     </div>
 
-                    <p className="hidden sm:block text-xs sm:text-sm md:text-base text-slate-400 line-clamp-2 md:line-clamp-4 font-medium max-w-2xl leading-relaxed mb-6 md:mb-12">
+                    <p className="hidden md:block text-[10px] sm:text-xs text-slate-400 line-clamp-2 font-medium max-w-lg leading-relaxed mb-2 md:mb-4">
                       {featuredAnime.description}
                     </p>
 
-                    <div className="flex items-center justify-center md:justify-start gap-4 md:gap-6">
+                    <div className="flex items-center justify-center md:justify-start gap-3 md:gap-4">
                       <button 
                          onClick={() => handleOpenAnime(featuredAnime, 'details')}
-                         className="group relative flex items-center gap-2 md:gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-6 sm:px-10 md:px-14 py-3 sm:py-4 md:py-5 rounded-2xl sm:rounded-3xl font-black text-[10px] sm:text-xs md:text-sm uppercase tracking-widest transition-all active:scale-95 overflow-hidden"
+                         className="group relative flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all active:scale-95 overflow-hidden"
                       >
                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                         <Play size={16} fill="currentColor" className="relative z-10 md:w-5 md:h-5" /> 
+                         <Play size={14} fill="currentColor" className="relative z-10" /> 
                          <span className="relative z-10">Ma'lumot</span>
                          {/* Glow effect */}
-                         <div className="absolute inset-0 shadow-[0_0_40px_rgba(79,70,229,0.4)] rounded-3xl" />
+                         <div className="absolute inset-0 shadow-[0_0_30px_rgba(79,70,229,0.3)] rounded-2xl" />
                       </button>
                       
                       <button 
                         onClick={(e) => handleWatchlist(e, featuredAnime.id)}
                         className={cn(
-                          "p-3 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl border transition-all active:scale-95 group backdrop-blur-md",
+                          "p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border transition-all active:scale-95 group backdrop-blur-md",
                           watchlist.has(featuredAnime.id) ? "bg-pink-600 border-pink-500 shadow-xl" : "bg-white/5 border-white/10 hover:bg-white/10"
                         )}
                       >
-                        <Heart size={16} fill={watchlist.has(featuredAnime.id) ? "currentColor" : "none"} className={cn("md:w-5 md:h-5", watchlist.has(featuredAnime.id) ? "text-white" : "text-white/40 group-hover:text-white")} />
+                        <Heart size={14} fill={watchlist.has(featuredAnime.id) ? "currentColor" : "none"} className={cn(watchlist.has(featuredAnime.id) ? "text-white" : "text-white/40 group-hover:text-white")} />
                       </button>
                     </div>
                   </motion.div>
@@ -271,12 +271,12 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                   initial={{ opacity: 0, scale: 0.9, x: 40 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="w-[120px] sm:w-[200px] md:w-[320px] lg:w-[380px] aspect-[2/3] z-10 flex-shrink-0"
+                  className="max-h-full aspect-[2/3] z-10 flex-shrink-0 flex items-center"
                 >
-                  <div className="w-full h-full rounded-[1.5rem] sm:rounded-[3rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/5 group-hover:border-indigo-500/30 transition-colors">
+                  <div className="h-full rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/5 group-hover:border-indigo-500/30 transition-colors">
                     <img 
                       src={featuredAnime.posterUrl} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                      className="h-full w-auto object-cover group-hover:scale-105 transition-transform duration-700" 
                       referrerPolicy="no-referrer" 
                     />
                   </div>
@@ -286,7 +286,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
 
             {/* Redesigned Pagination Indicators */}
             {bannerAnime.length > 1 && (
-              <div className="absolute bottom-12 left-0 right-0 z-30 flex justify-center gap-3">
+              <div className="absolute bottom-6 left-0 right-0 z-30 flex justify-center gap-2">
                 {bannerAnime.map((_, i) => (
                   <button
                     key={i}
@@ -294,8 +294,8 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                     className={cn(
                       "transition-all duration-300 rounded-full",
                       i === bannerIndex 
-                        ? "w-10 h-2 bg-indigo-500" 
-                        : "w-2 h-2 bg-white/20 hover:bg-white/40"
+                        ? "w-8 h-1.5 bg-indigo-500" 
+                        : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
                     )}
                   />
                 ))}

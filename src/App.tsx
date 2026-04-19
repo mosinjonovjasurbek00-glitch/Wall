@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { FallingLeaves } from './components/FallingLeaves';
 import { AuthModal } from './components/AuthModal';
 import NotificationSystem from './components/NotificationSystem';
+import PushNotificationInitializer from './components/PushNotificationInitializer';
 
 export default function App() {
   const [user, loading] = useAuthState(auth);
@@ -171,6 +172,7 @@ export default function App() {
       )}
 
       <NotificationSystem />
+      <PushNotificationInitializer />
     </div>
   );
 }

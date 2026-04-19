@@ -41,8 +41,9 @@ export default function NotificationSystem() {
         return;
       }
 
-      // Check if notification is truly new (created after our session started or very recently)
-      // Usually we only show it if the document was just added
+      // Check if notification is truly new (created after our session started)
+      if (newNotif.createdAt.toMillis() < sessionStartTime.toMillis()) return;
+
       setLastNotification(newNotif);
       setShow(true);
 
@@ -66,7 +67,7 @@ export default function NotificationSystem() {
           exit={{ opacity: 0, scale: 0.9, x: 20 }}
           className="fixed bottom-6 right-6 z-[999] w-[320px] sm:w-[380px]"
         >
-          <div className="glass overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col">
+          <div className="bg-slate-900 border border-white/10 overflow-hidden rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,1)] flex flex-col">
             {/* Progress Bar */}
             <motion.div 
               initial={{ width: "100%" }}

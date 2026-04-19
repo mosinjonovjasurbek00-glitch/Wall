@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CATEGORIES } from '../constants';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import NotificationBell from './NotificationPrompt';
+import NotificationMenu from './NotificationMenu';
 
 interface NavbarProps {
   isAdmin: boolean;
@@ -77,7 +77,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
                 </button>
               )}
 
-              <NotificationBell />
+              <NotificationMenu />
               
               <div className="flex items-center gap-4 pl-4 border-l border-white/10">
                 <div className="hidden lg:flex flex-col items-end">
