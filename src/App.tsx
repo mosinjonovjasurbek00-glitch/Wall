@@ -11,6 +11,7 @@ import { Loader2, ShieldAlert, AlertCircle, Send, Globe, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react';
 import { FallingLeaves } from './components/FallingLeaves';
 import { AuthModal } from './components/AuthModal';
+import NotificationSystem from './components/NotificationSystem';
 
 export default function App() {
   const [user, loading] = useAuthState(auth);
@@ -168,6 +169,8 @@ export default function App() {
           onClose={() => setShowAuthModal(false)} 
         />
       )}
+
+      <NotificationSystem />
     </div>
   );
 }

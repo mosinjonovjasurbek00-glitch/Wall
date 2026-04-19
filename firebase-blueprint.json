@@ -82,6 +82,20 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "username", "content", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Public site notification for new content",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["anime", "episode"] },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "posterUrl": { "type": "string" },
+        "animeId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "title", "message", "animeId", "createdAt"]
     }
   },
   "firestore": {
@@ -108,6 +122,10 @@
     "/messages/{messageId}": {
       "schema": "Message",
       "description": "Inbound contact form messages"
+    },
+    "/public_notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Global notifications for all users"
     }
   }
 }

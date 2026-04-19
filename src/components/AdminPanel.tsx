@@ -202,9 +202,19 @@ export default function AdminPanel() {
         await updateDoc(doc(db, 'anime', editingAnime.id), animeData);
         setEditingAnime(null);
       } else {
-        await addDoc(collection(db, 'anime'), {
+        const newAnimeDoc = await addDoc(collection(db, 'anime'), {
           ...animeData,
           views: 0,
+          createdAt: serverTimestamp()
+        });
+
+        // Add public notification for new anime
+        await addDoc(collection(db, 'public_notifications'), {
+          type: 'anime',
+          title: title,
+          message: `${title} saytga yuklandi! Hoziroq tomosha qiling.`,
+          posterUrl: finalPosterUrl,
+          animeId: newAnimeDoc.id,
           createdAt: serverTimestamp()
         });
       }
@@ -241,6 +251,16 @@ export default function AdminPanel() {
       } else {
         await addDoc(collection(db, 'anime', selectedAnimeForEpisodes.id, 'episodes'), {
           ...epData,
+          createdAt: serverTimestamp()
+        });
+
+        // Add public notification for new episode
+        await addDoc(collection(db, 'public_notifications'), {
+          type: 'episode',
+          title: `${selectedAnimeForEpisodes.title}: ${epNumber}-qism`,
+          message: `${selectedAnimeForEpisodes.title} ning yangi ${epNumber}-qismi saytga qo'shildi!`,
+          posterUrl: selectedAnimeForEpisodes.posterUrl,
+          animeId: selectedAnimeForEpisodes.id,
           createdAt: serverTimestamp()
         });
       }
