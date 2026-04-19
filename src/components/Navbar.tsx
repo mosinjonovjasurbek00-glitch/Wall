@@ -1,12 +1,13 @@
 import { auth, logout } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { LogOut, LayoutDashboard, Film, Play, User, Globe } from 'lucide-react';
+import { LogOut, LayoutDashboard, Film, Play, User, Globe, Bell } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CATEGORIES } from '../constants';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import NotificationBell from './NotificationPrompt';
 
 interface NavbarProps {
   isAdmin: boolean;
@@ -75,6 +76,8 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
                   {view === 'gallery' ? <LayoutDashboard size={20} /> : <Film size={20} />}
                 </button>
               )}
+
+              <NotificationBell />
               
               <div className="flex items-center gap-4 pl-4 border-l border-white/10">
                 <div className="hidden lg:flex flex-col items-end">

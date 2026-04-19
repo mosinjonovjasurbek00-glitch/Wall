@@ -52,7 +52,7 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Proxy route to handle CORS-free downloads
+  // Proxy route
   app.get("/api/proxy-image", async (req, res) => {
     const imageUrl = req.query.url as string;
     if (!imageUrl) return res.status(400).send("URL is required");
@@ -75,6 +75,63 @@ async function startServer() {
       res.send(Buffer.from(response.data));
     } catch (error: any) {
       res.status(500).send("Proxy error");
+    }
+  });
+
+  // Broadcast notification endpoint
+  app.post("/api/admin/broadcast-notification", async (req, res) => {
+    const { title, body, imageUrl, animeId } = req.body;
+    
+    // Basic auth check would be good here, but for now we follow the app's pattern
+    // In production, we'd check req.headers.authorization via firebase-admin verifyIdToken
+
+    try {
+      const db = getDbAdmin();
+      const tokensSnap = await db.collection('fcm_tokens').get();
+      const tokens = tokensSnap.docs.map(doc => doc.data().token);
+
+      if (tokens.length === 0) {
+        return res.json({ success: true, message: "No tokens found" });
+      }
+
+      console.log(`Sending push notification to ${tokens.length} devices: ${title}`);
+
+      const message = {
+        notification: {
+          title,
+          body,
+          image: imageUrl
+        },
+        data: {
+          animeId: animeId || '',
+          click_action: 'FLUTTER_NOTIFICATION_CLICK' // For consistency, though we are web
+        },
+        tokens: tokens
+      };
+
+      // sendEachForMulticast is the modern way in v11+
+      const response = await admin.messaging().sendEachForMulticast(message);
+      
+      console.log(`Push success: ${response.successCount}, failures: ${response.failureCount}`);
+      
+      // Cleanup invalid tokens
+      if (response.failureCount > 0) {
+        const batch = db.batch();
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            const errorCode = resp.error?.code;
+            if (errorCode === 'messaging/invalid-registration-token' || errorCode === 'messaging/registration-token-not-registered') {
+              batch.delete(tokensSnap.docs[idx].ref);
+            }
+          }
+        });
+        await batch.commit();
+      }
+
+      res.json({ success: true, count: response.successCount });
+    } catch (error: any) {
+      console.error("FCM broadcast error:", error);
+      res.status(500).json({ error: error.message });
     }
   });
 

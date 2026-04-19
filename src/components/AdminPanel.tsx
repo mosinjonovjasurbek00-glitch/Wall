@@ -6,6 +6,7 @@ import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as Lin
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { CATEGORIES } from '../constants';
+import axios from 'axios';
 
 interface AnimeDoc {
   id: string;
@@ -93,6 +94,14 @@ export default function AdminPanel() {
   const [epNumber, setEpNumber] = useState(1);
   const [epTitle, setEpTitle] = useState('');
   const [epVideoUrl, setEpVideoUrl] = useState('');
+
+  const sendPush = async (title: string, body: string, imageUrl: string, animeId: string) => {
+    try {
+      await axios.post('/api/admin/broadcast-notification', { title, body, imageUrl, animeId });
+    } catch (err) {
+      console.error("Failed to send push notification:", err);
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, 'anime'));
@@ -217,6 +226,9 @@ export default function AdminPanel() {
           animeId: newAnimeDoc.id,
           createdAt: serverTimestamp()
         });
+
+        // Send actual Push Notification
+        await sendPush(title, `${title} saytga yuklandi! Hoziroq tomosha qiling.`, finalPosterUrl, newAnimeDoc.id);
       }
 
       setTitle(''); setPosterUrl(''); setPosterFile(null); setDescription('');
@@ -263,6 +275,14 @@ export default function AdminPanel() {
           animeId: selectedAnimeForEpisodes.id,
           createdAt: serverTimestamp()
         });
+
+        // Send actual Push Notification
+        await sendPush(
+          `${selectedAnimeForEpisodes.title}: ${epNumber}-qism`, 
+          `${selectedAnimeForEpisodes.title} ning yangi ${epNumber}-qismi saytga qo'shildi!`,
+          selectedAnimeForEpisodes.posterUrl,
+          selectedAnimeForEpisodes.id
+        );
       }
       
       setEpNumber(prev => prev + 1);
