@@ -59,6 +59,9 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
   const [showWatchlistOnly, setShowWatchlistOnly] = useState(false);
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [bannerIndex, setBannerIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const itemsPerPage = 12;
 
   const bannerAnime = animeList.filter(a => a.isBanner);
   const featuredAnime = bannerAnime.length > 0 ? bannerAnime[bannerIndex] : (animeList.find(a => a.rating >= 9) || animeList[0]);
@@ -98,13 +101,30 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     return () => unsubscribe();
   }, [selectedAnime]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 500);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const filteredAnime = animeList.filter(anime => {
     const matchesSearch = anime.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           anime.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || anime.category === selectedCategory;
+  const matchesCategory = selectedCategory === 'All' || anime.category === selectedCategory;
     const matchesWatchlist = !showWatchlistOnly || watchlist.has(anime.id);
     return matchesSearch && matchesCategory && matchesWatchlist;
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredAnime.length / itemsPerPage);
+  const paginatedAnime = filteredAnime.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Reset to page 1 on search or category change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, showWatchlistOnly]);
 
   useEffect(() => {
     if (!selectedAnime || modalMode !== 'details') {
@@ -332,63 +352,110 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
             {[1, 2, 3, 4, 5, 6].map(n => <div key={n} className="aspect-[2/3] bg-white/5 rounded-2xl sm:rounded-3xl animate-pulse" />)}
           </div>
         ) : filteredAnime.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-8">
-            {filteredAnime.map((anime, i) => (
-              <motion.div
-                key={anime.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: (i % 6) * 0.1 }}
-                className="group relative cursor-pointer"
-                onClick={() => handleOpenAnime(anime)}
-              >
-                <div className="aspect-[2/3] rounded-2xl sm:rounded-[3rem] overflow-hidden relative glass border-white/5 group-hover:border-indigo-500/50 transition-all duration-500 shadow-2xl">
-                  <img src={anime.posterUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" loading="lazy" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
-                  {/* Hover Overlay - Simplified as info is now below */}
-                  <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center p-6">
-                    <div className="scale-75 group-hover:scale-100 transition-transform duration-500 h-16 w-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20">
-                       <Play size={24} fill="white" className="ml-1 text-white" />
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-8">
+              {paginatedAnime.map((anime, i) => (
+                <motion.div
+                  key={anime.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: (i % 6) * 0.1 }}
+                  className="group relative cursor-pointer"
+                  onClick={() => handleOpenAnime(anime)}
+                >
+                  <div className="aspect-[2/3] rounded-2xl sm:rounded-[3rem] overflow-hidden relative glass border-white/5 group-hover:border-indigo-500/50 transition-all duration-500 shadow-2xl">
+                    <img src={anime.posterUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" loading="lazy" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    
+                    {/* Hover Overlay - Simplified as info is now below */}
+                    <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center p-6">
+                      <div className="scale-75 group-hover:scale-100 transition-transform duration-500 h-16 w-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20">
+                         <Play size={24} fill="white" className="ml-1 text-white" />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="absolute top-3 left-3 sm:top-5 sm:left-5 flex flex-col gap-2">
-                    <span className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full text-[7px] sm:text-[9px] font-black uppercase tracking-widest border border-white/10 text-white">
-                      {anime.type === 'movie' ? 'Film' : 'Serial'}
-                    </span>
-                  </div>
+                    <div className="absolute top-3 left-3 sm:top-5 sm:left-5 flex flex-col gap-2">
+                      <span className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full text-[7px] sm:text-[9px] font-black uppercase tracking-widest border border-white/10 text-white">
+                        {anime.type === 'movie' ? 'Film' : 'Serial'}
+                      </span>
+                    </div>
 
-                  <button 
-                    onClick={(e) => handleWatchlist(e, anime.id)}
-                    className={cn(
-                      "absolute top-3 right-3 sm:top-5 sm:right-5 p-2 sm:p-2.5 rounded-xl backdrop-blur-md border transition-all",
-                      watchlist.has(anime.id) ? "bg-pink-600 border-pink-500 text-white opacity-100 shadow-lg shadow-pink-600/30" : "bg-black/60 border-white/10 text-white opacity-0 group-hover:opacity-100"
-                    )}
-                  >
-                    <Heart size={14} className="sm:w-[16px] sm:h-[16px]" fill={watchlist.has(anime.id) ? "currentColor" : "none"} />
-                  </button>
-                </div>
-                
-                {/* Unified Title & View Count (Always Visible) */}
-                <div className="mt-4 px-2">
-                   <h3 className="font-black text-xs sm:text-[13px] uppercase tracking-tight truncate text-white group-hover:text-indigo-400 transition-colors leading-tight">{anime.title}</h3>
-                   <div className="flex items-center justify-between mt-2">
-                     <div className="flex items-center gap-3">
-                       <span className="text-[9px] text-slate-600 font-black tracking-widest">{anime.year}</span>
-                       <div className="flex items-center gap-1.5 text-amber-500 text-[10px] font-black">
-                          <Star size={12} fill="currentColor" /> {anime.rating}
+                    <button 
+                      onClick={(e) => handleWatchlist(e, anime.id)}
+                      className={cn(
+                        "absolute top-3 right-3 sm:top-5 sm:right-5 p-2 sm:p-2.5 rounded-xl backdrop-blur-md border transition-all",
+                        watchlist.has(anime.id) ? "bg-pink-600 border-pink-500 text-white opacity-100 shadow-lg shadow-pink-600/30" : "bg-black/60 border-white/10 text-white opacity-0 group-hover:opacity-100"
+                      )}
+                    >
+                      <Heart size={14} className="sm:w-[16px] sm:h-[16px]" fill={watchlist.has(anime.id) ? "currentColor" : "none"} />
+                    </button>
+                  </div>
+                  
+                  {/* Unified Title & View Count (Always Visible) */}
+                  <div className="mt-4 px-2">
+                     <h3 className="font-black text-xs sm:text-[13px] uppercase tracking-tight truncate text-white group-hover:text-indigo-400 transition-colors leading-tight">{anime.title}</h3>
+                     <div className="flex items-center justify-between mt-2">
+                       <div className="flex items-center gap-3">
+                         <span className="text-[9px] text-slate-600 font-black tracking-widest">{anime.year}</span>
+                         <div className="flex items-center gap-1.5 text-amber-500 text-[10px] font-black">
+                            <Star size={12} fill="currentColor" /> {anime.rating}
+                         </div>
+                       </div>
+                       <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-[0.1em]">
+                          <Eye size={12} className="text-indigo-500/50" />
+                          <span>{anime.views || 0}</span>
                        </div>
                      </div>
-                     <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-[0.1em]">
-                        <Eye size={12} className="text-indigo-500/50" />
-                        <span>{anime.views || 0}</span>
-                     </div>
-                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Pagination UI - Based on User's Image */}
+            {totalPages > 1 && (
+              <div className="mt-20 flex justify-center items-center gap-2 sm:gap-4 pb-10">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/10 transition-all disabled:opacity-20 disabled:pointer-events-none group"
+                >
+                  <ArrowLeft size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                </button>
+                
+                {Array.from({ length: totalPages }).map((_, idx) => {
+                  const pageNumber = idx + 1;
+                  // Only show current page, plus/minus 2 pages
+                  if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={cn(
+                          "w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-2xl text-sm font-black transition-all border",
+                          currentPage === pageNumber 
+                            ? "bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-600/30" 
+                            : "bg-white/[0.03] border-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                    return <span key={pageNumber} className="text-slate-700 font-bold px-1 sm:px-2">...</span>;
+                  }
+                  return null;
+                })}
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/10 transition-all disabled:opacity-20 disabled:pointer-events-none group"
+                >
+                  <ChevronRight size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="py-20 sm:py-24 text-center glass rounded-3xl mx-4 sm:mx-0">
              <Film size={50} className="mx-auto text-slate-800 mb-6 sm:w-[60px] sm:h-[60px]" />
@@ -678,6 +745,26 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
               </AnimatePresence>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Back to Top Button */}
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.5, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.5, y: 50 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-10 right-10 z-[150] w-14 h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl flex items-center justify-center shadow-[0_0_50px_rgba(79,70,229,0.3)] active:scale-95 transition-all border border-indigo-400 group"
+          >
+            <motion.div
+              animate={{ y: [0, -4, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <ChevronRight size={28} className="-rotate-90 group-hover:scale-110 transition-transform" />
+            </motion.div>
+          </motion.button>
         )}
       </AnimatePresence>
     </div>
