@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { auth, db, loginWithGoogle, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendEmailVerification, syncUserToFirestore, signInWithCustomToken } from '../firebase';
-import { Mail, Lock, User, Loader2, X, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, User, Loader2, X, ArrowLeft, ShieldCheck, RefreshCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Turnstile } from '@marsidev/react-turnstile';
 import axios from 'axios';
-
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAAC_bA66fwl1XqLkD";
 
 interface AuthModalProps {
   onSuccess: () => void;
@@ -18,17 +15,49 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<React.ReactNode | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [mathQuest, setMathQuest] = useState({ q: '', a: 0 });
+  const [userAnswer, setUserAnswer] = useState('');
+
+  const generateCaptcha = React.useCallback(() => {
+    const ops = ['+', '-', '*', '/'];
+    const op = ops[Math.floor(Math.random() * ops.length)];
+    let n1, n2, ans, q;
+
+    if (op === '+') {
+      n1 = Math.floor(Math.random() * 80) + 11;
+      n2 = Math.floor(Math.random() * 80) + 11;
+      ans = n1 + n2;
+      q = `${n1} + ${n2} = ?`;
+    } else if (op === '-') {
+      n1 = Math.floor(Math.random() * 80) + 20;
+      n2 = Math.floor(Math.random() * (n1 - 5)) + 5;
+      ans = n1 - n2;
+      q = `${n1} - ${n2} = ?`;
+    } else if (op === '*') {
+      n1 = Math.floor(Math.random() * 10) + 3;
+      n2 = Math.floor(Math.random() * 10) + 3;
+      ans = n1 * n2;
+      q = `${n1} × ${n2} = ?`;
+    } else { // Division
+      ans = Math.floor(Math.random() * 10) + 2;
+      n2 = Math.floor(Math.random() * 8) + 2;
+      n1 = ans * n2;
+      q = `${n1} ÷ ${n2} = ?`;
+    }
+
+    setMathQuest({ q, a: ans });
+    setUserAnswer('');
+  }, []);
+
+  React.useEffect(() => {
+    generateCaptcha();
+  }, [generateCaptcha, mode]);
 
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  const onCaptchaChange = (token: string | null) => {
-    setCaptchaToken(token);
-  };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -46,17 +75,14 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!turnstileToken) {
-      setError("Iltimos, bot emasligingizni tasdiqlang (Turnstile).");
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      // 1. Verify Turnstile token on server
-      const verifyRes = await axios.post('/api/verify-turnstile', { token: turnstileToken });
-      if (!verifyRes.data.success) {
-        throw new Error("Turnstile tasdiqlanmadi.");
+      if (parseInt(userAnswer) !== mathQuest.a) {
+        setError("Matematik javob noto'g'ri. Iltimos, qaytadan urinib ko'ring.");
+        generateCaptcha();
+        setLoading(false);
+        return;
       }
 
       const result = await signInWithEmailAndPassword(auth, email, password);
@@ -64,6 +90,15 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
       onSuccess();
     } catch (err: any) {
       console.error("Login error:", err);
+      if (err.message?.includes('Could not reach Cloud Firestore backend') || err.code === 'unavailable') {
+        setError(
+          <div className="text-center space-y-2">
+            <p>Ma'lumotlar bazasiga ulanib bo'lmadi.</p>
+            <p className="text-[10px] opacity-70">Firestore ulanishi (offline). Iltimos, internetingizni tekshiring yoki birozdan so'ng qayta urinib ko'ring.</p>
+          </div>
+        );
+        return;
+      }
       const errMsg = err.response?.data?.error || err.message;
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError("Email yoki parol noto'g'ri.");
@@ -81,17 +116,14 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
       setError("Parollar mos kelmadi.");
       return;
     }
-    if (!turnstileToken) {
-      setError("Iltimos, bot emasligingizni tasdiqlang (Turnstile).");
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      // 1. Verify Turnstile token on server
-      const verifyRes = await axios.post('/api/verify-turnstile', { token: turnstileToken });
-      if (!verifyRes.data.success) {
-        throw new Error("Turnstile tasdiqlanmadi.");
+      if (parseInt(userAnswer) !== mathQuest.a) {
+        setError("Matematik javob noto'g'ri. Iltimos, qaytadan urinib ko'ring.");
+        generateCaptcha();
+        setLoading(false);
+        return;
       }
 
       const result = await createUserWithEmailAndPassword(auth, email, password);
@@ -124,24 +156,44 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="glass w-full max-w-sm p-8 sm:p-10 rounded-[2.5rem] relative overflow-hidden shadow-[0_0_100px_rgba(79,70,229,0.2)]"
+        className="glass w-full max-w-sm rounded-[2.5rem] relative overflow-hidden shadow-[0_0_100px_rgba(79,70,229,0.2)] flex flex-col max-h-[90vh]"
       >
-        <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
-          <X size={24} />
-        </button>
-
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-               <h2 className="text-3xl font-black uppercase tracking-tighter italic">
-                 Animem<span className="text-indigo-500">.uz</span>
-               </h2>
-          </div>
-          <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black">
-            {mode === 'login' ? 'Tizimga Kirish' : 
-             mode === 'register' ? "Ro'yxatdan O'tish" : 
-             'Emailni Tasdiqlash'}
-          </p>
+        {/* Header Actions */}
+        <div className="flex items-center justify-between p-6 pb-0 relative z-10">
+          {mode !== 'login' ? (
+            <button 
+              onClick={() => setMode('login')} 
+              className="p-2 -ml-2 text-slate-500 hover:text-white transition-colors bg-white/5 rounded-full"
+              title="Ortga qaytish"
+            >
+              <ArrowLeft size={20} />
+            </button>
+          ) : (
+            <div className="w-9" /> // Spacer
+          )}
+          
+          <button 
+            onClick={onClose} 
+            className="p-2 -mr-2 text-slate-500 hover:text-white transition-colors bg-white/5 rounded-full"
+            title="Yopish"
+          >
+            <X size={20} />
+          </button>
         </div>
+
+        <div className="overflow-y-auto p-8 pt-4 sm:p-10 sm:pt-4 custom-scrollbar">
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-3">
+                 <h2 className="text-2xl font-black uppercase tracking-tighter italic">
+                   Animem<span className="text-indigo-500">.uz</span>
+                 </h2>
+            </div>
+            <p className="text-[9px] text-slate-500 uppercase tracking-[0.3em] font-black">
+              {mode === 'login' ? 'Tizimga Kirish' : 
+               mode === 'register' ? "Ro'yxatdan O'tish" : 
+               'Emailni Tasdiqlash'}
+            </p>
+          </div>
 
         <AnimatePresence mode="wait">
           {mode === 'verify' ? (
@@ -226,16 +278,31 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
                   </div>
                 )}
 
-                <div className="flex justify-center py-2">
-                  <Turnstile 
-                    siteKey={TURNSTILE_SITE_KEY} 
-                    onSuccess={(token) => setTurnstileToken(token)}
-                    onExpire={() => setTurnstileToken(null)}
-                    onError={() => setTurnstileToken(null)}
-                    options={{
-                      theme: 'dark'
-                    }}
-                  />
+                <div className="space-y-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Bot tekshiruvi:</span>
+                    <button 
+                      type="button" 
+                      onClick={generateCaptcha} 
+                      className="text-indigo-500 hover:rotate-180 transition-transform duration-500"
+                      title="Yangilash"
+                    >
+                      <RefreshCcw size={14} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 px-4 py-3 bg-white/5 rounded-xl text-center font-mono text-lg font-black tracking-tighter text-indigo-400">
+                      {mathQuest.q}
+                    </div>
+                    <input 
+                      type="number"
+                      placeholder="Javob"
+                      className="w-24 glass-input text-center h-12 text-sm font-black"
+                      value={userAnswer}
+                      onChange={e => setUserAnswer(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
 
                 <button 
@@ -279,12 +346,13 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 text-red-500 bg-red-500/10 p-4 rounded-2xl border border-red-500/20 text-[9px] font-black uppercase tracking-widest text-center"
+            className="mt-4 text-red-500 bg-red-500/10 p-4 rounded-xl border border-red-500/20 text-[9px] font-black uppercase tracking-widest text-center mx-8 mb-8"
           >
             {error}
           </motion.div>
         )}
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
+  </div>
   );
 };

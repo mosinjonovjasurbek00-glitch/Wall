@@ -44,15 +44,19 @@ export const loginWithGoogle = async () => {
 // Test connection on boot as recommended
 async function testConnection() {
   try {
+    console.log('Testing Firestore connection to database:', firebaseConfig.firestoreDatabaseId || "(default)");
     // Attempting a simple read to check connectivity
     await getDocFromServer(doc(db, '_connection_test_', 'check'));
     console.log('Firebase connection successful');
   } catch (error: any) {
     if (error.code === 'unavailable') {
-      console.error("Firestore is unavailable. This may be due to network restrictions or incorrect database ID.");
-      console.error("Using Database ID:", firebaseConfig.firestoreDatabaseId || "(default)");
+      console.error("Firestore is unavailable [code=unavailable].");
+      console.warn("Possible causes: 1) Internet connection issue, 2) Firestore database not initialized in Firebase console, 3) Incorrect Database ID.");
+      console.info("Using Database ID:", firebaseConfig.firestoreDatabaseId || "(default)");
+    } else if (error.code === 'permission-denied') {
+      console.warn("Firestore connection check failed with Permission Denied. This is expected if security rules are tight, but suggests the database IS reachable.");
     } else {
-      console.error("Firebase connection test failed:", error);
+      console.error("Firebase connection test failed:", error.message, error.code);
     }
   }
 }

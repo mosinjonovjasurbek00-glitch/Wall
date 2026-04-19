@@ -46,8 +46,6 @@ const getDbAdmin = (databaseId?: string) => {
 
 const getAuthAdmin = () => getAuth();
 
-const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "0x4AAAAAAAC_bAlapuWFHvvqINSi4K6ynElk";
-
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -77,45 +75,6 @@ async function startServer() {
       res.send(Buffer.from(response.data));
     } catch (error: any) {
       res.status(500).send("Proxy error");
-    }
-  });
-
-  // --- Authentication Routes ---
-  
-  // Verify Turnstile token
-  app.post("/api/verify-turnstile", async (req, res) => {
-    const { token } = req.body;
-    if (!token) return res.status(400).json({ success: false, error: "Token topilmadi" });
-
-    try {
-      const params = new URLSearchParams();
-      params.append('secret', TURNSTILE_SECRET_KEY);
-      params.append('response', token);
-
-      const response = await axios.post(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        params.toString(),
-        { 
-          headers: { 
-            "Content-Type": "application/x-www-form-urlencoded" 
-          } 
-        }
-      );
-
-      if (response.data.success) {
-        console.log("Turnstile Verified Successfully");
-        res.json({ success: true });
-      } else {
-        console.error("Turnstile Verification Failed:", response.data);
-        res.status(400).json({ 
-          success: false, 
-          error: "Turnstile tasdiqlashdan o'tmadi",
-          codes: response.data['error-codes'] 
-        });
-      }
-    } catch (error: any) {
-      console.error("Turnstile API Error:", error.message);
-      res.status(500).json({ success: false, error: "Serverda Turnstile tekshirishda xatolik yuz berdi" });
     }
   });
 
