@@ -97,7 +97,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
                   </button>
                 )}
 
-                <NotificationMenu />
+                <NotificationMenu language={language} />
                 
                 <div className="flex items-center gap-1.5 sm:gap-4 pl-1.5 sm:pl-4 border-l border-white/10">
                   <div className="hidden lg:flex flex-col items-end">

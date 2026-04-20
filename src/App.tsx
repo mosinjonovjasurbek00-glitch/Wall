@@ -8,7 +8,7 @@ import Navbar from './components/Navbar';
 import AnimePortal from './components/AnimePortal';
 import AdminPanel from './components/AdminPanel';
 import ContactForm from './components/ContactForm';
-import { Loader2, ShieldAlert, AlertCircle, Send, Globe, X } from 'lucide-react';
+import { Loader2, ShieldAlert, AlertCircle, Send, Globe, X, Instagram, Youtube } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FallingLeaves } from './components/FallingLeaves';
 import { AuthModal } from './components/AuthModal';
@@ -180,11 +180,42 @@ export default function App() {
             </div>
             <p className="text-slate-500 text-sm max-w-sm font-medium leading-relaxed">{t('footerDesc')}</p>
           </div>
-          <div className="flex items-center gap-6 sm:gap-12 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
-            <a href="https://t.me/animem_uz1" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full hover:bg-indigo-600 hover:text-white transition-all border border-white/5">
-              <Send size={16} /> TELEGRAM
-            </a>
-            <button onClick={() => setShowContact(true)} className="hover:text-white transition-colors uppercase">{t('contact')}</button>
+          <div className="flex flex-col items-center md:items-end gap-6">
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://t.me/animem_uz1" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all border border-white/5 group shadow-lg hover:shadow-indigo-500/20"
+                title="Telegram"
+              >
+                <Send size={20} className="group-hover:scale-110 transition-transform" />
+              </a>
+              <a 
+                href="https://www.instagram.com/animem_uz/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-pink-600 hover:text-white transition-all border border-white/5 group shadow-lg hover:shadow-pink-500/20"
+                title="Instagram"
+              >
+                <Instagram size={20} className="group-hover:scale-110 transition-transform" />
+              </a>
+              <a 
+                href="https://www.youtube.com/@animemuz1" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-red-600 hover:text-white transition-all border border-white/5 group shadow-lg hover:shadow-red-500/20"
+                title="YouTube"
+              >
+                <Youtube size={20} className="group-hover:scale-110 transition-transform" />
+              </a>
+            </div>
+            <button 
+              onClick={() => setShowContact(true)} 
+              className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] hover:text-white transition-colors"
+            >
+              {t('contact')}
+            </button>
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-16 pt-12 border-t border-white/5 text-center text-slate-800 text-[10px] font-black uppercase tracking-[0.4em]">

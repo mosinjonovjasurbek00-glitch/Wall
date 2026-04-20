@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Bell, X, Sparkles, MessageSquare, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
+import { Language, useTranslation } from '../i18n';
 import { db } from '../firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 
@@ -13,7 +14,12 @@ interface AppNotification {
   timestamp: number;
 }
 
-export default function NotificationMenu() {
+interface NotificationMenuProps {
+  language?: Language;
+}
+
+export default function NotificationMenu({ language = 'uz' }: NotificationMenuProps) {
+  const t = useTranslation(language);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [hasNew, setHasNew] = useState(false);
@@ -29,8 +35,8 @@ export default function NotificationMenu() {
     if (!hasWelcomed) {
       const welcome: AppNotification = {
         id: 'welcome-' + Date.now(),
-        title: 'Xush kelibsiz!',
-        message: 'Animem.uz portaliga xush kelibsiz. Eng so\'nggi animelar olamiga sayohatni boshlang!',
+        title: t('welcomeTitle'),
+        message: t('welcomeMessage'),
         type: 'welcome',
         timestamp: Date.now()
       };
@@ -49,7 +55,7 @@ export default function NotificationMenu() {
           const data = change.doc.data();
           const newNotif: AppNotification = {
             id: change.doc.id,
-            title: data.title || 'Yangi xabar',
+            title: data.title || t('newNotification'),
             message: data.message || '',
             type: 'update',
             timestamp: typeof data.createdAt?.toMillis === 'function' ? data.createdAt.toMillis() : Date.now()
@@ -114,12 +120,12 @@ export default function NotificationMenu() {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute top-full mt-4 right-0 w-[320px] sm:w-[380px] z-[120]"
+              className="fixed left-4 right-4 top-20 sm:absolute sm:inset-x-auto sm:top-full sm:mt-4 sm:right-0 sm:w-[380px] z-[120]"
             >
               <div className="bg-slate-900 border border-white/10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,1)] overflow-hidden flex flex-col max-h-[500px]">
                 <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-                  <h3 className="text-white font-black text-sm uppercase tracking-tighter">Bildirishnomalar</h3>
-                  <span className="text-[10px] font-black text-slate-500 px-3 py-1 bg-white/5 rounded-full">{notifications.length} ta xabar</span>
+                  <h3 className="text-white font-black text-sm uppercase tracking-tighter">{t('notifications')}</h3>
+                  <span className="text-[10px] font-black text-slate-500 px-3 py-1 bg-white/5 rounded-full">{notifications.length} {t('msgCount')}</span>
                 </div>
 
                 <div className="overflow-y-auto custom-scrollbar flex-1">
@@ -128,7 +134,7 @@ export default function NotificationMenu() {
                       <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-slate-700">
                         <Bell size={32} />
                       </div>
-                      <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Hozircha xabarlar yo'q</p>
+                      <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{t('noMessages')}</p>
                     </div>
                   ) : (
                     <div className="flex flex-col">
@@ -174,7 +180,7 @@ export default function NotificationMenu() {
                       onClick={() => setIsOpen(false)}
                       className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] hover:text-white transition-colors"
                     >
-                      Yopish
+                      {t('close')}
                     </button>
                   </div>
                 )}
