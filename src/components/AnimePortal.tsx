@@ -675,6 +675,17 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                if (srcMatch) url = srcMatch[1];
                              }
                              if (url.startsWith('//')) url = 'https:' + url;
+                             
+                             // Handle Telegram URLs explicitly via our streaming API proxy
+                             if (url.includes('t.me/')) {
+                               const proxyUrl = `/api/telegram/stream?url=${encodeURIComponent(url)}`;
+                               return (
+                                 <video controls className="w-full h-full object-contain" key={proxyUrl} playsInline autoPlay>
+                                     <source src={proxyUrl} type="video/mp4" />
+                                 </video>
+                               );
+                             }
+
                              const isDirectVideo = url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi)$/) || url.includes('stream') || url.includes('/file/');
 
                              if (isDirectVideo) {

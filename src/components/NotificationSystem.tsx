@@ -42,7 +42,10 @@ export default function NotificationSystem() {
       }
 
       // Check if notification is truly new (created after our session started)
-      if (newNotif.createdAt.toMillis() < sessionStartTime.toMillis()) return;
+      const notifTime = typeof (newNotif.createdAt as any)?.toMillis === 'function' ? (newNotif.createdAt as any).toMillis() : 0;
+      const sessionTime = typeof (sessionStartTime as any)?.toMillis === 'function' ? (sessionStartTime as any).toMillis() : 0;
+      
+      if (notifTime < sessionTime) return;
 
       setLastNotification(newNotif);
       setShow(true);

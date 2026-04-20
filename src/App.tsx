@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { auth, db } from './firebase';
+import { auth, db, syncUserToFirestore } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc, setDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { getRedirectResult } from 'firebase/auth';
 import Navbar from './components/Navbar';
 import AnimePortal from './components/AnimePortal';
 import AdminPanel from './components/AdminPanel';
@@ -20,6 +21,17 @@ export default function App() {
   const [view, setView] = useState<'gallery' | 'admin'>('gallery');
   const [showContact, setShowContact] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Check for redirect result on mount
+  useEffect(() => {
+    getRedirectResult(auth).then(async (result) => {
+      if (result?.user) {
+        await syncUserToFirestore(result.user);
+      }
+    }).catch((error) => {
+      console.error("Redirect login error:", error);
+    });
+  }, []);
   const [selectedCategory, setSelectedCategory] = useState('All');
   
   const [animeList, setAnimeList] = useState<any[]>([]);
@@ -32,7 +44,10 @@ export default function App() {
     const qAnime = query(collection(db, 'anime'));
     const unsubscribe = onSnapshot(qAnime, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setAnimeList(docs.sort((a: any, b: any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
+      setAnimeList(docs.sort((a: any, b: any) => {
+        const getTs = (d: any) => typeof d?.toMillis === 'function' ? d.toMillis() : 0;
+        return getTs(b.createdAt) - getTs(a.createdAt);
+      }));
       setDataLoading(false);
     }, (error) => {
       setFetchError("Anime yuklashda xatolik");

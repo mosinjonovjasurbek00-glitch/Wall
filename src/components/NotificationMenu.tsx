@@ -52,7 +52,7 @@ export default function NotificationMenu() {
             title: data.title || 'Yangi xabar',
             message: data.message || '',
             type: 'update',
-            timestamp: data.createdAt?.toMillis() || Date.now()
+            timestamp: typeof data.createdAt?.toMillis === 'function' ? data.createdAt.toMillis() : Date.now()
           };
 
           setNotifications(prev => {

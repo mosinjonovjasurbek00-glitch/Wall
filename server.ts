@@ -21,36 +21,52 @@ process.env.GCLOUD_PROJECT = firebaseConfig.projectId;
 
 console.log(`DEBUG: Project ID from config: ${firebaseConfig.projectId}`);
 
-// Initialize Firebase Admin
+// Initialize Firebase Admin with Application Default Credentials
 if (admin.apps.length === 0) {
   try {
-    console.log(`Initializing Firebase Admin for project: ${firebaseConfig.projectId}`);
+    console.log(`[Firebase] Initializing Admin for project: ${firebaseConfig.projectId}`);
     admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
       projectId: firebaseConfig.projectId
     });
   } catch (e: any) {
-    console.error("Firebase Admin initialization failed:", e.message);
+    console.warn("[Firebase] Init with credentials failed, trying minimal:", e.message);
+    admin.initializeApp({
+      projectId: firebaseConfig.projectId
+    });
   }
 }
 
 // Access services with robust database ID resolution
-const getDbAdmin = (databaseId?: string) => {
-  const configDbId = firebaseConfig.firestoreDatabaseId;
-  const targetId = databaseId || configDbId;
-  
-  if (targetId && targetId !== "(default)") {
-    return getFirestore(targetId);
+const getDbAdmin = () => {
+  try {
+    const configDbId = firebaseConfig.firestoreDatabaseId;
+    if (configDbId && configDbId !== "(default)" && configDbId.trim() !== "") {
+      return getFirestore(admin.app(), configDbId);
+    }
+  } catch (e) {
+    console.warn("[Firebase] Named DB access failed, trying default:", e);
   }
   return getFirestore();
 };
 
 const getAuthAdmin = () => getAuth();
 
+import { tgStreamer } from "./src/services/TelegramStreamer";
+
+// Orqa fonda telegram mijozni ishga tushirish (xatolik bermasligi uchun catch)
+tgStreamer.init().catch(err => console.error("Telegram Streamer xatosi:", err));
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   app.use(express.json());
+
+  // Katta videolarni serverdan parchalab uzatish yo'li
+  app.get("/api/telegram/stream", async (req, res) => {
+    await tgStreamer.handleStream(req, res);
+  });
 
   // Proxy route
   app.get("/api/proxy-image", async (req, res) => {
@@ -75,6 +91,88 @@ async function startServer() {
       res.send(Buffer.from(response.data));
     } catch (error: any) {
       res.status(500).send("Proxy error");
+    }
+  });
+
+  // Bot API for Telegram or other integrations (Open Professional Version)
+  app.get("/api/bot/latest-activity", async (req, res) => {
+    try {
+      res.setHeader('Access-Control-Allow-Origin', '*'); 
+      const db = getDbAdmin();
+      
+      // 1. Get latest 15 anime
+      const animeSnap = await db.collection('anime')
+        .orderBy('createdAt', 'desc')
+        .limit(15)
+        .get();
+      
+      const latestAnime = animeSnap.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          description: data.description || "",
+          posterUrl: data.posterUrl || "",
+          rating: data.rating || 0,
+          year: data.year || 0,
+          category: data.category || "",
+          updatedAt: data.updatedAt?.toDate?.() || data.createdAt?.toDate?.() || new Date()
+        };
+      });
+
+      // 2. Get latest 15 notifications (detailed episodes)
+      const notificationsSnap = await db.collection('public_notifications')
+        .orderBy('createdAt', 'desc')
+        .limit(15)
+        .get();
+      
+      const latestEpisodes = notificationsSnap.docs
+        .map(doc => {
+          const data = doc.data();
+          if (data.type !== 'episode') return null;
+          return {
+            id: doc.id,
+            animeTitle: data.title,
+            episodeInfo: data.message,
+            posterUrl: data.posterUrl,
+            animeId: data.animeId,
+            timestamp: data.createdAt?.toDate?.() || new Date()
+          };
+        })
+        .filter(Boolean);
+
+      res.json({
+        success: true,
+        source: "Animem.uz PRO API",
+        generatedAt: new Date().toISOString(),
+        data: {
+          anime: latestAnime,
+          episodes: latestEpisodes
+        }
+      });
+    } catch (error: any) {
+      console.error("PRO Bot API error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Server xatosi", 
+        details: error.message 
+      });
+    }
+  });
+
+  // Direct trigger for Telegram Bridge (used by Admin Panel)
+  app.post("/api/admin/trigger-telegram", async (req, res) => {
+    try {
+      // Small delay to ensure Firestore has indexed the new document
+      setTimeout(async () => {
+        if (typeof global.triggerTelegramCheck === 'function') {
+          await global.triggerTelegramCheck();
+        }
+      }, 2000);
+      
+      res.json({ success: true, message: "Telegram yangilash navbatga qo'yildi" });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
     }
   });
 
@@ -110,28 +208,93 @@ async function startServer() {
       };
 
       // sendEachForMulticast is the modern way in v11+
-      const response = await admin.messaging().sendEachForMulticast(message);
-      
-      console.log(`Push success: ${response.successCount}, failures: ${response.failureCount}`);
-      
-      // Cleanup invalid tokens
-      if (response.failureCount > 0) {
-        const batch = db.batch();
-        response.responses.forEach((resp, idx) => {
-          if (!resp.success) {
-            const errorCode = resp.error?.code;
-            if (errorCode === 'messaging/invalid-registration-token' || errorCode === 'messaging/registration-token-not-registered') {
-              batch.delete(tokensSnap.docs[idx].ref);
+      try {
+        const response = await admin.messaging().sendEachForMulticast(message);
+        console.log(`Push success: ${response.successCount}, failures: ${response.failureCount}`);
+        
+        // Cleanup invalid tokens
+        if (response.failureCount > 0) {
+          const batch = db.batch();
+          response.responses.forEach((resp, idx) => {
+            if (!resp.success) {
+              const errorCode = resp.error?.code;
+              if (errorCode === 'messaging/invalid-registration-token' || errorCode === 'messaging/registration-token-not-registered') {
+                batch.delete(tokensSnap.docs[idx].ref);
+              }
             }
-          }
-        });
-        await batch.commit();
+          });
+          await batch.commit();
+        }
+        res.json({ success: true, count: response.successCount });
+      } catch (fcmErr: any) {
+        console.error("FCM broadcast error:", fcmErr);
+        res.json({ success: true, message: "Process continued with FCM error", error: fcmErr.message });
+      }
+    } catch (error: any) {
+      console.error("Route error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Debug route for Telegram Bridge
+  app.get("/api/debug/telegram-test", async (req, res) => {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const channelId = process.env.TELEGRAM_CHANNEL_ID;
+    
+    if (!token || !channelId) {
+      return res.status(400).json({ 
+        error: "Sozlamalar yetishmayapti", 
+        tokenSet: !!token, 
+        channelIdSet: !!channelId 
+      });
+    }
+
+    let botInfo = null;
+    let databaseStatus: any = {};
+
+    try {
+      // 1. Check Bot Token
+      const url = `https://api.telegram.org/bot${token}/getMe`;
+      const botRes = await fetch(url);
+      botInfo = await botRes.json();
+
+      // 2. Try Named Database from config
+      try {
+        const configDbId = firebaseConfig.firestoreDatabaseId;
+        databaseStatus.configDbId = configDbId;
+        
+        if (configDbId && configDbId !== "(default)") {
+          const namedDb = getFirestore(admin.app(), configDbId);
+          const snap = await namedDb.collection('public_notifications').limit(1).get();
+          databaseStatus.namedDb = { status: "success", count: snap.size };
+        } else {
+          databaseStatus.namedDb = { status: "skipped", reason: "No named DB in config" };
+        }
+      } catch (e: any) {
+        databaseStatus.namedDb = { status: "error", message: e.message };
       }
 
-      res.json({ success: true, count: response.successCount });
-    } catch (error: any) {
-      console.error("FCM broadcast error:", error);
-      res.status(500).json({ error: error.message });
+      // 3. Try Default Database
+      try {
+        const defaultDb = getFirestore();
+        const snap = await defaultDb.collection('public_notifications').limit(1).get();
+        databaseStatus.defaultDb = { status: "success", count: snap.size };
+      } catch (e: any) {
+        databaseStatus.defaultDb = { status: "error", message: e.message };
+      }
+
+      res.json({
+        success: true,
+        botInfo: botInfo,
+        channel: channelId,
+        databaseStatus: databaseStatus,
+        env: {
+          project: process.env.GOOGLE_CLOUD_PROJECT,
+          nodeEnv: process.env.NODE_ENV
+        }
+      });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message, stack: e.stack });
     }
   });
 
@@ -151,7 +314,142 @@ async function startServer() {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    startTelegramBridge().catch(console.error);
   });
+}
+
+/**
+ * Telegram Bridge: Monitors Firestore for new notifications and posts them to Telegram.
+ * This runs as a background task on the server.
+ */
+async function startTelegramBridge() {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  let channelId = process.env.TELEGRAM_CHANNEL_ID;
+
+  if (!token || !channelId) {
+    console.log("--- [Telegram Bridge] Sozlamalar topilmadi. BOT_TOKEN va CHANNEL_ID kiritishni unutmang. ---");
+    return;
+  }
+
+  // Cleanup channelId if it's a full telegram URL
+  if (channelId.includes('t.me/')) {
+    channelId = '@' + channelId.split('t.me/')[1].replace('/', '');
+  }
+
+  console.log("--- [Telegram Bridge] Ishga tushirildi! Yangi kontent monitoringi faol. ---");
+  const db = getDbAdmin();
+  let lastProcessedId: string | null = null;
+  let bridgeActive: boolean = true;
+
+  // Warm up: get the latest ID to avoid double-posting old content on restart
+  try {
+    const dbInstance = getDbAdmin();
+    const initialSnap = await dbInstance.collection('public_notifications').orderBy('createdAt', 'desc').limit(1).get();
+    if (!initialSnap.empty) {
+      lastProcessedId = initialSnap.docs[0].id;
+      console.log(`[Telegram Bridge] Warm-up complete. Last ID: ${lastProcessedId}`);
+    } else {
+      console.log("[Telegram Bridge] No notifications found in database yet.");
+    }
+  } catch (e: any) {
+    if (e.message.includes('PERMISSION_DENIED')) {
+      console.error("[Telegram Bridge] Permission denied. Retrying with default database...");
+      try {
+        const defaultDb = getFirestore();
+        const initialSnap = await defaultDb.collection('public_notifications').orderBy('createdAt', 'desc').limit(1).get();
+        if (!initialSnap.empty) {
+          lastProcessedId = initialSnap.docs[0].id;
+        }
+      } catch (innerError: any) {
+        if (innerError.message && innerError.message.includes('PERMISSION_DENIED')) {
+           console.warn("[Telegram Bridge] Completely unable to access database due to IAM constraints. Disabling bridge.");
+           bridgeActive = false;
+        } else {
+           console.error("[Telegram Bridge] Default database also failed:", innerError);
+        }
+      }
+    } else {
+      console.error("[Telegram Bridge] Initialization error:", e);
+    }
+  }
+
+  // Periodic check function
+  const checkAndPost = async () => {
+    if (token === "YOUR_BOT_TOKEN") return; // Don't run with placeholders
+    
+    try {
+      const dbInstance = getDbAdmin();
+      const snap = await dbInstance.collection('public_notifications').orderBy('createdAt', 'desc').limit(10).get();
+      if (snap.empty) return;
+
+      const docs = snap.docs;
+      const index = docs.findIndex(doc => doc.id === lastProcessedId);
+      
+      let newDocs = [];
+      if (index === -1) {
+        if (!lastProcessedId) {
+           lastProcessedId = docs[0].id;
+           return;
+        } else {
+           newDocs = docs;
+        }
+      } else {
+        newDocs = docs.slice(0, index);
+      }
+
+      if (newDocs.length > 0) {
+        for (const doc of newDocs.reverse()) {
+          const data = doc.data();
+          const siteUrl = "https://ais-dev-cgj6xwkpzi54j7zli3gjgu-155117606908.asia-east1.run.app";
+          const title = data.type === 'anime' ? "🎬 YANGI ANIME!" : "🔔 YANGI QISM (EPIZOD)!";
+          const text = `<b>${title}</b>\n\n<b>${data.title}</b>\n${data.message}\n\n🌐 Saytda ko'rish: ${siteUrl}`;
+
+          try {
+            const url = `https://api.telegram.org/bot${token}/sendPhoto`;
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: channelId,
+                photo: data.posterUrl,
+                caption: text,
+                parse_mode: 'HTML'
+              })
+            });
+            const result = await response.json();
+            if (result.ok) {
+              console.log(`[Telegram Bridge] Muvaffaqiyatli jo'natildi: ${data.title}`);
+            }
+          } catch (err) {
+            console.error("[Telegram Bridge] Fetch error:", err);
+          }
+          lastProcessedId = doc.id;
+        }
+      }
+    } catch (e: any) {
+      if (e.message && e.message.includes('PERMISSION_DENIED')) {
+        console.warn("[Telegram Bridge] O'qish huquqi yo'q (PERMISSION_DENIED). Loop to'xtatilmoqda.");
+        bridgeActive = false; // Disable future checks
+      } else {
+        console.error("[Telegram Bridge] Loop error:", e);
+      }
+    }
+  };
+
+  // Assign to global for trigger access
+  (global as any).triggerTelegramCheck = () => {
+    if (bridgeActive) checkAndPost();
+  };
+
+  // Run every 2 minutes for faster response
+  setInterval(() => {
+    if (bridgeActive) checkAndPost();
+  }, 1000 * 60 * 2);
+  
+  // Also run once immediately after 10 seconds to catch any missed updates
+  setTimeout(() => {
+    if (bridgeActive) checkAndPost();
+  }, 1000 * 10);
 }
 
 startServer();

@@ -98,16 +98,40 @@ export default function AdminPanel() {
   const sendPush = async (title: string, body: string, imageUrl: string, animeId: string) => {
     try {
       await axios.post('/api/admin/broadcast-notification', { title, body, imageUrl, animeId });
+      // Trigger Telegram bridge immediately
+      await axios.post('/api/admin/trigger-telegram');
     } catch (err) {
-      console.error("Failed to send push notification:", err);
+      console.error("Failed to send push/telegram notification:", err);
     }
   };
+
+  const [telegramStatus, setTelegramStatus] = useState<{connected: boolean, botName: string} | null>(null);
+
+  useEffect(() => {
+    const checkTelegram = async () => {
+      try {
+        const res = await axios.get('/api/debug/telegram-test');
+        if (res.data.botInfo?.ok) {
+          setTelegramStatus({
+            connected: true,
+            botName: res.data.botInfo.result.username
+          });
+        }
+      } catch (e) {
+        setTelegramStatus(null);
+      }
+    };
+    checkTelegram();
+  }, []);
 
   useEffect(() => {
     const q = query(collection(db, 'anime'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AnimeDoc[];
-      setAnimeList(docs.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
+      setAnimeList(docs.sort((a, b) => {
+        const getTs = (d: any) => typeof d?.toMillis === 'function' ? d.toMillis() : 0;
+        return getTs(b.createdAt) - getTs(a.createdAt);
+      }));
       setLoading(false);
     });
     return () => unsubscribe();
@@ -497,6 +521,26 @@ export default function AdminPanel() {
         )}
       </AnimatePresence>
 
+      {telegramStatus && (
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="glass rounded-2xl p-4 flex items-center justify-between border border-indigo-500/20">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center">
+                <Send className="text-indigo-400" size={20} />
+              </div>
+              <div className="flex flex-col">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Telegram Aloqasi</h4>
+                <p className="text-xs font-bold text-white uppercase tracking-tight">@{telegramStatus.botName} (ULANGAN)</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              ONLINE Monitoring
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex glass p-1 rounded-2xl mb-10 w-fit mx-auto gap-1">
         <button
           onClick={() => { setActiveTab('anime'); setSelectedAnimeForEpisodes(null); }}
@@ -669,7 +713,10 @@ export default function AdminPanel() {
                     <form onSubmit={handleEpisodeSubmit} className="space-y-4">
                       <input type="number" placeholder="Epizod Raqami" className="glass-input w-full" value={epNumber} onChange={e => setEpNumber(Number(e.target.value))} required />
                       <input type="text" placeholder="Epizod Sarlavhasi (Ixtiyoriy)" className="glass-input w-full" value={epTitle} onChange={e => setEpTitle(e.target.value)} />
-                      <input type="text" placeholder="Video URL" className="glass-input w-full" value={epVideoUrl} onChange={e => setEpVideoUrl(e.target.value)} required />
+                      <div className="space-y-1">
+                         <input type="text" placeholder="Video URL (yoki Telegram post: https://t.me/kanal/123)" className="glass-input w-full" value={epVideoUrl} onChange={e => setEpVideoUrl(e.target.value)} required />
+                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-1">Telegram havolasidan server o'zi videoni tortib uzatadi.</p>
+                      </div>
                       
                       <button type="submit" disabled={submitting} className="glass-button-primary w-full py-4 flex items-center justify-center gap-2">
                         {submitting ? <Loader2 className="animate-spin" /> : <Plus />}

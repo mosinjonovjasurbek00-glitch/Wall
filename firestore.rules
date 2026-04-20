@@ -119,5 +119,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
       allow update: if false;
     }
+
+    match /fcm_tokens/{tokenId} {
+      allow read: if isAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.userId); // Adjust logic if needed
+    }
   }
 }

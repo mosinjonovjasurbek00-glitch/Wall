@@ -67,7 +67,16 @@ export const AuthModal = ({ onSuccess, onClose }: AuthModalProps) => {
       onSuccess();
     } catch (err: any) {
       console.error("Google Login Error:", err);
-      setError("Google orqali kirishda xatolik yuz berdi.");
+      // Xatoning asl sababini chiqarish (misol uchun, ruxsat etilmagan domen xatosi)
+      if (err.code === 'auth/unauthorized-domain') {
+        setError("Sayt manzili Firebase 'Authorized domains' ro'yxatiga qo'shilmagan.");
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError("Kirish oynasi yopib yuborildi.");
+      } else if (err.code === 'auth/popup-blocked') {
+        setError("Brauzer oynani ochishni taqiqladi. Iltimos, popuplarga ruxsat bering.");
+      } else {
+        setError(`Xatolik yuz berdi: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }

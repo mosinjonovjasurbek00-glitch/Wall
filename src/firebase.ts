@@ -58,9 +58,20 @@ export const syncUserToFirestore = async (user: any) => {
 };
 
 export const loginWithGoogle = async () => {
-    const result = await signInWithPopup(auth, googleProvider);
-    await syncUserToFirestore(result.user);
-    return result;
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        await syncUserToFirestore(result.user);
+        return result;
+    } catch (error: any) {
+        // Agar popup bloklansa yoki muhit (masalan Telegram in-app browser) ko'tarmasa
+        if (error.code === 'auth/popup-blocked' || error.message.includes('popup')) {
+             console.warn("Popup bloklandi. Redirect orqali kirishga urinish...");
+             const { signInWithRedirect } = await import('firebase/auth');
+             await signInWithRedirect(auth, googleProvider);
+             return null; // Redirect sahifani yangilaydi
+        }
+        throw error;
+    }
 };
 
 // Test connection on boot as recommended
