@@ -318,7 +318,28 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
         </div>
       )}
       {/* Grid Content */}
-      <div className={cn("px-6 sm:px-12 lg:px-24 py-12 relative z-10", (!featuredAnime || selectedCategory !== 'All' || searchTerm || showWatchlistOnly) && "pt-12 sm:pt-20")}>
+      <div id="anime-grid" className={cn("px-6 sm:px-12 lg:px-24 py-12 relative z-10", (!featuredAnime || selectedCategory !== 'All' || searchTerm || showWatchlistOnly) && "pt-12 sm:pt-20")}>
+        
+        {/* Categories Bar */}
+        <div id="categories-section" className="mb-12 overflow-x-auto no-scrollbar pb-4">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-max">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={cn(
+                  "px-6 sm:px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                  selectedCategory === cat 
+                    ? "bg-indigo-600 border-indigo-500 text-white shadow-xl shadow-indigo-600/20" 
+                    : "bg-white/5 border-white/10 text-slate-500 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                {t((categoryKeys[cat] || cat) as any)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
           <div className="space-y-3 sm:space-y-4">
              <div className="flex items-center gap-3 text-indigo-400">
@@ -341,6 +362,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
             <div className="relative group flex-1 md:flex-none">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
               <input 
+                id="search-input"
                 type="text" 
                 placeholder={t('search')} 
                 className="bg-white/5 border border-white/10 rounded-full pl-14 pr-6 py-3.5 text-sm focus:outline-none focus:border-indigo-500/50 w-full md:w-64 lg:w-80 transition-all font-medium"

@@ -70,6 +70,34 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
             </div>
           </div>
 
+          <div className="hidden md:flex items-center gap-4 lg:gap-8 px-4 lg:px-8 border-l border-white/5 ml-2 lg:ml-4">
+            <button 
+              onClick={() => { setView('gallery'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+            >
+              {t('home')}
+            </button>
+            <button 
+              onClick={() => { 
+                setView('gallery'); 
+                const searchInput = document.getElementById('search-input');
+                if (searchInput) {
+                  searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  setTimeout(() => searchInput.focus(), 600);
+                }
+              }}
+              className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+            >
+              {t('catalog')}
+            </button>
+            <button 
+              onClick={() => { setView('gallery'); document.getElementById('categories-section')?.scrollIntoView({ behavior: 'smooth' }); }}
+              className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+            >
+              {t('genres')}
+            </button>
+          </div>
+
           <div className="flex items-center gap-1 sm:gap-4 min-w-0">
             {/* Language Switcher */}
             <button 
