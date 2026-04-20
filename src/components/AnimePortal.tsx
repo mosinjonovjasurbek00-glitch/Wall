@@ -297,6 +297,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                   <div className="h-full rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/5 group-hover:border-indigo-500/30 transition-colors">
                     <img 
                       src={featuredAnime.posterUrl} 
+                      alt={featuredAnime.title}
                       className="h-full w-auto object-cover group-hover:scale-105 transition-transform duration-700" 
                       referrerPolicy="no-referrer" 
                     />
@@ -407,7 +408,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                   onClick={() => handleOpenAnime(anime)}
                 >
                   <div className="aspect-[2/3] rounded-2xl sm:rounded-[3rem] overflow-hidden relative glass border-white/5 group-hover:border-indigo-500/50 transition-all duration-500 shadow-2xl">
-                    <img src={anime.posterUrl} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" loading="lazy" />
+                    <img src={anime.posterUrl} alt={anime.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" loading="lazy" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     
                     {/* Hover Overlay - Simplified as info is now below */}
