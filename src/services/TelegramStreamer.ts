@@ -2,6 +2,8 @@ import { Api, TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions";
 import { Request, Response } from "express";
 
+import bigInt from "big-integer";
+
 export class TelegramStreamer {
   public client: TelegramClient | null = null;
   private apiId: number;
@@ -97,9 +99,9 @@ export class TelegramStreamer {
         // to prevent Vercel memory crash on whole download
         const iterator = this.client.iterDownload({
           file: media,
-          offset: require('big-integer')(0),
+          offset: bigInt(0),
           limit: 1024 * 1024 * 2, // 2MB
-          requestSize: 256 * 1024,
+          requestSize: 512 * 1024,
         });
         
         for await (const chunk of iterator) {
@@ -128,9 +130,9 @@ export class TelegramStreamer {
       try {
         const iterator = this.client.iterDownload({
           file: media,
-          offset: require('big-integer')(start),
+          offset: bigInt(start),
           limit: chunksize,
-          requestSize: 256 * 1024, // 256 KB chunk requests to Telegram
+          requestSize: 512 * 1024, // 512 KB chunk requests to Telegram
         });
 
         for await (const chunk of iterator) {

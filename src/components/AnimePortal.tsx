@@ -58,6 +58,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
   const [modalMode, setModalMode] = useState<'details' | 'player'>('details');
   const [episodes, setEpisodes] = useState<EpisodeDoc[]>([]);
   const [currentEpisode, setCurrentEpisode] = useState<EpisodeDoc | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
   const [comments, setComments] = useState<CommentDoc[]>([]);
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -100,6 +101,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as EpisodeDoc[];
       setEpisodes(docs);
       if (docs.length > 0 && !currentEpisode) {
+        setVideoLoading(true);
         setCurrentEpisode(docs[0]);
       }
       setLoadingEpisodes(false);
@@ -196,6 +198,12 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
         createdAt: serverTimestamp()
       });
     }
+  };
+
+  const handleEpisodeSelect = (ep: EpisodeDoc) => {
+    if (currentEpisode?.id === ep.id) return;
+    setVideoLoading(true);
+    setCurrentEpisode(ep);
   };
 
   const handleOpenAnime = (anime: AnimeDoc, mode: 'details' | 'player' = 'details') => {
@@ -562,11 +570,11 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
               <AnimatePresence mode="wait">
                 {modalMode === 'details' ? (
                   <motion.div 
-                    key="details-view"
+                    key={`details-${selectedAnime.id}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className="flex flex-col md:flex-row p-6 sm:p-12 md:p-20 gap-10 md:gap-16 items-center md:items-start relative overflow-y-auto custom-scrollbar"
+                    className="flex-1 flex flex-col md:flex-row p-6 sm:p-12 md:p-20 gap-10 md:gap-16 items-center md:items-start relative overflow-y-auto custom-scrollbar"
                   >
                     {/* Background atmosphere for details */}
                     <div className="absolute top-0 right-0 w-full h-full bg-indigo-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
@@ -588,7 +596,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                             )}
                           >
                              <Heart size={16} fill={watchlist.has(selectedAnime.id) ? "currentColor" : "none"} />
-                             {watchlist.has(selectedAnime.id) ? "SAQLANGAN" : "SAQLASH"}
+                             {watchlist.has(selectedAnime.id) ? t('savedBtn') : t('save')}
                           </button>
                           
                           <button 
@@ -599,8 +607,25 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                             className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
                           >
                              <Play size={16} fill="white" />
-                             KO'RISH
+                             {t('watch')}
                           </button>
+                       </div>
+
+                       {/* Recommended Anime Section */}
+                       <div className="hidden lg:block pt-8 border-t border-white/5">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{t('recently')}</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                             {animeList.filter(a => a.id !== selectedAnime.id).slice(0, 4).map(recommend => (
+                               <button 
+                                 key={recommend.id}
+                                 onClick={() => handleOpenAnime(recommend)}
+                                 className="group relative aspect-[2/3] rounded-xl overflow-hidden border border-white/5 hover:border-indigo-500/50 transition-all"
+                               >
+                                  <img src={recommend.posterUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                                  <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors" />
+                               </button>
+                             ))}
+                          </div>
                        </div>
                     </div>
 
@@ -639,7 +664,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                        </div>
 
                        {/* Comments Section */}
-                       <div className="pt-10 border-t border-white/5 space-y-8">
+                       <div className="pt-10 border-t border-white/5 space-y-8 text-left">
                           <div className="flex items-center gap-3">
                              <MessageSquare size={20} className="text-indigo-500" />
                              <h3 className="text-xl font-black uppercase tracking-tighter">{t('comments')} ({comments.length})</h3>
@@ -649,7 +674,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                             <form onSubmit={handlePostComment} className="relative">
                                <textarea 
                                  placeholder={t('leaveComment')} 
-                                 className="glass-input w-full min-h-[100px] py-4 pr-16 bg-white/[0.02]"
+                                 className="glass-input w-full min-h-[100px] py-4 pr-16 bg-white/[0.02] text-left"
                                  value={newComment}
                                  onChange={e => setNewComment(e.target.value)}
                                  required
@@ -710,7 +735,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                   </motion.div>
                 ) : (
                   <motion.div 
-                    key="player-view"
+                    key={`player-${selectedAnime.id}`}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
@@ -721,24 +746,51 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                       onClick={() => setModalMode('details')}
                       className="absolute top-6 left-6 z-[300] flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors bg-black/40 px-4 py-2 rounded-xl border border-white/5"
                     >
-                      <ArrowLeft size={16} /> MA'LUMOT
+                      <ArrowLeft size={16} /> {t('info')}
                     </button>
 
                     {/* Left Side: Player & Info */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-10 pt-20 sm:pt-24 space-y-6">
                       
                       {/* Simplified Dubbing Selection */}
-                      <div className="flex items-center gap-4">
-                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">DUBLYAJ:</span>
-                         <div className="flex gap-2">
-                            <button className="bg-indigo-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-600/30 text-white">
-                               <Check size={12} /> 日本語
-                            </button>
+                      <div className="flex items-center justify-between pr-4">
+                         <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">DUBLYAJ:</span>
+                            <div className="flex gap-2">
+                               <button className="bg-indigo-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-600/30 text-white">
+                                  <Check size={12} /> 日本語
+                               </button>
+                            </div>
                          </div>
+
+                         {/* Next Episode Button */}
+                         {currentEpisode && episodes.some(e => e.episodeNumber > currentEpisode.episodeNumber) && (
+                           <button 
+                             onClick={() => {
+                               const next = episodes.find(e => e.episodeNumber > currentEpisode.episodeNumber);
+                               if (next) {
+                                  setVideoLoading(true);
+                                  setCurrentEpisode(next);
+                               }
+                             }}
+                             className="group flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 px-5 py-2.5 rounded-xl transition-all active:scale-95"
+                           >
+                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-indigo-400 transition-colors">Keyingi qism</span>
+                             <ChevronRight size={16} className="text-indigo-500" />
+                           </button>
+                         )}
                       </div>
 
                       {/* Video Player Area */}
                       <div className="aspect-video bg-black rounded-2xl sm:rounded-[2rem] overflow-hidden relative shadow-2xl border border-white/5 group">
+                        {/* Video Loading State */}
+                        {currentEpisode && videoLoading && (
+                          <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                            <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white animate-pulse">Yuklanmoqda...</p>
+                          </div>
+                        )}
+                        
                         {/* Anime Title Overlay */}
                         <div className="absolute top-6 left-6 z-20 pointer-events-none">
                           <h3 className="text-white/80 font-black text-xs sm:text-sm uppercase tracking-widest drop-shadow-lg">
@@ -759,7 +811,17 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                              if (url.includes('t.me/')) {
                                const proxyUrl = `/api/telegram/stream?url=${encodeURIComponent(url)}`;
                                return (
-                                 <video controls className="w-full h-full object-contain" key={proxyUrl} playsInline autoPlay>
+                                 <video 
+                                   controls 
+                                   className="w-full h-full object-contain" 
+                                   key={proxyUrl} 
+                                   playsInline 
+                                   autoPlay
+                                   onCanPlay={() => setVideoLoading(false)}
+                                   onWaiting={() => setVideoLoading(true)}
+                                   onPlaying={() => setVideoLoading(false)}
+                                   onError={() => setVideoLoading(false)}
+                                 >
                                      <source src={proxyUrl} type="video/mp4" />
                                  </video>
                                );
@@ -768,7 +830,21 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                              const isDirectVideo = url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi)$/) || url.includes('stream') || url.includes('/file/');
 
                              if (isDirectVideo) {
-                               return <video controls className="w-full h-full object-contain" key={url} playsInline autoPlay><source src={url} type="video/mp4" /></video>;
+                               return (
+                                 <video 
+                                   controls 
+                                   className="w-full h-full object-contain" 
+                                   key={url} 
+                                   playsInline 
+                                   autoPlay
+                                   onCanPlay={() => setVideoLoading(false)}
+                                   onWaiting={() => setVideoLoading(true)}
+                                   onPlaying={() => setVideoLoading(false)}
+                                   onError={() => setVideoLoading(false)}
+                                 >
+                                   <source src={url} type="video/mp4" />
+                                 </video>
+                               );
                              }
                              
                              let embedUrl = url;
@@ -778,7 +854,16 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                embedUrl = url.replace('ok.ru/video/', 'ok.ru/videoembed/');
                              }
 
-                             return <iframe src={embedUrl} className="w-full h-full border-none" allowFullScreen allow="autoplay; encrypted-media" />;
+                             return (
+                               <iframe 
+                                 key={embedUrl}
+                                 src={embedUrl} 
+                                 className="w-full h-full border-none" 
+                                 allowFullScreen 
+                                 allow="autoplay; encrypted-media" 
+                                 onLoad={() => setVideoLoading(false)}
+                               />
+                             );
                            })()
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-indigo-950/20 to-black p-6 text-center">
@@ -804,7 +889,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                           episodes.map(ep => (
                             <button
                               key={ep.id}
-                              onClick={() => setCurrentEpisode(ep)}
+                              onClick={() => handleEpisodeSelect(ep)}
                               className={cn(
                                 "w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4",
                                 currentEpisode?.id === ep.id 
