@@ -1,0 +1,220 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { X, Upload, Check, Loader2, User } from 'lucide-react';
+import { db, auth } from '../firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { cn } from '../lib/utils';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useTranslation, Language } from '../i18n';
+
+interface ProfileModalProps {
+  onClose: () => void;
+  isOpen: boolean;
+  language?: Language;
+}
+
+const DEFAULT_AVATARS = [
+  'https://api.dicebear.com/7.x/lorelei/svg?seed=Leo&backgroundColor=b6e3f4',
+  'https://api.dicebear.com/7.x/lorelei/svg?seed=Mia&backgroundColor=c0aede',
+  'https://api.dicebear.com/7.x/lorelei/svg?seed=Sam&backgroundColor=ffd5dc',
+  'https://api.dicebear.com/7.x/lorelei/svg?seed=Nia&backgroundColor=b6e3f4',
+  'https://api.dicebear.com/7.x/lorelei/svg?seed=Kai&backgroundColor=c0aede',
+  'https://api.dicebear.com/7.x/lorelei/svg?seed=Zoe&backgroundColor=ffd5dc'
+];
+
+export default function ProfileModal({ onClose, isOpen, language = 'uz' }: ProfileModalProps) {
+  const [user] = useAuthState(auth);
+  const t = useTranslation(language);
+  const [username, setUsername] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [customPreview, setCustomPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUsername(data.username || user.displayName || '');
+          setAvatarUrl(data.avatarUrl || '');
+        }
+      }
+      setLoading(false);
+    }
+    if (isOpen) {
+      loadProfile();
+      setCustomPreview(null);
+    }
+  }, [user, isOpen]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 250;
+          const MAX_HEIGHT = 250;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Compress to base64 jpeg
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setCustomPreview(dataUrl);
+          setAvatarUrl(''); // Deselect pre-defined if custom is loaded
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      let finalAvatarUrl = avatarUrl;
+
+      // Handle custom file upload (Base64)
+      if (customPreview && !avatarUrl) {
+         finalAvatarUrl = customPreview;
+      }
+
+      await updateDoc(doc(db, 'users', user.uid), {
+        username: username.trim(),
+        avatarUrl: finalAvatarUrl,
+      });
+      onClose();
+    } catch (err) {
+      console.error('Error saving profile:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          className="relative w-full max-w-md bg-[#0A0A0A] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden"
+        >
+           <button 
+             onClick={onClose}
+             className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors"
+           >
+             <X size={20} />
+           </button>
+
+           <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-white mb-6">{t('editProfile')}</h2>
+
+           {loading ? (
+             <div className="flex justify-center py-10">
+               <Loader2 className="animate-spin text-indigo-500" size={32} />
+             </div>
+           ) : (
+             <div className="space-y-8">
+               {/* Username input */}
+               <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('username')}</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+               </div>
+
+               {/* Avatar selection */}
+               <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('chooseAvatar')}</label>
+                  
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                    {/* Custom Upload Button */}
+                    <div className="relative aspect-square">
+                       <label className="cursor-pointer w-full h-full rounded-2xl border-2 border-dashed border-white/20 hover:border-indigo-500 bg-white/5 flex flex-col items-center justify-center gap-1 transition-all">
+                          <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                          {customPreview ? (
+                            <>
+                              <img src={customPreview} className="w-full h-full object-cover rounded-[14px]" />
+                              {(customPreview || (!avatarUrl && customPreview)) && (
+                                <div className="absolute inset-0 ring-2 ring-indigo-500 rounded-2xl flex items-center justify-center bg-black/40">
+                                   <Check size={16} className="text-white" />
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <Upload size={16} className="text-slate-400" />
+                          )}
+                       </label>
+                    </div>
+
+                    {/* Pre-defined Avatars */}
+                    {DEFAULT_AVATARS.map((url, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setAvatarUrl(url);
+                          setCustomPreview(null);
+                        }}
+                        className={cn(
+                          "relative aspect-square rounded-2xl overflow-hidden border-2 transition-all",
+                          avatarUrl === url ? "border-indigo-500 scale-105" : "border-transparent hover:border-white/20"
+                        )}
+                      >
+                         <img src={url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                         {avatarUrl === url && (
+                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                             <Check size={16} className="text-white" />
+                           </div>
+                         )}
+                      </button>
+                    ))}
+                  </div>
+               </div>
+
+               <button
+                 onClick={handleSave}
+                 disabled={saving || !username.trim()}
+                 className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl py-3.5 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+               >
+                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                 {saving ? t('saving') : t('save')}
+               </button>
+             </div>
+           )}
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+}

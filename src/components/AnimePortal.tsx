@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, loginWithGoogle } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, query, orderBy, onSnapshot, doc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs, addDoc } from 'firebase/firestore';
 import { Play, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -34,18 +34,23 @@ interface CommentDoc {
   id: string;
   userId: string;
   username: string;
+  avatarUrl?: string;
   content: string;
   createdAt: any;
 }
+
+import { Language, useTranslation } from '../i18n';
 
 interface AnimePortalProps {
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
   animeList: AnimeDoc[];
   loading: boolean;
+  language: Language;
 }
 
-export default function AnimePortal({ selectedCategory, setSelectedCategory, animeList, loading }: AnimePortalProps) {
+export default function AnimePortal({ selectedCategory, setSelectedCategory, animeList, loading, language }: AnimePortalProps) {
+  const t = useTranslation(language);
   const [user] = useAuthState(auth);
   const [searchTerm, setSearchTerm] = useState('');
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
@@ -61,6 +66,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
   const [bannerIndex, setBannerIndex] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [expandedDesc, setExpandedDesc] = useState(false);
   const itemsPerPage = 12;
 
   const bannerAnime = animeList.filter(a => a.isBanner);
@@ -147,9 +153,15 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     if (!user || !selectedAnime || !newComment.trim()) return;
     setSubmittingComment(true);
     try {
+      // Get the latest profile data from Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const customUsername = userDoc.exists() ? userDoc.data().username : null;
+      const customAvatarUrl = userDoc.exists() ? userDoc.data().avatarUrl : null;
+
       await addDoc(collection(db, 'anime', selectedAnime.id, 'comments'), {
         userId: user.uid,
-        username: user.displayName || user.email?.split('@')[0] || 'Foydalanuvchi',
+        username: customUsername || user.displayName || user.email?.split('@')[0] || 'Foydalanuvchi',
+        avatarUrl: customAvatarUrl || user.photoURL || '',
         content: newComment.trim(),
         createdAt: serverTimestamp()
       });
@@ -191,6 +203,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     setModalMode(mode);
     setCurrentEpisode(null);
     setEpisodes([]);
+    setExpandedDesc(false);
     if (mode === 'player') {
       setDoc(doc(db, 'anime', anime.id), { views: increment(1) }, { merge: true });
     }
@@ -376,7 +389,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
 
                     <div className="absolute top-3 left-3 sm:top-5 sm:left-5 flex flex-col gap-2">
                       <span className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full text-[7px] sm:text-[9px] font-black uppercase tracking-widest border border-white/10 text-white">
-                        {anime.type === 'movie' ? 'Film' : 'Serial'}
+                        {anime.type === 'movie' ? t('movies') : t('series')}
                       </span>
                     </div>
 
@@ -545,7 +558,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                          
                          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-8">
                             <span className="bg-indigo-600 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white">TV</span>
-                            <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400">TUGALLANGAN</span>
+                            <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400">{t('completed')}</span>
                             <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400">{selectedAnime.year}</span>
                             <div className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                                <Eye size={12} className="text-indigo-400" /> {selectedAnime.views || 0}
@@ -557,25 +570,30 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                        </div>
 
                        <div className="space-y-4">
-                          <p className="text-slate-400 text-sm sm:text-base font-medium leading-relaxed">
+                          <p className={cn("text-slate-400 text-sm sm:text-base font-medium leading-relaxed transition-all", expandedDesc ? "" : "line-clamp-3")}>
                             {selectedAnime.description}
                           </p>
-                          <button className="text-indigo-400 font-black text-[10px] uppercase tracking-widest hover:text-indigo-300 transition-colors">
-                            Ko'proq o'qish
-                          </button>
+                          {selectedAnime.description && selectedAnime.description.length > 150 && (
+                            <button 
+                              onClick={() => setExpandedDesc(!expandedDesc)}
+                              className="text-indigo-400 font-black text-[10px] uppercase tracking-widest hover:text-indigo-300 transition-colors"
+                            >
+                              {expandedDesc ? t('readLess') : t('readMore')}
+                            </button>
+                          )}
                        </div>
 
                        {/* Comments Section */}
                        <div className="pt-10 border-t border-white/5 space-y-8">
                           <div className="flex items-center gap-3">
                              <MessageSquare size={20} className="text-indigo-500" />
-                             <h3 className="text-xl font-black uppercase tracking-tighter">Fikrlar ({comments.length})</h3>
+                             <h3 className="text-xl font-black uppercase tracking-tighter">{t('comments')} ({comments.length})</h3>
                           </div>
 
                           {user ? (
                             <form onSubmit={handlePostComment} className="relative">
                                <textarea 
-                                 placeholder="Fikringizni qoldiring..." 
+                                 placeholder={t('leaveComment')} 
                                  className="glass-input w-full min-h-[100px] py-4 pr-16 bg-white/[0.02]"
                                  value={newComment}
                                  onChange={e => setNewComment(e.target.value)}
@@ -590,12 +608,12 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                             </form>
                           ) : (
                             <div className="glass p-6 rounded-2xl flex items-center justify-between gap-4 border-dashed border-white/10">
-                               <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500">Fikr qoldirish uchun tizimga kiring</p>
+                               <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500">{t('loginToComment')}</p>
                                <button 
                                  onClick={loginWithGoogle}
                                  className="bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                                >
-                                 KIRISH
+                                 {t('login')}
                                </button>
                             </div>
                           )}
@@ -604,10 +622,16 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                              {comments.map(comment => (
                                <div key={comment.id} className="glass p-5 rounded-2xl relative group">
                                   <div className="flex justify-between items-start mb-2">
-                                     <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 bg-indigo-600/20 rounded-lg flex items-center justify-center">
-                                           <User size={12} className="text-indigo-500" />
-                                        </div>
+                                     <div className="flex items-center gap-3">
+                                        {comment.avatarUrl ? (
+                                          <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 shrink-0">
+                                             <img src={comment.avatarUrl} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                          </div>
+                                        ) : (
+                                          <div className="w-8 h-8 bg-indigo-600/20 rounded-full flex items-center justify-center border border-white/10 shrink-0">
+                                             <User size={14} className="text-indigo-500" />
+                                          </div>
+                                        )}
                                         <span className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">{comment.username}</span>
                                      </div>
                                      {(user?.uid === comment.userId || user?.uid === 'mosinjonovjasurbek00@gmail.com') && (
@@ -619,11 +643,11 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                        </button>
                                      )}
                                   </div>
-                                  <p className="text-xs text-slate-300 font-medium leading-relaxed">{comment.content}</p>
+                                  <p className="text-xs text-slate-300 font-medium leading-relaxed pl-11">{comment.content}</p>
                                </div>
                              ))}
                              {comments.length === 0 && (
-                               <p className="text-center py-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 italic">Hali fikrlar yo'q</p>
+                               <p className="text-center py-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 italic">{t('noComments')}</p>
                              )}
                           </div>
                        </div>
@@ -715,7 +739,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                     {/* Right Side: Episode List (Sidebar) */}
                     <div className="w-full lg:w-[26rem] bg-white/[0.01] border-t lg:border-t-0 lg:border-l border-white/5 flex flex-col h-[40vh] lg:h-auto">
                       <div className="px-8 pt-8 pb-4">
-                         <h3 className="text-2xl font-black uppercase tracking-tighter">Qismlar</h3>
+                         <h3 className="text-2xl font-black uppercase tracking-tighter">{t('episodes')}</h3>
                       </div>
                       
                       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar">
@@ -748,6 +772,9 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                               {currentEpisode?.id === ep.id && <Activity size={12} className="text-indigo-500 animate-pulse" />}
                             </button>
                           ))
+                        )}
+                        {episodes.length === 0 && !loadingEpisodes && (
+                           <p className="text-center py-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-600 italic">{t('noEpisodes')}</p>
                         )}
                       </div>
                     </div>

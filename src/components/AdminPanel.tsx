@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../firebase';
 import { collection, addDoc, deleteDoc, doc, query, onSnapshot, serverTimestamp, where, updateDoc, getDocs, orderBy, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as LinkIcon, MessageSquare, Star, Clock, Play, List, ChevronRight, ArrowLeft, Send, User } from 'lucide-react';
+import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as LinkIcon, MessageSquare, Star, Clock, Play, List, ChevronRight, ArrowLeft, Send, User, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { CATEGORIES } from '../constants';
 import axios from 'axios';
+import { Language, useTranslation } from '../i18n';
 
 interface AnimeDoc {
   id: string;
@@ -19,6 +20,7 @@ interface AnimeDoc {
   type: 'movie' | 'series';
   views: number;
   createdAt: any;
+  language?: Language;
 }
 
 interface EpisodeDoc {
@@ -48,7 +50,13 @@ interface UserDoc {
   role: 'admin' | 'user';
 }
 
-export default function AdminPanel() {
+interface AdminPanelProps {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+}
+
+export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
+  const t = useTranslation(language);
   const [animeList, setAnimeList] = useState<AnimeDoc[]>([]);
   const [activeTab, setActiveTab] = useState<'anime' | 'episodes' | 'messages' | 'admins'>('anime');
   const [selectedAnimeForEpisodes, setSelectedAnimeForEpisodes] = useState<AnimeDoc | null>(null);
@@ -89,6 +97,7 @@ export default function AdminPanel() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [contentType, setContentType] = useState<'movie' | 'series'>('series');
   const [isBanner, setIsBanner] = useState(false);
+  const [animeLanguage, setAnimeLanguage] = useState<Language>('uz');
 
   // Episode Form State
   const [epNumber, setEpNumber] = useState(1);
@@ -183,10 +192,12 @@ export default function AdminPanel() {
       setContentType(editingAnime.type || 'series');
       // @ts-ignore
       setIsBanner(editingAnime.isBanner || false);
+      setAnimeLanguage(editingAnime.language || 'uz');
     } else {
       setTitle(''); setPosterUrl(''); setPosterFile(null); setDescription('');
       setCategory('Action'); setRating(8.5); setYear(new Date().getFullYear());
       setIsBanner(false);
+      setAnimeLanguage('uz');
     }
   }, [editingAnime]);
 
@@ -228,6 +239,7 @@ export default function AdminPanel() {
         type: contentType, 
         authorUid: auth.currentUser?.uid,
         isBanner,
+        language: animeLanguage,
         updatedAt: serverTimestamp()
       };
 
@@ -242,17 +254,19 @@ export default function AdminPanel() {
         });
 
         // Add public notification for new anime
+        const isRu = animeLanguage === 'ru';
+        const msg = isRu ? `${title} загружено на сайт! Смотрите прямо сейчас.` : `${title} saytga yuklandi! Hoziroq tomosha qiling.`;
         await addDoc(collection(db, 'public_notifications'), {
           type: 'anime',
           title: title,
-          message: `${title} saytga yuklandi! Hoziroq tomosha qiling.`,
+          message: msg,
           posterUrl: finalPosterUrl,
           animeId: newAnimeDoc.id,
           createdAt: serverTimestamp()
         });
 
         // Send actual Push Notification
-        await sendPush(title, `${title} saytga yuklandi! Hoziroq tomosha qiling.`, finalPosterUrl, newAnimeDoc.id);
+        await sendPush(title, msg, finalPosterUrl, newAnimeDoc.id);
       }
 
       setTitle(''); setPosterUrl(''); setPosterFile(null); setDescription('');
@@ -261,7 +275,7 @@ export default function AdminPanel() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
-      setError(err.message || "Xatolik");
+      setError(err.message || t('errorAddAnime'));
     } finally {
       setSubmitting(false);
       setUploadProgress(null);
@@ -291,10 +305,14 @@ export default function AdminPanel() {
         });
 
         // Add public notification for new episode
+        const isRu = selectedAnimeForEpisodes.language === 'ru';
+        const titleMsg = isRu ? `${selectedAnimeForEpisodes.title}: ${epNumber}-серия` : `${selectedAnimeForEpisodes.title}: ${epNumber}-qism`;
+        const bodyMsg = isRu ? `Новая ${epNumber}-я серия ${selectedAnimeForEpisodes.title} добавлена на сайт!` : `${selectedAnimeForEpisodes.title} ning yangi ${epNumber}-qismi saytga qo'shildi!`;
+
         await addDoc(collection(db, 'public_notifications'), {
           type: 'episode',
-          title: `${selectedAnimeForEpisodes.title}: ${epNumber}-qism`,
-          message: `${selectedAnimeForEpisodes.title} ning yangi ${epNumber}-qismi saytga qo'shildi!`,
+          title: titleMsg,
+          message: bodyMsg,
           posterUrl: selectedAnimeForEpisodes.posterUrl,
           animeId: selectedAnimeForEpisodes.id,
           createdAt: serverTimestamp()
@@ -302,8 +320,8 @@ export default function AdminPanel() {
 
         // Send actual Push Notification
         await sendPush(
-          `${selectedAnimeForEpisodes.title}: ${epNumber}-qism`, 
-          `${selectedAnimeForEpisodes.title} ning yangi ${epNumber}-qismi saytga qo'shildi!`,
+          titleMsg, 
+          bodyMsg,
           selectedAnimeForEpisodes.posterUrl,
           selectedAnimeForEpisodes.id
         );
@@ -315,7 +333,7 @@ export default function AdminPanel() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
-      setError("Epizodni qo'shishda xatolik");
+      setError(t('errorAddEpisode'));
     } finally {
       setSubmitting(false);
     }
@@ -324,8 +342,8 @@ export default function AdminPanel() {
   const handleDeleteAnime = (id: string) => {
     setConfirmModal({
       show: true,
-      title: "Animeni o'chirish",
-      message: "Animenı o'chirishni tasdiqlaysizmi? Barcha epizodlar ham o'chiriladi!",
+      title: t('deleteAnimeTitle'),
+      message: t('deleteAnimeConfirm'),
       onConfirm: async () => {
         try {
           setSubmitting(true);
@@ -348,7 +366,7 @@ export default function AdminPanel() {
           setTimeout(() => setSuccess(false), 3000);
         } catch (err: any) {
           console.error("Delete error:", err);
-          setError("O'chirishda xatolik yuz berdi: " + (err.message || 'Unknown error'));
+          setError(t('errorDeleteAnime') + ": " + (err.message || 'Unknown error'));
         } finally {
           setSubmitting(false);
         }
@@ -360,8 +378,8 @@ export default function AdminPanel() {
     if (!selectedAnimeForEpisodes) return;
     setConfirmModal({
       show: true,
-      title: "Epizodni o'chirish",
-      message: "Epizodni o'chirishni tasdiqlaysizmi?",
+      title: t('deleteEpisodeTitle'),
+      message: t('deleteEpisodeConfirm'),
       onConfirm: async () => {
         try {
           setSubmitting(true);
@@ -371,7 +389,7 @@ export default function AdminPanel() {
           setTimeout(() => setSuccess(false), 3000);
         } catch (err: any) {
           console.error("Episode delete error:", err);
-          setError("Epizodni o'chirishda xatolik: " + (err.message || 'Unknown error'));
+          setError(t('errorDeleteEpisode') + ": " + (err.message || 'Unknown error'));
         } finally {
           setSubmitting(false);
         }
@@ -382,8 +400,8 @@ export default function AdminPanel() {
   const handleDeleteMessage = (id: string) => {
     setConfirmModal({
       show: true,
-      title: "Xabarni o'chirish",
-      message: "Ushbu xabarni o'chirishni tasdiqlaysizmi?",
+      title: t('deleteMessageTitle'),
+      message: t('deleteMessageConfirm'),
       onConfirm: async () => {
         try {
           setSubmitting(true);
@@ -392,7 +410,7 @@ export default function AdminPanel() {
           setSuccess(true);
           setTimeout(() => setSuccess(false), 3000);
         } catch (err: any) {
-          setError("Xabarni o'chirishda xatolik");
+          setError(t('errorDeleteMessage'));
         } finally {
           setSubmitting(false);
         }
@@ -409,7 +427,7 @@ export default function AdminPanel() {
       const q = query(collection(db, 'users'), where('email', '==', userSearch.trim().toLowerCase()));
       const snap = await getDocs(q);
       if (snap.empty) {
-        throw new Error("Bunday email bilan foydalanuvchi topilmadi");
+        throw new Error(t('userNotFound'));
       }
       
       const userToPromote = snap.docs[0];
@@ -419,7 +437,7 @@ export default function AdminPanel() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
-      setError(err.message || "Admin qo'shishda xatolik");
+      setError(err.message || t('errorAddAdmin'));
     } finally {
       setSubmitting(false);
     }
@@ -427,13 +445,13 @@ export default function AdminPanel() {
 
   const handleRemoveAdmin = (userId: string, email: string) => {
     if (email === "mosinjonovjasurbek00@gmail.com") {
-      setError("Asosiy adminni o'chirib bo'lmaydi");
+      setError(t('mainAdminError'));
       return;
     }
     setConfirmModal({
       show: true,
-      title: "Adminlikdan olish",
-      message: "Ushbu foydalanuvchini adminlikdan olib tashlamoqchimisiz?",
+      title: t('removeAdminTitle'),
+      message: t('removeAdminConfirm'),
       onConfirm: async () => {
         try {
           setSubmitting(true);
@@ -442,7 +460,7 @@ export default function AdminPanel() {
           setSuccess(true);
           setTimeout(() => setSuccess(false), 3000);
         } catch (err: any) {
-          setError("Adminni o'chirishda xatolik");
+          setError(t('errorRemoveAdmin'));
         } finally {
           setSubmitting(false);
         }
@@ -474,7 +492,7 @@ export default function AdminPanel() {
             className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-indigo-600/90 backdrop-blur-md text-white px-6 py-4 rounded-2xl flex items-center gap-3 shadow-2xl border border-indigo-500/20"
           >
             <Check size={20} />
-            <span className="text-xs font-black uppercase tracking-widest">Amal muvaffaqiyatli bajarildi</span>
+            <span className="text-xs font-black uppercase tracking-widest">{t('successMessage')}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -507,13 +525,13 @@ export default function AdminPanel() {
                   onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
                   className="glass-button py-4 text-[10px] font-black uppercase tracking-widest text-slate-400"
                 >
-                  BEKOR QILISH
+                  {t('cancel')}
                 </button>
                 <button 
                   onClick={confirmModal.onConfirm}
                   className="bg-red-600 hover:bg-red-500 text-white rounded-2xl py-4 text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-red-600/20"
                 >
-                  O'CHIRISH
+                  {t('delete')}
                 </button>
               </div>
             </motion.div>
@@ -529,13 +547,13 @@ export default function AdminPanel() {
                 <Send className="text-indigo-400" size={20} />
               </div>
               <div className="flex flex-col">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Telegram Aloqasi</h4>
-                <p className="text-xs font-bold text-white uppercase tracking-tight">@{telegramStatus.botName} (ULANGAN)</p>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('telegramConnection')}</h4>
+                <p className="text-xs font-bold text-white uppercase tracking-tight">@{telegramStatus.botName} ({t('connected')})</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              ONLINE Monitoring
+              {t('onlineMonitoring')}
             </div>
           </div>
         </div>
@@ -558,7 +576,7 @@ export default function AdminPanel() {
             activeTab === 'episodes' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
           )}
         >
-          <List size={16} /> Epizodlar
+          <List size={16} /> {t('episodes')}
         </button>
         <button
           onClick={() => setActiveTab('messages')}
@@ -567,7 +585,7 @@ export default function AdminPanel() {
             activeTab === 'messages' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
           )}
         >
-          <MessageSquare size={16} /> Xabarlar
+          <MessageSquare size={16} /> {t('messages')}
         </button>
         <button
           onClick={() => setActiveTab('admins')}
@@ -576,7 +594,7 @@ export default function AdminPanel() {
             activeTab === 'admins' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
           )}
         >
-          <User size={16} /> Adminlar
+          <User size={16} /> {t('adminsTab')}
         </button>
       </div>
 
@@ -592,21 +610,21 @@ export default function AdminPanel() {
             <div className="lg:col-span-1">
               <div className="glass rounded-3xl p-8 sticky top-32">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-black uppercase tracking-tighter">{editingAnime ? "Tahrirlash" : "Yangi Anime"}</h2>
+                  <h2 className="text-2xl font-black uppercase tracking-tighter">{editingAnime ? t('edit') : t('newAnime')}</h2>
                   {editingAnime && (
-                    <button onClick={() => setEditingAnime(null)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">Bekor qilish</button>
+                    <button onClick={() => setEditingAnime(null)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">{t('cancel')}</button>
                   )}
                 </div>
                 <form onSubmit={handleAnimeSubmit} className="space-y-4">
-                  <input type="text" placeholder="Anime Sarlavhasi" className="glass-input w-full" value={title} onChange={e => setTitle(e.target.value)} required />
-                  <textarea placeholder="Tavsif" className="glass-input w-full h-24" value={description} onChange={e => setDescription(e.target.value)} />
+                  <input type="text" placeholder={t('title')} className="glass-input w-full" value={title} onChange={e => setTitle(e.target.value)} required />
+                  <textarea placeholder={t('description')} className="glass-input w-full h-24" value={description} onChange={e => setDescription(e.target.value)} />
                   
                   <div className="space-y-2">
-                    <label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Poster</label>
+                    <label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('posterOrUrl')}</label>
                     <div className="flex gap-2">
                        <input type="file" onChange={e => setPosterFile(e.target.files?.[0] || null)} className="text-[10px] flex-1" />
                     </div>
-                    <input type="text" placeholder="yoki Poster URL" className="glass-input w-full" value={posterUrl} onChange={e => setPosterUrl(e.target.value)} />
+                    <input type="text" placeholder={t('posterOrUrl')} className="glass-input w-full" value={posterUrl} onChange={e => setPosterUrl(e.target.value)} />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -614,21 +632,41 @@ export default function AdminPanel() {
                       {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c} value={c} className="bg-slate-900">{c}</option>)}
                     </select>
                     <select className="glass-input" value={contentType} onChange={e => setContentType(e.target.value as any)}>
-                      <option value="series" className="bg-slate-900">Serial</option>
-                      <option value="movie" className="bg-slate-900">Film</option>
+                      <option value="series" className="bg-slate-900">{t('series')}</option>
+                      <option value="movie" className="bg-slate-900">{t('movies')}</option>
                     </select>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <input type="number" step="0.1" placeholder="Reyting" className="glass-input" value={rating} onChange={e => setRating(Number(e.target.value))} />
-                    <input type="number" placeholder="Yil" className="glass-input" value={year} onChange={e => setYear(Number(e.target.value))} />
+                    <input type="number" step="0.1" placeholder={t('rating')} className="glass-input" value={rating} onChange={e => setRating(Number(e.target.value))} />
+                    <input type="number" placeholder={t('year')} className="glass-input" value={year} onChange={e => setYear(Number(e.target.value))} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 uppercase font-black tracking-widest flex items-center gap-2"><Globe size={12}/>{t('language')}</label>
+                    <div className="flex gap-2">
+                      <button 
+                        type="button"
+                        onClick={() => setAnimeLanguage('uz')}
+                        className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", animeLanguage === 'uz' ? "bg-indigo-600 border-indigo-500 text-white shadow-lg" : "bg-white/5 border border-white/10 text-slate-400")}
+                      >
+                         O'zbek (UZ)
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setAnimeLanguage('ru')}
+                        className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", animeLanguage === 'ru' ? "bg-indigo-600 border-indigo-500 text-white shadow-lg" : "bg-white/5 border border-white/10 text-slate-400")}
+                      >
+                         Русский (RU)
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3 p-4 glass rounded-2xl cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setIsBanner(!isBanner)}>
                      <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", isBanner ? "bg-indigo-600 border-indigo-500 shadow-lg shadow-indigo-500/30" : "border-white/10")}>
                         {isBanner && <Check size={14} className="text-white" />}
                      </div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Bannerga qo'yish</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('addToBanner')}</span>
                   </div>
 
                   {uploadProgress !== null && (
@@ -639,7 +677,7 @@ export default function AdminPanel() {
 
                   <button type="submit" disabled={submitting} className="glass-button-primary w-full py-4 flex items-center justify-center gap-2">
                     {submitting ? <Loader2 className="animate-spin" /> : <Plus />}
-                    SAQLASH
+                    {t('save')}
                   </button>
                 </form>
               </div>
@@ -647,26 +685,29 @@ export default function AdminPanel() {
 
             <div className="lg:col-span-2">
               <div className="glass rounded-3xl p-8">
-                <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">Anime Ro'yxati</h2>
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">{t('animeList')}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {animeList.map(anime => (
                     <div key={anime.id} className="glass rounded-2xl p-3 flex gap-4 items-center group relative overflow-hidden">
                       <img src={anime.posterUrl} className="w-16 h-24 object-cover rounded-xl" />
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-black text-sm uppercase truncate">{anime.title}</h3>
-                        <p className="text-[10px] text-slate-500 uppercase font-black">{anime.category} • {anime.year} • {anime.views || 0} ko'rishlar</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", anime.language === 'ru' ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400")}>{anime.language === 'ru' ? 'RU' : 'UZ'}</span>
+                          <h3 className="font-black text-sm uppercase truncate">{anime.title}</h3>
+                        </div>
+                        <p className="text-[10px] text-slate-500 uppercase font-black">{anime.category} • {anime.year} • {anime.views || 0} {t('views')}</p>
                         <div className="flex gap-2 mt-2">
                           <button 
                             onClick={() => { setSelectedAnimeForEpisodes(anime); setActiveTab('episodes'); }}
                             className="bg-indigo-600/20 text-indigo-400 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter hover:bg-indigo-600 hover:text-white transition-all"
                           >
-                            Epizodlar
+                            {t('episodes')}
                           </button>
                           <button 
                             onClick={() => setEditingAnime(anime)}
                             className="bg-white/5 text-white/50 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter hover:bg-white/10 hover:text-white transition-all"
                           >
-                            Tahrirlash
+                            {t('edit')}
                           </button>
                         </div>
                       </div>
@@ -700,27 +741,27 @@ export default function AdminPanel() {
                       onClick={() => setSelectedAnimeForEpisodes(null)}
                       className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-white mb-6"
                     >
-                      <ArrowLeft size={14} /> ORQAGA
+                      <ArrowLeft size={14} /> {t('back')}
                     </button>
                     <h2 className="text-xl font-black uppercase tracking-tighter mb-2">{selectedAnimeForEpisodes.title}</h2>
                     <div className="flex justify-between items-center mb-6">
-                      <p className="text-[10px] text-indigo-400 font-black uppercase">{editingEpisode ? "EPIZODNI TAHRIRLASH" : "YANGI EPIZOD QO'SHISH"}</p>
+                      <p className="text-[10px] text-indigo-400 font-black uppercase">{editingEpisode ? t('editEpisode') : t('addEpisode')}</p>
                       {editingEpisode && (
-                        <button onClick={() => setEditingEpisode(null)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">Bekor qilish</button>
+                        <button onClick={() => setEditingEpisode(null)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">{t('cancel')}</button>
                       )}
                     </div>
                     
                     <form onSubmit={handleEpisodeSubmit} className="space-y-4">
-                      <input type="number" placeholder="Epizod Raqami" className="glass-input w-full" value={epNumber} onChange={e => setEpNumber(Number(e.target.value))} required />
-                      <input type="text" placeholder="Epizod Sarlavhasi (Ixtiyoriy)" className="glass-input w-full" value={epTitle} onChange={e => setEpTitle(e.target.value)} />
+                      <input type="number" placeholder={t('episodeNumber')} className="glass-input w-full" value={epNumber} onChange={e => setEpNumber(Number(e.target.value))} required />
+                      <input type="text" placeholder={t('episodeTitle')} className="glass-input w-full" value={epTitle} onChange={e => setEpTitle(e.target.value)} />
                       <div className="space-y-1">
-                         <input type="text" placeholder="Video URL (yoki Telegram post: https://t.me/kanal/123)" className="glass-input w-full" value={epVideoUrl} onChange={e => setEpVideoUrl(e.target.value)} required />
-                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-1">Telegram havolasidan server o'zi videoni tortib uzatadi.</p>
+                         <input type="text" placeholder={t('videoUrl')} className="glass-input w-full" value={epVideoUrl} onChange={e => setEpVideoUrl(e.target.value)} required />
+                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-1">{t('telegramHint')}</p>
                       </div>
                       
                       <button type="submit" disabled={submitting} className="glass-button-primary w-full py-4 flex items-center justify-center gap-2">
                         {submitting ? <Loader2 className="animate-spin" /> : <Plus />}
-                        QO'SHISH
+                        {t('add')}
                       </button>
                     </form>
                   </div>
@@ -728,7 +769,7 @@ export default function AdminPanel() {
 
                 <div className="lg:col-span-2">
                   <div className="glass rounded-3xl p-8">
-                    <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">Epizodlar</h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">{t('episodes')}</h2>
                     <div className="space-y-3">
                       {episodes.map(ep => (
                         <div key={ep.id} className="glass rounded-2xl p-4 flex items-center justify-between group">
@@ -737,7 +778,7 @@ export default function AdminPanel() {
                               {ep.episodeNumber}
                             </div>
                             <div>
-                              <h4 className="font-black text-xs uppercase">{ep.title || `Epizod ${ep.episodeNumber}`}</h4>
+                              <h4 className="font-black text-xs uppercase">{ep.title || `${t('episodeFallback')}${ep.episodeNumber}`}</h4>
                               <p className="text-[8px] text-slate-500 uppercase tracking-widest truncate max-w-xs">{ep.videoUrl}</p>
                             </div>
                           </div>
@@ -760,7 +801,7 @@ export default function AdminPanel() {
                       ))}
                       {episodes.length === 0 && (
                         <div className="text-center py-10 text-slate-600 font-black uppercase tracking-widest text-xs italic">
-                          Hali Epizodlar Yo'q
+                          {t('noEpisodes')}
                         </div>
                       )}
                     </div>
@@ -769,12 +810,12 @@ export default function AdminPanel() {
               </div>
             ) : (
               <div className="glass rounded-3xl p-12 text-center">
-                <h3 className="text-xl font-black tracking-tighter text-slate-500 uppercase mb-4">Oldin Animeni Tanlang</h3>
+                <h3 className="text-xl font-black tracking-tighter text-slate-500 uppercase mb-4">{t('selectAnimeFirst')}</h3>
                 <button 
                    onClick={() => setActiveTab('anime')}
                    className="glass-button-primary px-10 py-3"
                 >
-                  ANIME RO'YXATIGA O'TISH
+                  {t('goToAnimeList')}
                 </button>
               </div>
             )}
@@ -790,9 +831,9 @@ export default function AdminPanel() {
             className="glass rounded-3xl p-8 sm:p-12"
           >
             <div className="flex items-center justify-between mb-10">
-              <h2 className="text-3xl font-black uppercase tracking-tighter">Foydalanuvchi Xabarlari</h2>
+              <h2 className="text-3xl font-black uppercase tracking-tighter">{t('userMessages')}</h2>
               <div className="bg-indigo-600/20 px-4 py-2 rounded-xl border border-indigo-500/20">
-                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{messages.length} ta xabar</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{messages.length} {t('msgCount')}</span>
               </div>
             </div>
             
@@ -826,14 +867,14 @@ export default function AdminPanel() {
                       <Send size={12} />
                       <span>{msg.contact}</span>
                     </div>
-                    <span className="text-slate-600">{msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleDateString() : 'Yaqinda'}</span>
+                    <span className="text-slate-600">{msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleDateString() : t('recently')}</span>
                   </div>
                 </div>
               ))}
               
               {messages.length === 0 && (
                 <div className="col-span-full py-20 text-center glass rounded-3xl border-dashed border-2 border-white/5">
-                  <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-xs">Hozircha xabarlar yo'q</p>
+                  <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-xs">{t('noMessages')}</p>
                 </div>
               )}
             </div>
@@ -850,12 +891,12 @@ export default function AdminPanel() {
           >
             <div className="lg:col-span-1">
               <div className="glass rounded-[2.5rem] p-8 sm:p-10 sticky top-32 border border-white/10">
-                <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">Admin Qo'shish</h2>
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-8">Foydalanuvchini email orqali qidiring</p>
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">{t('addAdmin')}</h2>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-8">{t('searchUserByEmail')}</p>
                 
                 <form onSubmit={handleAddAdmin} className="space-y-6">
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Email Manzili</label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">{t('emailAddress')}</label>
                     <input 
                       type="email" 
                       placeholder="foydalanuvchi@gmail.com" 
@@ -868,17 +909,17 @@ export default function AdminPanel() {
                   
                   <button type="submit" disabled={submitting} className="glass-button-primary w-full py-5 flex items-center justify-center gap-3">
                     {submitting ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
-                    <span className="text-[10px] font-black uppercase tracking-widest">ADMIN TAYINLASH</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{t('assignAdmin')}</span>
                   </button>
                 </form>
 
                 <div className="mt-10 p-6 bg-indigo-600/10 rounded-2xl border border-indigo-500/20">
                   <div className="flex items-center gap-3 text-indigo-400 mb-3">
                     <AlertCircle size={16} />
-                    <span className="text-[9px] font-black uppercase tracking-widest">Eslatma</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest">{t('note')}</span>
                   </div>
                   <p className="text-[9px] text-slate-400 font-medium leading-relaxed normal-case">
-                    Foydalanuvchini admin qilishdan oldin, u kamida bir marta saytga kirgan bo'lishi kerak.
+                    {t('adminNote')}
                   </p>
                 </div>
               </div>
@@ -886,7 +927,7 @@ export default function AdminPanel() {
 
             <div className="lg:col-span-2">
               <div className="glass rounded-[2.5rem] p-8 sm:p-12 border border-white/5">
-                <h2 className="text-2xl font-black uppercase tracking-tighter mb-10">Adminlar Ro'yxati</h2>
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-10">{t('adminList')}</h2>
                 
                 <div className="space-y-4">
                   {users.map(u => (
@@ -905,7 +946,7 @@ export default function AdminPanel() {
                         <button 
                           onClick={() => handleRemoveAdmin(u.id, u.email)}
                           className="p-3 text-slate-700 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                          title="Adminlikdan olish"
+                          title={t('removeAdmin')}
                         >
                           <Trash2 size={20} />
                         </button>

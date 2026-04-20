@@ -3,13 +3,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Send, Loader2, CheckCircle } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Language, useTranslation } from '../i18n';
 
 interface ContactFormProps {
   isOpen: boolean;
   onClose: () => void;
+  language?: Language;
 }
 
-export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
+export default function ContactForm({ isOpen, onClose, language = 'uz' }: ContactFormProps) {
+  const t = useTranslation(language);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [contact, setContact] = useState('');
@@ -43,7 +46,7 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
       }, 3000);
     } catch (err: any) {
       console.error("Message send error:", err);
-      setError("Xabar yuborishda xatolik. Iltimos qaytadan urinib ko'ring.");
+      setError(t('errorMessageSend'));
     } finally {
       setSubmitting(false);
     }
@@ -70,8 +73,8 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
             <div className="p-8 sm:p-12">
               <div className="flex items-center justify-between mb-10">
                 <div className="flex flex-col">
-                  <h2 className="text-3xl font-black uppercase tracking-tighter italic">Bog'lanish</h2>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1">Sizning taklif va shikoyatlaringiz</p>
+                  <h2 className="text-3xl font-black uppercase tracking-tighter italic">{t('contactFormTitle')}</h2>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1">{t('contactFormDesc')}</p>
                 </div>
                 <button 
                   onClick={onClose}
@@ -90,19 +93,19 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
                   >
                     <CheckCircle className="text-indigo-400 w-12 h-12" />
                   </motion.div>
-                  <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 italic">Xabar Yuborildi!</h3>
-                  <p className="text-slate-400 text-sm font-medium uppercase tracking-widest leading-relaxed">Tez orada adminlarimiz siz bilan bog'lanishadi. Rahmat!</p>
+                  <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 italic">{t('messageSent')}</h3>
+                  <p className="text-slate-400 text-sm font-medium uppercase tracking-widest leading-relaxed">{t('messageSentDesc')}</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Ismingiz</label>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">{t('yourName')}</label>
                       <input 
                         type="text" 
                         required 
                         className="glass-input w-full h-14" 
-                        placeholder="Masalan: Jasur"
+                        placeholder={t('namePlaceholder')}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                       />
@@ -114,7 +117,7 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
                         type="email" 
                         required 
                         className="glass-input w-full h-14" 
-                        placeholder="misol@gmail.com"
+                        placeholder={t('emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
@@ -122,23 +125,23 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Telegram yoki Telefon</label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">{t('telegramOrPhone')}</label>
                     <input 
                       type="text" 
                       required 
                       className="glass-input w-full h-14" 
-                      placeholder="@username yoki +998..."
+                      placeholder={t('contactPlaceholder')}
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Xabar matni</label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">{t('messageText')}</label>
                     <textarea 
                       required 
                       className="glass-input w-full h-40 resize-none py-5" 
-                      placeholder="Qanday taklif yoki muammongiz bor?"
+                      placeholder={t('messagePlaceholder')}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                     />
@@ -160,7 +163,7 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
                     className="glass-button-primary w-full flex items-center justify-center gap-4 py-6 shadow-2xl shadow-indigo-600/20 group"
                   >
                     {submitting ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">{submitting ? 'YUBORILMOQDA...' : 'XABARNI YUBORISH'}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">{submitting ? t('sending') : t('send')}</span>
                   </button>
                 </form>
               )}

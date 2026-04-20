@@ -14,6 +14,7 @@ import { FallingLeaves } from './components/FallingLeaves';
 import { AuthModal } from './components/AuthModal';
 import NotificationSystem from './components/NotificationSystem';
 import PushNotificationInitializer from './components/PushNotificationInitializer';
+import { Language } from './i18n';
 
 export default function App() {
   const [user, loading] = useAuthState(auth);
@@ -21,6 +22,12 @@ export default function App() {
   const [view, setView] = useState<'gallery' | 'admin'>('gallery');
   const [showContact, setShowContact] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('language') as Language) || 'uz');
+
+  useEffect(() => {
+    localStorage.setItem('language', language);
+  }, [language]);
 
   // Check for redirect result on mount
   useEffect(() => {
@@ -76,6 +83,9 @@ export default function App() {
     syncUserRole();
   }, [user]);
 
+  // Filter anime by selected language
+  const filteredAnimeListByLang = animeList.filter(a => (a.language || 'uz') === language);
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-[#020202]">
@@ -91,7 +101,9 @@ export default function App() {
             referrerPolicy="no-referrer"
           />
         </motion.div>
-        <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px] animate-pulse">Loading Animem.uz...</p>
+        <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px] animate-pulse">
+          {t('loadingString')}
+        </p>
       </div>
     );
   }
@@ -106,8 +118,10 @@ export default function App() {
         setView={setView} 
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
-        imageCount={animeList.length}
+        imageCount={filteredAnimeListByLang.length}
         onLoginClick={() => setShowAuthModal(true)}
+        language={language}
+        setLanguage={setLanguage}
       />
 
       <AnimatePresence>
@@ -120,9 +134,9 @@ export default function App() {
           >
             <div className="flex items-center gap-3 text-red-400">
                <AlertCircle size={20} />
-               <p className="text-xs font-black uppercase tracking-widest leading-none">{fetchError}</p>
+               <p className="text-xs font-black uppercase tracking-widest leading-none">{t('errorFetchAnime')}</p>
             </div>
-            <button onClick={() => window.location.reload()} className="px-6 py-2 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl">Retry</button>
+            <button onClick={() => window.location.reload()} className="px-6 py-2 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl">{t('retry')}</button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -132,18 +146,19 @@ export default function App() {
         <AnimePortal 
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
-          animeList={animeList}
+          animeList={filteredAnimeListByLang}
           loading={dataLoading}
+          language={language}
         />
       ) : isAdmin ? (
-        <AdminPanel />
+        <AdminPanel language={language} setLanguage={setLanguage} />
       ) : (
         <div className="pt-40 flex flex-col items-center justify-center px-6">
           <div className="glass p-16 rounded-[2rem] text-center max-w-lg">
             <ShieldAlert className="text-red-500 w-20 h-20 mx-auto mb-8 animate-bounce" />
-            <h2 className="text-4xl font-black tracking-tighter mb-4 uppercase">Ruxsat Yo'q</h2>
-            <p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed uppercase tracking-widest">Sizda ushbu bo'limga kirish uchun ruxsat mavjud emas. Iltimos admin bilan bog'laning.</p>
-            <button onClick={() => setView('gallery')} className="glass-button-primary w-full py-5 text-xs">ASOSIY SAHIFAGA QAYTISH</button>
+            <h2 className="text-4xl font-black tracking-tighter mb-4 uppercase">{t('noAccess')}</h2>
+            <p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed uppercase tracking-widest">{t('noAccessDesc')}</p>
+            <button onClick={() => setView('gallery')} className="glass-button-primary w-full py-5 text-xs">{t('backToHome')}</button>
           </div>
         </div>
       )}
@@ -163,26 +178,27 @@ export default function App() {
               </div>
               <span className="text-3xl font-black tracking-tighter italic uppercase">Animem<span className="text-indigo-500">.uz</span></span>
             </div>
-            <p className="text-slate-500 text-sm max-w-sm font-medium leading-relaxed">Eng so'nggi va qaynoq animelar faqat bizda. Professional streaming tajribasi.</p>
+            <p className="text-slate-500 text-sm max-w-sm font-medium leading-relaxed">{t('footerDesc')}</p>
           </div>
           <div className="flex items-center gap-6 sm:gap-12 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
             <a href="https://t.me/animem_uz1" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full hover:bg-indigo-600 hover:text-white transition-all border border-white/5">
               <Send size={16} /> TELEGRAM
             </a>
-            <button onClick={() => setShowContact(true)} className="hover:text-white transition-colors uppercase">Bog'lanish</button>
+            <button onClick={() => setShowContact(true)} className="hover:text-white transition-colors uppercase">{t('contact')}</button>
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-16 pt-12 border-t border-white/5 text-center text-slate-800 text-[10px] font-black uppercase tracking-[0.4em]">
-          © 2026 ANIMEM.UZ MEDIA GROUP. BARCHA HUQUQLAR HIMOYALANGAN.
+          {t('copyright')}
         </div>
       </footer>
 
-      <ContactForm isOpen={showContact} onClose={() => setShowContact(false)} />
+      <ContactForm isOpen={showContact} onClose={() => setShowContact(false)} language={language} />
       
       {showAuthModal && (
         <AuthModal 
           onSuccess={() => setShowAuthModal(false)} 
           onClose={() => setShowAuthModal(false)} 
+          language={language}
         />
       )}
 
