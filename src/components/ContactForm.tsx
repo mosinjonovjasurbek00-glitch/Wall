@@ -61,14 +61,15 @@ export default function ContactForm({ isOpen, onClose, language = 'uz' }: Contac
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            className="absolute inset-0 bg-black/95 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]"
           />
           
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-lg glass rounded-[2.5rem] shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto custom-scrollbar"
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="relative w-full max-w-lg glass rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.8)] border border-white/10 max-h-[90vh] overflow-y-auto custom-scrollbar"
           >
             <div className="p-8 sm:p-12">
               <div className="flex items-center justify-between mb-10">

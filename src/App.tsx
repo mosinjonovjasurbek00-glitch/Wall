@@ -88,22 +88,47 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-[#020202]">
-        <motion.div 
-          animate={{ scale: [1, 1.1, 1], opacity: [1, 0.8, 1] }} 
-          transition={{ duration: 2, repeat: Infinity }}
-          className="w-24 h-24 bg-indigo-600 rounded-full overflow-hidden shadow-[0_0_50px_rgba(79,70,229,0.3)] border-2 border-indigo-500/20"
-        >
-          <img 
-            src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
-            alt="Loading..."
-            className="w-full h-full object-cover"
-            referrerPolicy="no-referrer"
-          />
-        </motion.div>
-        <p className="text-slate-500 font-black uppercase tracking-[0.4em] text-[10px] animate-pulse">
-          {t('loadingString')}
-        </p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-12 bg-[#020202] overflow-hidden">
+        <div className="relative">
+          {/* Subtle glow behind the logo */}
+          <div className="absolute inset-x-0 -inset-y-4 bg-indigo-500/20 blur-[60px] rounded-full animate-pulse" />
+          
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.05, 1],
+              boxShadow: [
+                "0 0 20px rgba(79,70,229,0.2)",
+                "0 0 40px rgba(79,70,229,0.4)",
+                "0 0 20px rgba(79,70,229,0.2)"
+              ]
+            }} 
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 rounded-[2.5rem] overflow-hidden border-2 border-white/5 relative z-10"
+          >
+            <img 
+              src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
+              alt="Loading..."
+              className="w-full h-full object-cover grayscale-[0.2]"
+              referrerPolicy="no-referrer"
+            />
+            {/* Spinning ring only on edges */}
+            <div className="absolute inset-0 border-[3px] border-transparent border-t-indigo-400 rounded-[2.5rem] animate-[spin_1.5s_linear_infinite]" />
+          </motion.div>
+        </div>
+
+        <div className="flex flex-col items-center gap-4 relative z-10">
+          <p className="text-white font-black uppercase tracking-[0.6em] text-[10px] sm:text-xs">
+            {t('loadingString')}
+          </p>
+          <div className="w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ x: "-100%" }}
+              animate={{ x: "100%" }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="w-1/2 h-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -225,13 +250,15 @@ export default function App() {
 
       <ContactForm isOpen={showContact} onClose={() => setShowContact(false)} language={language} />
       
-      {showAuthModal && (
-        <AuthModal 
-          onSuccess={() => setShowAuthModal(false)} 
-          onClose={() => setShowAuthModal(false)} 
-          language={language}
-        />
-      )}
+      <AnimatePresence>
+        {showAuthModal && (
+          <AuthModal 
+            onSuccess={() => setShowAuthModal(false)} 
+            onClose={() => setShowAuthModal(false)} 
+            language={language}
+          />
+        )}
+      </AnimatePresence>
 
       <NotificationSystem language={language} />
       <PushNotificationInitializer />

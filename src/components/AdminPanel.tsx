@@ -477,7 +477,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 backdrop-blur-md text-white px-6 py-4 rounded-2xl flex items-center gap-3 shadow-2xl border border-red-500/20"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-red-600 shadow-[0_10px_40px_rgba(220,38,38,0.4)] text-white px-6 py-4 rounded-2xl flex items-center gap-3 border border-red-500/20"
           >
             <AlertCircle size={20} />
             <span className="text-xs font-black uppercase tracking-widest">{error}</span>
@@ -489,7 +489,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-indigo-600/90 backdrop-blur-md text-white px-6 py-4 rounded-2xl flex items-center gap-3 shadow-2xl border border-indigo-500/20"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-indigo-600 shadow-[0_10px_40px_rgba(79,70,229,0.4)] text-white px-6 py-4 rounded-2xl flex items-center gap-3 border border-indigo-500/20"
           >
             <Check size={20} />
             <span className="text-xs font-black uppercase tracking-widest">{t('successMessage')}</span>
@@ -505,7 +505,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setConfirmModal(prev => ({ ...prev, show: false }))}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/95"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}

@@ -115,13 +115,6 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
                       <User size={16} className="text-slate-400 sm:w-5 sm:h-5" />
                     )}
                   </button>
-                  <button 
-                    onClick={logout}
-                    className="w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-red-600/10 border border-red-500/20 text-red-500 hover:bg-red-600 hover:text-white transition-all group shrink-0"
-                    title={t('logout')}
-                  >
-                    <LogOut size={16} className="group-hover:translate-x-0.5 transition-transform sm:w-5 sm:h-5" />
-                  </button>
                 </div>
               </div>
             ) : (
@@ -136,13 +129,15 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
         </div>
       </nav>
 
-      {showProfileModal && (
-        <ProfileModal 
-          isOpen={showProfileModal} 
-          onClose={() => setShowProfileModal(false)}
-          language={language}
-        />
-      )}
+      <AnimatePresence>
+        {showProfileModal && (
+          <ProfileModal 
+            isOpen={showProfileModal} 
+            onClose={() => setShowProfileModal(false)}
+            language={language}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

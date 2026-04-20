@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Upload, Check, Loader2, User } from 'lucide-react';
+import { X, Upload, Check, Loader2, User, LogOut } from 'lucide-react';
 import { db, auth } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { cn } from '../lib/utils';
@@ -77,10 +77,14 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+          }
           
           // Compress to base64 jpeg
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
           setCustomPreview(dataUrl);
           setAvatarUrl(''); // Deselect pre-defined if custom is loaded
         };
@@ -95,11 +99,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
     setSaving(true);
     try {
       let finalAvatarUrl = avatarUrl;
-
-      // Handle custom file upload (Base64)
-      if (customPreview && !avatarUrl) {
-         finalAvatarUrl = customPreview;
-      }
+      if (customPreview && !avatarUrl) finalAvatarUrl = customPreview;
 
       await updateDoc(doc(db, 'users', user.uid), {
         username: username.trim(),
@@ -113,22 +113,22 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 20 }}
-          className="relative w-full max-w-md bg-[#0A0A0A] border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden"
-        >
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/95 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]"
+        onClick={onClose}
+      />
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="relative w-full max-w-md bg-[#080808] border border-white/5 rounded-[2.5rem] p-6 sm:p-10 shadow-[0_30px_100px_rgba(0,0,0,0.8)] overflow-hidden"
+      >
            <button 
              onClick={onClose}
              className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors"
@@ -145,24 +145,34 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
            ) : (
              <div className="space-y-8">
                {/* Username input */}
-               <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('username')}</label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                  />
+               <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t('emailAddressTitle')}</label>
+                    <div className="w-full bg-white/[0.02] border border-white/5 rounded-2xl px-5 py-4 text-sm text-slate-400 font-medium">
+                      {user?.email}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t('username')}</label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
+                      placeholder={t('username')}
+                    />
+                  </div>
                </div>
 
                {/* Avatar selection */}
-               <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('chooseAvatar')}</label>
+               <div className="space-y-4 pt-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{t('chooseAvatar')}</label>
                   
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                     {/* Custom Upload Button */}
                     <div className="relative aspect-square">
-                       <label className="cursor-pointer w-full h-full rounded-2xl border-2 border-dashed border-white/20 hover:border-indigo-500 bg-white/5 flex flex-col items-center justify-center gap-1 transition-all">
+                       <label className="cursor-pointer w-full h-full rounded-2xl border-2 border-dashed border-white/10 hover:border-indigo-500 bg-white/[0.02] flex flex-col items-center justify-center gap-1 transition-all group">
                           <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                           {customPreview ? (
                             <>
@@ -174,7 +184,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                               )}
                             </>
                           ) : (
-                            <Upload size={16} className="text-slate-400" />
+                            <Upload size={18} className="text-slate-600 group-hover:text-indigo-400 transition-colors" />
                           )}
                        </label>
                     </div>
@@ -189,7 +199,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                         }}
                         className={cn(
                           "relative aspect-square rounded-2xl overflow-hidden border-2 transition-all",
-                          avatarUrl === url ? "border-indigo-500 scale-105" : "border-transparent hover:border-white/20"
+                          avatarUrl === url ? "border-indigo-500 scale-105 shadow-lg shadow-indigo-500/20" : "border-transparent hover:border-white/10"
                         )}
                       >
                          <img src={url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -203,18 +213,31 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                   </div>
                </div>
 
-               <button
-                 onClick={handleSave}
-                 disabled={saving || !username.trim()}
-                 className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl py-3.5 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
-               >
-                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                 {saving ? t('saving') : t('save')}
-               </button>
+               <div className="pt-4 flex flex-col gap-3">
+                 <button
+                   onClick={handleSave}
+                   disabled={saving || !username.trim()}
+                   className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-2xl py-4 font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/20"
+                 >
+                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                   {saving ? t('saving') : t('save')}
+                 </button>
+
+                 <button
+                   onClick={() => {
+                     const { logout } = require('../firebase');
+                     logout();
+                     onClose();
+                   }}
+                   className="w-full bg-white/5 hover:bg-red-600/10 border border-white/5 hover:border-red-500/20 text-slate-500 hover:text-red-500 rounded-2xl py-4 font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-2"
+                 >
+                   <LogOut size={16} />
+                   {t('logout')}
+                 </button>
+               </div>
              </div>
            )}
         </motion.div>
       </div>
-    </AnimatePresence>
   );
 }
