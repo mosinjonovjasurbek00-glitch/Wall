@@ -14,16 +14,16 @@ import { FallingLeaves } from './components/FallingLeaves';
 import { AuthModal } from './components/AuthModal';
 import NotificationSystem from './components/NotificationSystem';
 import PushNotificationInitializer from './components/PushNotificationInitializer';
-import { Language } from './i18n';
+import { Language, useTranslation } from './i18n';
 
 export default function App() {
+  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('language') as Language) || 'uz');
+  const t = useTranslation(language);
   const [user, loading] = useAuthState(auth);
   const [firestoreAdmin, setFirestoreAdmin] = useState(false);
   const [view, setView] = useState<'gallery' | 'admin'>('gallery');
   const [showContact, setShowContact] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  
-  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('language') as Language) || 'uz');
 
   useEffect(() => {
     localStorage.setItem('language', language);
