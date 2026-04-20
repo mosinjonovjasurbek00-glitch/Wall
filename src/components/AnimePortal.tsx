@@ -502,6 +502,34 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                 modalMode === 'details' ? "sm:max-w-5xl" : "sm:max-w-[1400px]"
               )}
             >
+               {/* Breadcrumbs */}
+               <div className="flex items-center gap-2 px-8 sm:px-12 pt-8 sm:pt-10 overflow-x-auto no-scrollbar whitespace-nowrap">
+                  <button 
+                    onClick={() => setSelectedAnime(null)}
+                    className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-white transition-colors"
+                  >
+                    {t('home')}
+                  </button>
+                  <ChevronRight size={10} className="text-slate-700 shrink-0" />
+                  <button 
+                    onClick={() => setModalMode('details')}
+                    className={cn(
+                      "text-[10px] font-black uppercase tracking-[0.2em] transition-colors",
+                      modalMode === 'details' ? "text-indigo-400" : "text-slate-500 hover:text-white"
+                    )}
+                  >
+                    {selectedAnime.title}
+                  </button>
+                  {modalMode === 'player' && currentEpisode && (
+                    <>
+                      <ChevronRight size={10} className="text-slate-700 shrink-0" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
+                        {currentEpisode.episodeNumber}-{t('episode')}
+                      </span>
+                    </>
+                  )}
+               </div>
+
               <button 
                 onClick={() => setSelectedAnime(null)} 
                 className="absolute top-6 right-6 z-[300] p-3 text-white/40 hover:text-white transition-all bg-white/5 hover:bg-white/10 rounded-full border border-white/5 flex items-center justify-center active:scale-90"
@@ -735,7 +763,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                             <div className="w-20 h-20 sm:w-24 sm:h-24 bg-indigo-600/20 rounded-full flex items-center justify-center animate-pulse">
                               <Play size={32} className="sm:w-10 sm:h-10 text-indigo-500 ml-1.5 sm:ml-2" />
                             </div>
-                            <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">Epizodni tanlang</p>
+                            <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">{t('selectEpisodeFirst')}</p>
                           </div>
                         )}
                       </div>
