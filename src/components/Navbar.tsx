@@ -77,7 +77,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
               className="bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full px-4 py-2 font-black text-[10px] sm:text-xs tracking-widest flex items-center gap-2 transition-all active:scale-95"
             >
                <Globe size={14} className="text-indigo-400" />
-               {language.toUpperCase()}
+               {language === 'uz' ? 'RU' : 'UZ'}
             </button>
 
             <div className="h-6 sm:h-8 w-px bg-white/10 mx-1 sm:mx-2 hidden sm:block" />
@@ -102,7 +102,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
                 <div className="flex items-center gap-1.5 sm:gap-4 pl-1.5 sm:pl-4 border-l border-white/10">
                   <div className="hidden lg:flex flex-col items-end">
                      <span className="text-[10px] font-black uppercase tracking-tighter truncate max-w-[120px]">@{username || 'User'}</span>
-                     <span className="text-[7px] font-black text-indigo-400 uppercase tracking-widest">{isAdmin ? 'Admin' : 'Member'}</span>
+                     <span className="text-[7px] font-black text-indigo-400 uppercase tracking-widest">{isAdmin ? t('admin') : t('member')}</span>
                   </div>
                   <button 
                     onClick={() => setShowProfileModal(true)}

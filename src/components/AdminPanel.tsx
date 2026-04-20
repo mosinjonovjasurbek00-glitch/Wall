@@ -5,7 +5,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as LinkIcon, MessageSquare, Star, Clock, Play, List, ChevronRight, ArrowLeft, Send, User, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import { CATEGORIES } from '../constants';
+import { CATEGORIES, categoryKeys } from '../constants';
 import axios from 'axios';
 import { Language, useTranslation } from '../i18n';
 
@@ -567,7 +567,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
             activeTab === 'anime' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
           )}
         >
-          <Film size={16} /> Anime
+          <Film size={16} /> {t('animeTab')}
         </button>
         <button
           onClick={() => setActiveTab('episodes')}
@@ -629,7 +629,9 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <select className="glass-input" value={category} onChange={e => setCategory(e.target.value)}>
-                      {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c} value={c} className="bg-slate-900">{c}</option>)}
+                      {CATEGORIES.filter(c => c !== 'All').map(c => (
+                        <option key={c} value={c} className="bg-slate-900">{t(categoryKeys[c] as any)}</option>
+                      ))}
                     </select>
                     <select className="glass-input" value={contentType} onChange={e => setContentType(e.target.value as any)}>
                       <option value="series" className="bg-slate-900">{t('series')}</option>

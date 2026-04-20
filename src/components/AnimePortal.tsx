@@ -5,7 +5,7 @@ import { collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, deleteDoc,
 import { Play, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import { CATEGORIES } from '../constants';
+import { CATEGORIES, categoryKeys } from '../constants';
 
 interface AnimeDoc {
   id: string;
@@ -240,10 +240,10 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
 
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-1 sm:gap-2 mb-1 md:mb-2">
                        <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-indigo-400">
-                          {featuredAnime.category}
+                          {t((categoryKeys[featuredAnime.category] || featuredAnime.category) as any)}
                        </span>
                        <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          {featuredAnime.type === 'movie' ? 'Film' : 'Serial'}
+                          {featuredAnime.type === 'movie' ? t('movie') : t('serial')}
                        </span>
                        <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">
                           {featuredAnime.year}
@@ -261,7 +261,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                       >
                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                          <Play size={14} fill="currentColor" className="relative z-10" /> 
-                         <span className="relative z-10">Ma'lumot</span>
+                         <span className="relative z-10">{t('info')}</span>
                          {/* Glow effect */}
                          <div className="absolute inset-0 shadow-[0_0_30px_rgba(79,70,229,0.3)] rounded-2xl" />
                       </button>
@@ -333,7 +333,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em]">Animem.uz Platformasi</span>
              </div>
              <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tighter">
-               {showWatchlistOnly ? 'Watchlist' : searchTerm ? `Natijalar` : selectedCategory !== 'All' ? selectedCategory : 'Yangi Anime'}
+               {showWatchlistOnly ? t('watchlist') : searchTerm ? t('results') : selectedCategory !== 'All' ? t((categoryKeys[selectedCategory] || selectedCategory) as any) : t('newAnime')}
              </h2>
           </div>
 
@@ -342,7 +342,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
               <input 
                 type="text" 
-                placeholder="Qidiruv..." 
+                placeholder={t('search')} 
                 className="bg-white/5 border border-white/10 rounded-full pl-14 pr-6 py-3.5 text-sm focus:outline-none focus:border-indigo-500/50 w-full md:w-64 lg:w-80 transition-all font-medium"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}

@@ -57,7 +57,7 @@ export default function App() {
       }));
       setDataLoading(false);
     }, (error) => {
-      setFetchError("Anime yuklashda xatolik");
+      setFetchError(t('errorFetchAnime'));
       setDataLoading(false);
     });
     return () => unsubscribe();
@@ -202,7 +202,7 @@ export default function App() {
         />
       )}
 
-      <NotificationSystem />
+      <NotificationSystem language={language} />
       <PushNotificationInitializer />
     </div>
   );

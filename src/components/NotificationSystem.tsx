@@ -4,6 +4,7 @@ import { collection, query, orderBy, limit, onSnapshot, Timestamp } from 'fireba
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, Sparkles, X, ChevronRight, Play } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { Language, useTranslation } from '../i18n';
 
 interface NotificationDoc {
   id: string;
@@ -15,7 +16,12 @@ interface NotificationDoc {
   createdAt: Timestamp;
 }
 
-export default function NotificationSystem() {
+interface NotificationSystemProps {
+  language?: Language;
+}
+
+export default function NotificationSystem({ language = 'uz' }: NotificationSystemProps) {
+  const t = useTranslation(language);
   const [lastNotification, setLastNotification] = useState<NotificationDoc | null>(null);
   const [show, setShow] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
@@ -100,7 +106,7 @@ export default function NotificationSystem() {
               <div className="flex-1 min-w-0 pt-1">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">Yangi {lastNotification.type === 'anime' ? 'Anime' : 'Epizod'}</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">{t('new')} {lastNotification.type === 'anime' ? t('newAnime') : t('episode')}</span>
                 </div>
                 
                 <h4 className="text-white font-black text-sm uppercase tracking-tight truncate mb-1">
@@ -122,7 +128,7 @@ export default function NotificationSystem() {
                     }}
                     className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95"
                   >
-                    <Play size={12} fill="currentColor" /> KO'RISH
+                    <Play size={12} fill="currentColor" /> {t('watch')}
                   </button>
                   <button 
                     onClick={() => setShow(false)}
