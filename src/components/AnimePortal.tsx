@@ -485,16 +485,21 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center"
+            className="fixed inset-0 z-[200] flex items-center justify-center p-0 sm:p-4"
           >
-            <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl" onClick={() => setSelectedAnime(null)} />
+            <div 
+              className="absolute inset-0 bg-black/95 shadow-[inset_0_0_200px_rgba(0,0,0,0.8)]" 
+              onClick={() => setSelectedAnime(null)} 
+            />
             
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 40 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 40 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className={cn(
-                "relative max-w-7xl w-full h-full sm:h-auto sm:max-h-[95vh] rounded-none sm:rounded-[3rem] overflow-hidden border-0 sm:border border-white/10 flex flex-col shadow-none sm:shadow-[0_0_200px_rgba(0,0,0,1)] bg-[#080808] transition-all duration-500",
-                modalMode === 'details' ? "sm:max-w-5xl" : "sm:max-w-7xl"
+                "relative max-w-7xl w-full h-full sm:h-auto sm:max-h-[92vh] rounded-none sm:rounded-[4rem] overflow-hidden border-0 sm:border border-white/5 flex flex-col shadow-[0_50px_200px_rgba(0,0,0,0.9)] bg-[#050505] transition-all duration-500",
+                modalMode === 'details' ? "sm:max-w-5xl" : "sm:max-w-[1400px]"
               )}
             >
               <button 

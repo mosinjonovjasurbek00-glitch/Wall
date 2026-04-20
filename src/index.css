@@ -9,10 +9,17 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-50 min-h-screen selection:bg-indigo-500/30;
-    /* Optimized background - single gradient instead of four complex ones */
+    @apply bg-[#020617] text-slate-50 min-h-screen selection:bg-indigo-500/30;
+    position: relative;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
     background: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%), #020617;
-    background-attachment: fixed;
+    pointer-events: none;
   }
 
   .custom-scrollbar::-webkit-scrollbar {

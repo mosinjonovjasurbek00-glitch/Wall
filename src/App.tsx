@@ -20,7 +20,15 @@ export default function App() {
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('language') as Language) || 'uz');
   const t = useTranslation(language);
   const [user, loading] = useAuthState(auth);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [firestoreAdmin, setFirestoreAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => setInitialLoading(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
   const [view, setView] = useState<'gallery' | 'admin'>('gallery');
   const [showContact, setShowContact] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -77,16 +85,16 @@ export default function App() {
         }
       } else {
         setFirestoreAdmin(false);
-        setView('gallery');
+        if (!loading) setView('gallery');
       }
     }
     syncUserRole();
-  }, [user]);
+  }, [user, loading]);
 
   // Filter anime by selected language
   const filteredAnimeListByLang = animeList.filter(a => (a.language || 'uz') === language);
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-12 bg-[#020202] overflow-hidden">
         <div className="relative">

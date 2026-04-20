@@ -511,7 +511,8 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative glass rounded-3xl p-8 max-w-sm w-full border border-white/10 shadow-2xl"
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative glass rounded-[2.5rem] p-8 max-w-sm w-full border border-white/5 shadow-[0_30px_100px_rgba(0,0,0,0.8)]"
             >
               <div className="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
                 <Trash2 size={32} className="text-red-500" />
