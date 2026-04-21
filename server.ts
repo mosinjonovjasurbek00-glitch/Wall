@@ -58,11 +58,20 @@ import { rumbleStreamer } from "./src/services/RumbleStreamer";
 // Orqa fonda telegram mijozni ishga tushirish (xatolik bermasligi uchun catch)
 tgStreamer.init().catch(err => console.error("Telegram Streamer xatosi:", err));
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+export const app = express();
+const PORT = 3000;
 
+async function setupServer() {
   app.use(express.json());
+  
+  // Conditionally load Vite only in dev
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  }
 
   // Katta videolarni serverdan parchalab uzatish yo'li
   app.get("/api/telegram/stream", async (req, res) => {
@@ -363,11 +372,7 @@ async function startServer() {
   });
 
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+    // Vite middleware handled at the start of setupServer
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
@@ -375,12 +380,19 @@ async function startServer() {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
+}
 
+// Global setup call
+setupServer().catch(console.error);
+
+if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
     startTelegramBridge().catch(console.error);
   });
 }
+
+export default app;
 
 /**
  * Telegram Bridge: Monitors Firestore for new notifications and posts them to Telegram.
@@ -515,5 +527,3 @@ async function startTelegramBridge() {
     if (bridgeActive) checkAndPost();
   }, 1000 * 10);
 }
-
-startServer();

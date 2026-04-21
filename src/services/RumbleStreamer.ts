@@ -34,17 +34,24 @@ export const rumbleStreamer = {
       if (ldMatch) {
         try {
           const json = JSON.parse(ldMatch[1]);
-          const data = Array.isArray(json) ? json[0] : json;
-          if (data.contentUrl) finalUrl = data.contentUrl;
+          const dataArray = Array.isArray(json) ? json : [json];
+          for (const data of dataArray) {
+             if (data.contentUrl) {
+               finalUrl = data.contentUrl;
+               break;
+             }
+          }
         } catch (e) {
           console.warn("[Rumble] LD+JSON parse failed");
         }
       }
 
       if (!finalUrl) {
-        // Method 2: Look for mp4 or m3u8 in the serialized config or scripts
-        const videoMatch = html.match(/https?:\/\/[^"']+\.(?:mp4|m3u8)(?:\?[^"']*)?/);
-        if (videoMatch) finalUrl = videoMatch[0];
+        // Method 2: serialized logic search
+        const serializedMatch = html.match(/"?u"?:\s*"([^"]+\.(?:mp4|m3u8|webm)(?:\?[^"]*)?)"/);
+        if (serializedMatch) {
+           finalUrl = serializedMatch[1].replace(/\\/g, '');
+        }
       }
 
       if (!finalUrl) {
@@ -55,12 +62,20 @@ export const rumbleStreamer = {
 
       if (!finalUrl) {
         // Method 4: Generic search for video sources in scripts
-        const genericMatch = html.match(/"url":\s*"([^"]+\.(?:mp4|m3u8)[^"]*)"/);
+        const genericMatch = html.match(/"url":\s*"([^"]+\.(?:mp4|m3u8|webm)[^"]*)"/);
         if (genericMatch) finalUrl = genericMatch[1].replace(/\\/g, '');
       }
 
+      if (!finalUrl) {
+        // Method 5: Look for any mp4/m3u8 links that look like video files
+        const videoMatch = html.match(/https?:\/\/[a-zA-Z0-9.\-_/]+\.(?:mp4|m3u8|webm)(?:\?[a-zA-Z0-9.=&_%-]*)?/);
+        if (videoMatch) finalUrl = videoMatch[0];
+      }
+
       if (finalUrl) {
-        console.log(`[Rumble] Successfully extracted URL: ${finalUrl.substring(0, 50)}...`);
+        // Ensure URL is absolute
+        if (finalUrl.startsWith('//')) finalUrl = 'https:' + finalUrl;
+        console.log(`[Rumble] Successfully extracted URL: ${finalUrl.substring(0, 70)}...`);
         return finalUrl;
       }
 
