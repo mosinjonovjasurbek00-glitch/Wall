@@ -391,12 +391,10 @@ async function setupServer() {
 // Global setup call
 setupServer().catch(console.error);
 
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    startTelegramBridge().catch(console.error);
-  });
-}
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  startTelegramBridge().catch(console.error);
+});
 
 export default app;
 
