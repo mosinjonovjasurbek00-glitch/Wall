@@ -3,7 +3,7 @@ import Hls from 'hls.js';
 import { db, auth, loginWithGoogle } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs, addDoc, limit } from 'firebase/firestore';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Monitor, Settings, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2, Filter, ChevronDown, RotateCcw, XCircle } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Monitor, Settings, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2, Filter, ChevronDown, RotateCcw, XCircle, Share2, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { CATEGORIES, categoryKeys } from '../constants';
@@ -253,6 +253,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
   const [bannerIndex, setBannerIndex] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [expandedDesc, setExpandedDesc] = useState(false);
   const [filterYear, setFilterYear] = useState<string>('All');
   const [filterType, setFilterType] = useState<string>('All');
@@ -1047,6 +1048,14 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                           >
                              <Heart size={16} fill={watchlist.has(selectedAnime.id) ? "currentColor" : "none"} />
                              {watchlist.has(selectedAnime.id) ? t('savedBtn') : t('save')}
+                          </button>
+                          
+                          <button 
+                            onClick={() => setIsShareModalOpen(true)}
+                            className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
+                          >
+                             <Share2 size={16} />
+                             {t('share')}
                           </button>
                           
                           <button 
