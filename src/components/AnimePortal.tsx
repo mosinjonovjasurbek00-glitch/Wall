@@ -1420,7 +1420,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
       <ShareModal 
         isOpen={isShareModalOpen} 
         onClose={() => setIsShareModalOpen(false)} 
-        url={window.location.href} 
+        url={`${window.location.origin}${window.location.pathname}?anime=${selectedAnime?.id || ''}${currentEpisode ? `&episode=${currentEpisode.episodeNumber}` : ''}`} 
         title={selectedAnime?.title || ''} 
         t={t} 
       />
