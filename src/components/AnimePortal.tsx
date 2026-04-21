@@ -1285,24 +1285,16 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                );
                              }
 
-                              // Handle Rumble URLs using native embed player
+                              // Handle Rumble URLs using server-side direct stream proxy
                               if (url.includes('rumble.com/')) {
-                                  let embedUrl = url;
-                                  if (!embedUrl.includes('/embed/')) {
-                                      const match = embedUrl.match(/rumble\.com\/(v[a-zA-Z0-9]+)/);
-                                      if (match) {
-                                          embedUrl = `https://rumble.com/embed/${match[1]}/`;
-                                      }
-                                  }
+                                  const proxyUrl = `/api/rumble/stream?url=${encodeURIComponent(url)}`;
                                   return (
-                                      <iframe 
-                                         key={embedUrl}
-                                         src={embedUrl} 
-                                         className="w-full h-full border-none" 
-                                         allowFullScreen 
-                                         allow="autoplay; encrypted-media" 
-                                         onLoad={() => setVideoLoading(false)}
-                                      />
+                                    <UniversalVideoPlayer 
+                                      src={proxyUrl}
+                                      videoRef={videoRef}
+                                      setVideoLoading={setVideoLoading}
+                                      setCurrentTime={setCurrentTime}
+                                    />
                                   );
                               }
 
