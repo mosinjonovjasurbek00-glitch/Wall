@@ -66,6 +66,15 @@ service cloud.firestore {
              data.animeId is string;
     }
 
+    function isValidHistory(data) {
+      return data.keys().hasAll(['userId', 'animeId', 'episodeId', 'episodeNumber', 'updatedAt']) &&
+             data.userId == request.auth.uid &&
+             data.animeId is string &&
+             data.episodeId is string &&
+             data.episodeNumber is number &&
+             data.updatedAt == request.time;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -118,6 +127,12 @@ service cloud.firestore {
       allow create: if isAdmin() && isValidNotification(request.resource.data);
       allow delete: if isAdmin();
       allow update: if false;
+    }
+
+    match /history/{id} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create, update: if isAuthenticated() && isValidHistory(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 
     match /fcm_tokens/{tokenId} {

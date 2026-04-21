@@ -96,6 +96,19 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["type", "title", "message", "animeId", "createdAt"]
+    },
+    "History": {
+      "title": "History",
+      "description": "User's watch history",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "animeId": { "type": "string" },
+        "episodeId": { "type": "string" },
+        "episodeNumber": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "animeId", "episodeNumber", "updatedAt"]
     }
   },
   "firestore": {
@@ -126,6 +139,10 @@
     "/public_notifications/{notificationId}": {
       "schema": "Notification",
       "description": "Global notifications for all users"
+    },
+    "/history/{historyId}": {
+      "schema": "History",
+      "description": "User viewing progress"
     }
   }
 }

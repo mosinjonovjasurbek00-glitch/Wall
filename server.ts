@@ -400,8 +400,8 @@ async function startTelegramBridge() {
       if (newDocs.length > 0) {
         for (const doc of newDocs.reverse()) {
           const data = doc.data();
-          const siteUrl = "https://ais-dev-cgj6xwkpzi54j7zli3gjgu-155117606908.asia-east1.run.app";
-          const title = data.type === 'anime' ? "🎬 YANGI ANIME!" : "🔔 YANGI QISM (EPIZOD)!";
+          const siteUrl = "https://animem.uz";
+          const title = data.type === 'anime' ? "🎬 YANGI ANIME (Animem Uz)!" : "🔔 YANGI QISM (Animem Uz)!";
           const text = `<b>${title}</b>\n\n<b>${data.title}</b>\n${data.message}\n\n🌐 Saytda ko'rish: ${siteUrl}`;
 
           try {

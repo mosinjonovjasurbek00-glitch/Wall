@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, loginWithGoogle } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs, addDoc } from 'firebase/firestore';
-import { Play, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2 } from 'lucide-react';
+import { collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs, addDoc, limit } from 'firebase/firestore';
+import { Play, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2, Filter, ChevronDown, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { CATEGORIES, categoryKeys } from '../constants';
@@ -68,6 +68,11 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
   const [currentPage, setCurrentPage] = useState(1);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [expandedDesc, setExpandedDesc] = useState(false);
+  const [filterYear, setFilterYear] = useState<string>('All');
+  const [filterType, setFilterType] = useState<string>('All');
+  const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [showFilters, setShowFilters] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
   const itemsPerPage = 12;
 
   const bannerAnime = animeList.filter(a => a.isBanner);
@@ -90,7 +95,18 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setWatchlist(new Set(snapshot.docs.map(doc => doc.data().animeId)));
     });
-    return () => unsubscribe();
+    
+    const qHistory = query(
+      collection(db, 'history'), 
+      where('userId', '==', auth.currentUser.uid), 
+      orderBy('updatedAt', 'desc'), 
+      limit(10)
+    );
+    const unsubHistory = onSnapshot(qHistory, (snapshot) => {
+      setHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    
+    return () => { unsubscribe(); unsubHistory(); };
   }, [auth.currentUser]);
 
   useEffect(() => {
@@ -120,19 +136,26 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
   const filteredAnime = animeList.filter(anime => {
     const matchesSearch = anime.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           anime.description?.toLowerCase().includes(searchTerm.toLowerCase());
-  const matchesCategory = selectedCategory === 'All' || anime.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'All' || anime.category === selectedCategory;
     const matchesWatchlist = !showWatchlistOnly || watchlist.has(anime.id);
-    return matchesSearch && matchesCategory && matchesWatchlist;
+    const matchesYear = filterYear === 'All' || anime.year?.toString() === filterYear;
+    const matchesType = filterType === 'All' || anime.type === filterType;
+    // status checks for data presence since old docs might not have it
+    const matchesStatus = filterStatus === 'All' || (anime as any).status === filterStatus;
+    
+    return matchesSearch && matchesCategory && matchesWatchlist && matchesYear && matchesType && matchesStatus;
   });
+
+  const availableYears = Array.from(new Set(animeList.map(a => a.year?.toString()).filter(Boolean))).sort((a, b) => b.localeCompare(a));
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredAnime.length / itemsPerPage);
   const paginatedAnime = filteredAnime.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Reset to page 1 on search or category change
+  // Reset to page 1 on search or filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory, showWatchlistOnly]);
+  }, [searchTerm, selectedCategory, showWatchlistOnly, filterYear, filterType, filterStatus]);
 
   useEffect(() => {
     if (!selectedAnime || modalMode !== 'details') {
@@ -200,10 +223,21 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     }
   };
 
-  const handleEpisodeSelect = (ep: EpisodeDoc) => {
+  const handleEpisodeSelect = async (ep: EpisodeDoc) => {
     if (currentEpisode?.id === ep.id) return;
     setVideoLoading(true);
     setCurrentEpisode(ep);
+    
+    if (auth.currentUser && selectedAnime) {
+      const historyId = `${auth.currentUser.uid}_${selectedAnime.id}`;
+      setDoc(doc(db, 'history', historyId), {
+        userId: auth.currentUser.uid,
+        animeId: selectedAnime.id,
+        episodeId: ep.id,
+        episodeNumber: ep.episodeNumber,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
   };
 
   const handleOpenAnime = (anime: AnimeDoc, mode: 'details' | 'player' = 'details') => {
@@ -216,6 +250,12 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
       setDoc(doc(db, 'anime', anime.id), { views: increment(1) }, { merge: true });
     }
   };
+
+  const historyAnime = history.map(h => {
+    const anime = animeList.find(a => a.id === h.animeId);
+    if (!anime) return null;
+    return { ...anime, lastEpisode: h.episodeNumber };
+  }).filter(Boolean) as any[];
 
   return (
     <div className="min-h-screen bg-[#020202] text-white">
@@ -360,7 +400,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                    referrerPolicy="no-referrer"
                  />
                </div>
-               <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em]">Animem.uz Platformasi</span>
+               <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em]">Animem Uz Platformasi</span>
              </div>
              <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tighter">
                {showWatchlistOnly ? t('watchlist') : searchTerm ? t('results') : selectedCategory !== 'All' ? t((categoryKeys[selectedCategory] || selectedCategory) as any) : t('newAnime')}
@@ -379,6 +419,20 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
+            
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                "p-3.5 sm:p-4 rounded-full border transition-all flex items-center justify-center shrink-0",
+                showFilters || filterYear !== 'All' || filterType !== 'All' || filterStatus !== 'All' 
+                  ? "bg-indigo-600 border-indigo-500 shadow-xl" 
+                  : "bg-white/5 border-white/10 hover:bg-white/10"
+              )}
+              title={t('filterTitle')}
+            >
+              <Filter size={20} className={cn((filterYear !== 'All' || filterType !== 'All' || filterStatus !== 'All') && "text-white")} />
+            </button>
+
             <button 
               onClick={() => setShowWatchlistOnly(!showWatchlistOnly)}
               className={cn(
@@ -390,6 +444,151 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
             </button>
           </div>
         </div>
+
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 48 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-white/[0.02] border border-white/10 rounded-[2.5rem] p-6 sm:p-8 backdrop-blur-xl flex flex-wrap items-end gap-6 sm:gap-10">
+                {/* Year Filter */}
+                <div className="flex-1 min-w-[140px] space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1 flex items-center gap-2">
+                    <Calendar size={12} className="text-indigo-400" />
+                    {t('yearLabel')}
+                  </label>
+                  <div className="relative group">
+                    <select 
+                      value={filterYear}
+                      onChange={(e) => setFilterYear(e.target.value)}
+                      className="appearance-none w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-xs font-bold focus:outline-none focus:border-indigo-500/50 transition-all pr-12 cursor-pointer hover:bg-white/10"
+                    >
+                      <option value="All" className="bg-[#0A0A0A]">{t('allYears')}</option>
+                      {availableYears.map(y => (
+                        <option key={y} value={y} className="bg-[#0A0A0A]">{y}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-indigo-400" />
+                  </div>
+                </div>
+
+                {/* Type Filter */}
+                <div className="flex-1 min-w-[140px] space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1 flex items-center gap-2">
+                    <Film size={12} className="text-indigo-400" />
+                    {t('typeLabel')}
+                  </label>
+                  <div className="relative group">
+                    <select 
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                      className="appearance-none w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-xs font-bold focus:outline-none focus:border-indigo-500/50 transition-all pr-12 cursor-pointer hover:bg-white/10"
+                    >
+                      <option value="All" className="bg-[#0A0A0A]">{t('all')}</option>
+                      <option value="movie" className="bg-[#0A0A0A]">{t('movie')}</option>
+                      <option value="series" className="bg-[#0A0A0A]">{t('serial')}</option>
+                    </select>
+                    <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-indigo-400" />
+                  </div>
+                </div>
+
+                {/* Status Filter */}
+                <div className="flex-1 min-w-[140px] space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1 flex items-center gap-2">
+                    <Activity size={12} className="text-indigo-400" />
+                    {t('status')}
+                  </label>
+                  <div className="relative group">
+                    <select 
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="appearance-none w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-xs font-bold focus:outline-none focus:border-indigo-500/50 transition-all pr-12 cursor-pointer hover:bg-white/10"
+                    >
+                      <option value="All" className="bg-[#0A0A0A]">{t('all')}</option>
+                      <option value="ongoing" className="bg-[#0A0A0A]">{t('ongoing')}</option>
+                      <option value="finished" className="bg-[#0A0A0A]">{t('finished')}</option>
+                    </select>
+                    <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-indigo-400" />
+                  </div>
+                </div>
+
+                {/* Reset Button */}
+                <div className="flex-shrink-0">
+                  <button 
+                    onClick={() => {
+                      setFilterYear('All');
+                      setFilterType('All');
+                      setFilterStatus('All');
+                      setSelectedCategory('All');
+                      setSearchTerm('');
+                    }}
+                    className="flex items-center gap-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 px-6 py-3.5 rounded-2xl transition-all text-[10px] font-black uppercase tracking-[0.2em] active:scale-95 group shadow-lg hover:shadow-red-500/10"
+                  >
+                    <RotateCcw size={16} className="group-hover:-rotate-45 transition-transform" />
+                    {t('clearFilters')}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Continue Watching Section */}
+        <AnimatePresence>
+          {auth.currentUser && historyAnime.length > 0 && !searchTerm && selectedCategory === 'All' && filterYear === 'All' && filterType === 'All' && filterStatus === 'All' && !showWatchlistOnly && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-16 sm:mb-20"
+            >
+              <div className="flex items-center gap-4 mb-8 sm:mb-10">
+                <div className="flex items-center gap-3 bg-indigo-600/10 border border-indigo-500/20 px-4 py-2 rounded-full">
+                  <Clock size={16} className="text-indigo-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{t('continueWatching')}</span>
+                </div>
+              </div>
+              
+              <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 scrollbar-hide -mx-6 px-6 sm:mx-0 sm:px-0">
+                {historyAnime.map((anime) => (
+                  <motion.div 
+                    key={`history-${anime.id}`}
+                    whileHover={{ scale: 1.02 }}
+                    className="flex-shrink-0 w-[240px] sm:w-[320px] group cursor-pointer"
+                    onClick={() => handleOpenAnime(anime, 'player')}
+                  >
+                    <div className="relative aspect-video rounded-2xl sm:rounded-3xl overflow-hidden border border-white/5 shadow-2xl transition-all group-hover:border-indigo-500/50">
+                      <img 
+                        src={anime.posterUrl} 
+                        alt={anime.title} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                      
+                      <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <h4 className="font-black text-xs sm:text-sm uppercase tracking-tight text-white truncate">{anime.title}</h4>
+                          <p className="text-[9px] sm:text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-1">
+                            {anime.lastEpisode}-{t('episodeShort')}
+                          </p>
+                        </div>
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-110 transition-transform">
+                          <Play size={18} fill="currentColor" />
+                        </div>
+                      </div>
+                      
+                      {/* Progress line (visual only) */}
+                      <div className="absolute bottom-0 left-0 h-1 bg-indigo-500 w-2/3" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-8">
