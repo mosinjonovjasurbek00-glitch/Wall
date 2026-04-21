@@ -1270,17 +1270,25 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                );
                              }
 
-                              // Handle Rumble URLs via our direct extractor proxy to use custom player
-                              if (url.includes('rumble.com/') && !forceLegacy) {
-                                const proxyUrl = `/api/rumble/stream?url=${encodeURIComponent(url)}`;
-                                return (
-                                  <UniversalVideoPlayer 
-                                    src={proxyUrl}
-                                    videoRef={videoRef}
-                                    setVideoLoading={setVideoLoading}
-                                    setCurrentTime={setCurrentTime}
-                                  />
-                                );
+                              // Handle Rumble URLs using native embed player
+                              if (url.includes('rumble.com/')) {
+                                  let embedUrl = url;
+                                  if (!embedUrl.includes('/embed/')) {
+                                      const match = embedUrl.match(/rumble\.com\/(v[a-zA-Z0-9]+)/);
+                                      if (match) {
+                                          embedUrl = `https://rumble.com/embed/${match[1]}/`;
+                                      }
+                                  }
+                                  return (
+                                      <iframe 
+                                         key={embedUrl}
+                                         src={embedUrl} 
+                                         className="w-full h-full border-none" 
+                                         allowFullScreen 
+                                         allow="autoplay; encrypted-media" 
+                                         onLoad={() => setVideoLoading(false)}
+                                      />
+                                  );
                               }
 
                               const isDirectVideo = (url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi|m3u8)$/) || url.includes('stream') || url.includes('/file/')) && !forceLegacy;
