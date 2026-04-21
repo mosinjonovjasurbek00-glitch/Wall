@@ -82,7 +82,7 @@ export default function NotificationSystem({ language = 'uz' }: NotificationSyst
               initial={{ width: "100%" }}
               animate={{ width: "0%" }}
               transition={{ duration: 8, ease: "linear" }}
-              className="h-1 bg-indigo-500 absolute top-0 left-0"
+              className="h-1 bg-red-500 absolute top-0 left-0"
             />
 
             <div className="p-5 flex gap-4">
@@ -96,7 +96,7 @@ export default function NotificationSystem({ language = 'uz' }: NotificationSyst
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-indigo-500">
+                  <div className="w-full h-full flex items-center justify-center text-red-500">
                     <Sparkles size={24} />
                   </div>
                 )}
@@ -105,8 +105,8 @@ export default function NotificationSystem({ language = 'uz' }: NotificationSyst
               {/* Content */}
               <div className="flex-1 min-w-0 pt-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-400">{t('new')} {lastNotification.type === 'anime' ? t('newAnime') : t('episode')}</span>
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400">{t('new')} {lastNotification.type === 'anime' ? t('newAnime') : t('episode')}</span>
                 </div>
                 
                 <h4 className="text-white font-black text-sm uppercase tracking-tight truncate mb-1">
@@ -126,7 +126,7 @@ export default function NotificationSystem({ language = 'uz' }: NotificationSyst
                         // or provide a more complex routing system later.
                         window.location.reload(); // Refreshing to see new content is simple
                     }}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95"
+                    className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95"
                   >
                     <Play size={12} fill="currentColor" /> {t('watch')}
                   </button>

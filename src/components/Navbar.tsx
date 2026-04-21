@@ -54,7 +54,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
             className="flex items-center gap-2 sm:gap-4 cursor-pointer group flex-shrink-0"
             onClick={() => setView('gallery')}
           >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.5)] group-hover:scale-110 transition-transform ring-2 sm:ring-4 ring-indigo-500/20 overflow-hidden">
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-red-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.5)] group-hover:scale-110 transition-transform ring-2 sm:ring-4 ring-red-500/20 overflow-hidden">
               <img 
                 src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" 
                 alt="Logo" 
@@ -64,7 +64,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
             </div>
             <div className="flex flex-col">
               <span className="font-black text-sm sm:text-2xl tracking-tighter italic leading-none">
-                ANIMEM<span className="text-indigo-400">.UZ</span>
+                ANIMEM<span className="text-red-400"> Uz</span>
               </span>
               <span className="hidden sm:block text-[8px] font-black text-slate-500 tracking-[0.4em] uppercase mt-1">{t('database')}</span>
             </div>
@@ -104,7 +104,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
               onClick={() => setLanguage(language === 'uz' ? 'ru' : 'uz')}
               className="bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full px-4 py-2 font-black text-[10px] sm:text-xs tracking-widest flex items-center gap-2 transition-all active:scale-95"
             >
-               <Globe size={14} className="text-indigo-400" />
+               <Globe size={14} className="text-red-400" />
                {language === 'uz' ? 'RU' : 'UZ'}
             </button>
 
@@ -117,7 +117,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
                     onClick={() => setView(view === 'gallery' ? 'admin' : 'gallery')}
                     className={cn(
                       "w-9 h-9 sm:w-12 sm:h-12 rounded-full transition-all border flex items-center justify-center",
-                      view === 'admin' ? "bg-indigo-600 border-indigo-500" : "bg-white/5 border-white/10 hover:bg-white/10"
+                      view === 'admin' ? "bg-red-600 border-red-500" : "bg-white/5 border-white/10 hover:bg-white/10"
                     )}
                     title={view === 'gallery' ? t('adminPanel') : t('gallery')}
                   >
@@ -130,11 +130,11 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
                 <div className="flex items-center gap-1.5 sm:gap-4 pl-1.5 sm:pl-4 border-l border-white/10">
                   <div className="hidden lg:flex flex-col items-end">
                      <span className="text-[10px] font-black uppercase tracking-tighter truncate max-w-[120px]">@{username || (language === 'uz' ? 'Foydalanuvchi' : 'Пользователь')}</span>
-                     <span className="text-[7px] font-black text-indigo-400 uppercase tracking-widest">{isAdmin ? t('admin') : t('member')}</span>
+                     <span className="text-[7px] font-black text-red-500 uppercase tracking-widest">{isAdmin ? t('admin') : t('member')}</span>
                   </div>
                   <button 
                     onClick={() => setShowProfileModal(true)}
-                    className="w-9 h-9 sm:w-12 sm:h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center shrink-0 overflow-hidden hover:border-indigo-500 transition-colors"
+                    className="w-9 h-9 sm:w-12 sm:h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center shrink-0 overflow-hidden hover:border-red-500 transition-colors"
                     title={t('editProfile')}
                   >
                     {avatarUrl ? (
@@ -148,7 +148,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
             ) : (
               <button 
                 onClick={onLoginClick}
-                className="bg-white text-black px-10 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-400 transition-all active:scale-95"
+                className="bg-white text-black px-10 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-400 transition-all active:scale-95"
               >
                 {t('login')}
               </button>

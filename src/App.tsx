@@ -96,22 +96,22 @@ export default function App() {
 
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-12 bg-[#020202] overflow-hidden">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-12 bg-[#000000] overflow-hidden">
         <div className="relative">
           {/* Subtle glow behind the logo */}
-          <div className="absolute inset-x-0 -inset-y-4 bg-indigo-500/20 blur-[60px] rounded-full animate-pulse" />
+          <div className="absolute inset-x-0 -inset-y-4 bg-red-500/20 blur-[60px] rounded-full animate-pulse" />
           
           <motion.div 
             animate={{ 
               scale: [1, 1.05, 1],
               boxShadow: [
-                "0 0 20px rgba(79,70,229,0.2)",
-                "0 0 40px rgba(79,70,229,0.4)",
-                "0 0 20px rgba(79,70,229,0.2)"
+                "0 0 20px rgba(220,38,38,0.2)",
+                "0 0 40px rgba(220,38,38,0.4)",
+                "0 0 20px rgba(220,38,38,0.2)"
               ]
             }} 
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 rounded-[2.5rem] overflow-hidden border-2 border-white/5 relative z-10"
+            className="w-24 h-24 sm:w-32 sm:h-32 bg-red-600 rounded-[2.5rem] overflow-hidden border-2 border-white/5 relative z-10"
           >
             <img 
               src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" 
@@ -120,7 +120,7 @@ export default function App() {
               referrerPolicy="no-referrer"
             />
             {/* Spinning ring only on edges */}
-            <div className="absolute inset-0 border-[3px] border-transparent border-t-indigo-400 rounded-[2.5rem] animate-[spin_1.5s_linear_infinite]" />
+            <div className="absolute inset-0 border-[3px] border-transparent border-t-red-400 rounded-[2.5rem] animate-[spin_1.5s_linear_infinite]" />
           </motion.div>
         </div>
 
@@ -133,7 +133,7 @@ export default function App() {
               initial={{ x: "-100%" }}
               animate={{ x: "100%" }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-1/2 h-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
+              className="w-1/2 h-full bg-gradient-to-r from-transparent via-red-500 to-transparent"
             />
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020202] selection:bg-indigo-500/30 font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#000000] selection:bg-red-500/30 font-sans overflow-x-hidden">
       <FallingLeaves />
 
       <Navbar 
@@ -209,7 +209,7 @@ export default function App() {
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <span className="text-3xl font-black tracking-tighter italic uppercase">Animem<span className="text-indigo-500">.uz</span></span>
+              <span className="text-3xl font-black tracking-tighter italic uppercase">Animem<span className="text-red-500"> Uz</span></span>
             </div>
             <p className="text-slate-500 text-sm max-w-sm font-medium leading-relaxed">{t('footerDesc')}</p>
           </div>
@@ -219,7 +219,7 @@ export default function App() {
                 href="https://t.me/animem_uz1" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all border border-white/5 group shadow-lg hover:shadow-indigo-500/20"
+                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-red-600 hover:text-white transition-all border border-white/5 group shadow-lg hover:shadow-red-500/20"
                 title="Telegram"
               >
                 <Send size={20} className="group-hover:scale-110 transition-transform" />

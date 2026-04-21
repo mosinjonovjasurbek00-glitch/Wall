@@ -90,9 +90,9 @@ export default function ContactForm({ isOpen, onClose, language = 'uz' }: Contac
                   <motion.div 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="w-24 h-24 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto mb-8"
+                    className="w-24 h-24 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-8"
                   >
-                    <CheckCircle className="text-indigo-400 w-12 h-12" />
+                    <CheckCircle className="text-red-400 w-12 h-12" />
                   </motion.div>
                   <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 italic">{t('messageSent')}</h3>
                   <p className="text-slate-400 text-sm font-medium uppercase tracking-widest leading-relaxed">{t('messageSentDesc')}</p>
@@ -161,7 +161,7 @@ export default function ContactForm({ isOpen, onClose, language = 'uz' }: Contac
                   <button 
                     type="submit" 
                     disabled={submitting}
-                    className="glass-button-primary w-full flex items-center justify-center gap-4 py-6 shadow-2xl shadow-indigo-600/20 group"
+                    className="glass-button-primary w-full flex items-center justify-center gap-4 py-6 shadow-2xl shadow-red-600/20 group"
                   >
                     {submitting ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
                     <span className="text-[10px] font-black uppercase tracking-[0.3em]">{submitting ? t('sending') : t('send')}</span>

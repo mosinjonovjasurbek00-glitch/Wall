@@ -312,7 +312,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                 className="absolute inset-0 flex flex-col md:flex-row items-center justify-center md:justify-between px-6 sm:px-12 md:px-20 py-8 md:py-4 gap-6 md:gap-6"
               >
                 {/* Visual Background Element (Subtle) */}
-                <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
 
                 {/* Left Side: Content */}
                 <div className="flex-1 z-10 space-y-1 sm:space-y-1.5 md:space-y-2 text-center md:text-left">
@@ -326,7 +326,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                     </h1>
 
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-1 sm:gap-2 mb-1 md:mb-2">
-                       <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                       <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-red-400">
                           {t((categoryKeys[featuredAnime.category] || featuredAnime.category) as any)}
                        </span>
                        <span className="bg-white/5 border border-white/10 px-3 sm:px-6 py-1 sm:py-2 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -344,13 +344,13 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                     <div className="flex items-center justify-center md:justify-start gap-3 md:gap-4">
                       <button 
                          onClick={() => handleOpenAnime(featuredAnime, 'details')}
-                         className="group relative flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all active:scale-95 overflow-hidden"
+                         className="group relative flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all active:scale-95 overflow-hidden"
                       >
-                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                         <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                          <Play size={14} fill="currentColor" className="relative z-10" /> 
                          <span className="relative z-10">{t('info')}</span>
                          {/* Glow effect */}
-                         <div className="absolute inset-0 shadow-[0_0_30px_rgba(79,70,229,0.3)] rounded-2xl" />
+                         <div className="absolute inset-0 shadow-[0_0_30px_rgba(220,38,38,0.3)] rounded-2xl" />
                       </button>
                       
                       <button 
@@ -373,7 +373,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                   transition={{ delay: 0.3 }}
                   className="h-[180px] sm:h-[220px] md:h-full aspect-[2/3] z-10 flex-shrink-0 flex items-center"
                 >
-                  <div className="h-full rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/5 group-hover:border-indigo-500/30 transition-colors">
+                  <div className="h-full rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/5 group-hover:border-red-500/30 transition-colors">
                     <img 
                       src={featuredAnime.posterUrl} 
                       alt={featuredAnime.title}
@@ -395,7 +395,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                     className={cn(
                       "transition-all duration-300 rounded-full",
                       i === bannerIndex 
-                        ? "w-8 h-1.5 bg-indigo-500" 
+                        ? "w-8 h-1.5 bg-red-500" 
                         : "w-1.5 h-1.5 bg-white/20 hover:bg-white/40"
                     )}
                   />
@@ -418,7 +418,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                 className={cn(
                   "px-6 sm:px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
                   selectedCategory === cat 
-                    ? "bg-indigo-600 border-indigo-500 text-white shadow-xl shadow-indigo-600/20" 
+                    ? "bg-red-600 border-red-500 text-white shadow-xl shadow-red-600/20" 
                     : "bg-white/5 border-white/10 text-slate-500 hover:bg-white/10 hover:text-white"
                 )}
               >
@@ -430,8 +430,8 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
           <div className="space-y-3 sm:space-y-4">
-             <div className="flex items-center gap-3 text-indigo-400">
-               <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg overflow-hidden border border-indigo-500/20">
+             <div className="flex items-center gap-3 text-red-400">
+               <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg overflow-hidden border border-red-500/20">
                  <img 
                    src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" 
                    alt="Icon" 
@@ -448,12 +448,12 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
 
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="relative group flex-1 md:flex-none">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-400 transition-colors" size={18} />
               <input 
                 id="search-input"
                 type="text" 
                 placeholder={t('search')} 
-                className="bg-white/5 border border-white/10 rounded-full pl-14 pr-6 py-3.5 text-sm focus:outline-none focus:border-indigo-500/50 w-full md:w-64 lg:w-80 transition-all font-medium"
+                className="bg-white/5 border border-white/10 rounded-full pl-14 pr-6 py-3.5 text-sm focus:outline-none focus:border-red-500/50 w-full md:w-64 lg:w-80 transition-all font-medium"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -464,7 +464,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
               className={cn(
                 "p-3.5 sm:p-4 rounded-full border transition-all flex items-center justify-center shrink-0",
                 showFilters || filterYear !== 'All' || filterType !== 'All' || filterStatus !== 'All' 
-                  ? "bg-indigo-600 border-indigo-500 shadow-xl" 
+                  ? "bg-red-600 border-red-500 shadow-xl" 
                   : "bg-white/5 border-white/10 hover:bg-white/10"
               )}
               title={t('filterTitle')}
@@ -476,7 +476,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
               onClick={() => setShowWatchlistOnly(!showWatchlistOnly)}
               className={cn(
                 "p-3.5 sm:p-4 rounded-full border transition-all flex items-center justify-center shrink-0",
-                showWatchlistOnly ? "bg-indigo-600 border-indigo-500 shadow-xl" : "bg-white/5 border-white/10 hover:bg-white/10"
+                showWatchlistOnly ? "bg-red-600 border-red-500 shadow-xl" : "bg-white/5 border-white/10 hover:bg-white/10"
               )}
             >
               <Heart size={20} fill={showWatchlistOnly ? "currentColor" : "none"} />
@@ -496,61 +496,61 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                 {/* Year Filter */}
                 <div className="flex-1 min-w-[140px] space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1 flex items-center gap-2">
-                    <Calendar size={12} className="text-indigo-400" />
+                    <Calendar size={12} className="text-red-400" />
                     {t('yearLabel')}
                   </label>
                   <div className="relative group">
                     <select 
                       value={filterYear}
                       onChange={(e) => setFilterYear(e.target.value)}
-                      className="appearance-none w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-xs font-bold focus:outline-none focus:border-indigo-500/50 transition-all pr-12 cursor-pointer hover:bg-white/10"
+                      className="appearance-none w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-xs font-bold focus:outline-none focus:border-red-500/50 transition-all pr-12 cursor-pointer hover:bg-white/10"
                     >
                       <option value="All" className="bg-[#0A0A0A]">{t('allYears')}</option>
                       {availableYears.map(y => (
                         <option key={y} value={y} className="bg-[#0A0A0A]">{y}</option>
                       ))}
                     </select>
-                    <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-indigo-400" />
+                    <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-red-400" />
                   </div>
                 </div>
 
                 {/* Type Filter */}
                 <div className="flex-1 min-w-[140px] space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1 flex items-center gap-2">
-                    <Film size={12} className="text-indigo-400" />
+                    <Film size={12} className="text-red-400" />
                     {t('typeLabel')}
                   </label>
                   <div className="relative group">
                     <select 
                       value={filterType}
                       onChange={(e) => setFilterType(e.target.value)}
-                      className="appearance-none w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-xs font-bold focus:outline-none focus:border-indigo-500/50 transition-all pr-12 cursor-pointer hover:bg-white/10"
+                      className="appearance-none w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-xs font-bold focus:outline-none focus:border-red-500/50 transition-all pr-12 cursor-pointer hover:bg-white/10"
                     >
                       <option value="All" className="bg-[#0A0A0A]">{t('all')}</option>
                       <option value="movie" className="bg-[#0A0A0A]">{t('movie')}</option>
                       <option value="series" className="bg-[#0A0A0A]">{t('serial')}</option>
                     </select>
-                    <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-indigo-400" />
+                    <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-red-400" />
                   </div>
                 </div>
 
                 {/* Status Filter */}
                 <div className="flex-1 min-w-[140px] space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1 flex items-center gap-2">
-                    <Activity size={12} className="text-indigo-400" />
+                    <Activity size={12} className="text-red-400" />
                     {t('status')}
                   </label>
                   <div className="relative group">
                     <select 
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="appearance-none w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-xs font-bold focus:outline-none focus:border-indigo-500/50 transition-all pr-12 cursor-pointer hover:bg-white/10"
+                      className="appearance-none w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-xs font-bold focus:outline-none focus:border-red-500/50 transition-all pr-12 cursor-pointer hover:bg-white/10"
                     >
                       <option value="All" className="bg-[#0A0A0A]">{t('all')}</option>
                       <option value="ongoing" className="bg-[#0A0A0A]">{t('ongoing')}</option>
                       <option value="finished" className="bg-[#0A0A0A]">{t('finished')}</option>
                     </select>
-                    <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-indigo-400" />
+                    <ChevronDown size={14} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-red-400" />
                   </div>
                 </div>
 
@@ -584,9 +584,9 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
               className="mb-16 sm:mb-20"
             >
               <div className="flex items-center gap-4 mb-8 sm:mb-10">
-                <div className="flex items-center gap-3 bg-indigo-600/10 border border-indigo-500/20 px-4 py-2 rounded-full">
-                  <Clock size={16} className="text-indigo-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{t('continueWatching')}</span>
+                <div className="flex items-center gap-3 bg-red-600/10 border border-red-500/20 px-4 py-2 rounded-full">
+                  <Clock size={16} className="text-red-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-red-400">{t('continueWatching')}</span>
                 </div>
               </div>
               
@@ -598,7 +598,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                     className="flex-shrink-0 w-[240px] sm:w-[320px] group cursor-pointer"
                     onClick={() => handleOpenAnime(anime, 'player')}
                   >
-                    <div className="relative aspect-video rounded-2xl sm:rounded-3xl overflow-hidden border border-white/5 shadow-2xl transition-all group-hover:border-indigo-500/50">
+                    <div className="relative aspect-video rounded-2xl sm:rounded-3xl overflow-hidden border border-white/5 shadow-2xl transition-all group-hover:border-red-500/50">
                       <img 
                         src={anime.posterUrl} 
                         alt={anime.title} 
@@ -610,17 +610,17 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                       <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
                         <div className="min-w-0">
                           <h4 className="font-black text-xs sm:text-sm uppercase tracking-tight text-white truncate">{anime.title}</h4>
-                          <p className="text-[9px] sm:text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-1">
+                          <p className="text-[9px] sm:text-[10px] font-black text-red-400 uppercase tracking-widest mt-1">
                             {anime.lastEpisode}-{t('episodeShort')}
                           </p>
                         </div>
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-110 transition-transform">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/30 group-hover:scale-110 transition-transform">
                           <Play size={18} fill="currentColor" />
                         </div>
                       </div>
                       
                       {/* Progress line (visual only) */}
-                      <div className="absolute bottom-0 left-0 h-1 bg-indigo-500 w-2/3" />
+                      <div className="absolute bottom-0 left-0 h-1 bg-red-500 w-2/3" />
                     </div>
                   </motion.div>
                 ))}
@@ -645,12 +645,12 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                   className="group relative cursor-pointer"
                   onClick={() => handleOpenAnime(anime)}
                 >
-                  <div className="aspect-[2/3] rounded-2xl sm:rounded-[3rem] overflow-hidden relative glass border-white/5 group-hover:border-indigo-500/50 transition-all duration-500 shadow-2xl">
+                  <div className="aspect-[2/3] rounded-2xl sm:rounded-[3rem] overflow-hidden relative glass border-white/5 group-hover:border-red-500/50 transition-all duration-500 shadow-2xl">
                     <img src={anime.posterUrl} alt={anime.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" referrerPolicy="no-referrer" loading="lazy" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     
                     {/* Hover Overlay - Simplified as info is now below */}
-                    <div className="absolute inset-0 bg-indigo-950/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-red-950/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center p-6">
                       <div className="scale-75 group-hover:scale-100 transition-transform duration-500 h-16 w-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20">
                          <Play size={24} fill="white" className="ml-1 text-white" />
                       </div>
@@ -675,7 +675,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                   
                   {/* Unified Title & View Count (Always Visible) */}
                   <div className="mt-4 px-2">
-                     <h3 className="font-black text-xs sm:text-[13px] uppercase tracking-tight truncate text-white group-hover:text-indigo-400 transition-colors leading-tight">{anime.title}</h3>
+                     <h3 className="font-black text-xs sm:text-[13px] uppercase tracking-tight truncate text-white group-hover:text-red-400 transition-colors leading-tight">{anime.title}</h3>
                      <div className="flex items-center justify-between mt-2">
                        <div className="flex items-center gap-3">
                          <span className="text-[9px] text-slate-600 font-black tracking-widest">{anime.year}</span>
@@ -684,7 +684,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                          </div>
                        </div>
                        <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-[0.1em]">
-                          <Eye size={12} className="text-indigo-500/50" />
+                          <Eye size={12} className="text-red-500/50" />
                           <span>{anime.views || 0}</span>
                        </div>
                      </div>
@@ -715,7 +715,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                         className={cn(
                           "w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-2xl text-sm font-black transition-all border",
                           currentPage === pageNumber 
-                            ? "bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-600/30" 
+                            ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-600/30" 
                             : "bg-white/[0.03] border-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                         )}
                       >
@@ -784,7 +784,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                     onClick={() => setModalMode('details')}
                     className={cn(
                       "text-[10px] font-black uppercase tracking-[0.2em] transition-colors",
-                      modalMode === 'details' ? "text-indigo-400" : "text-slate-500 hover:text-white"
+                      modalMode === 'details' ? "text-red-400" : "text-slate-500 hover:text-white"
                     )}
                   >
                     {selectedAnime.title}
@@ -792,7 +792,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                   {modalMode === 'player' && currentEpisode && (
                     <>
                       <ChevronRight size={10} className="text-slate-700 shrink-0" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-400">
                         {currentEpisode.episodeNumber}-{t('episode')}
                       </span>
                     </>
@@ -816,7 +816,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                     className="flex-1 flex flex-col md:flex-row p-6 sm:p-12 md:p-20 gap-10 md:gap-16 items-center md:items-start relative overflow-y-auto custom-scrollbar"
                   >
                     {/* Background atmosphere for details */}
-                    <div className="absolute top-0 right-0 w-full h-full bg-indigo-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-full h-full bg-red-600/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
 
                     {/* Left: Poster and Buttons */}
                     <div className="w-full sm:w-[280px] md:w-[320px] flex-shrink-0 z-10 space-y-4">
@@ -831,7 +831,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                               "w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95",
                               watchlist.has(selectedAnime.id) 
                                 ? "bg-pink-600 text-white shadow-lg shadow-pink-600/20" 
-                                : "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                                : "bg-red-600 text-white shadow-lg shadow-red-600/20"
                             )}
                           >
                              <Heart size={16} fill={watchlist.has(selectedAnime.id) ? "currentColor" : "none"} />
@@ -858,7 +858,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                <button 
                                  key={recommend.id}
                                  onClick={() => handleOpenAnime(recommend)}
-                                 className="group relative aspect-[2/3] rounded-xl overflow-hidden border border-white/5 hover:border-indigo-500/50 transition-all"
+                                 className="group relative aspect-[2/3] rounded-xl overflow-hidden border border-white/5 hover:border-red-500/50 transition-all"
                                >
                                   <img src={recommend.posterUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
                                   <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors" />
@@ -876,11 +876,11 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                          </h2>
                          
                          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-8">
-                            <span className="bg-indigo-600 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white">TV</span>
+                            <span className="bg-red-600 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white">TV</span>
                             <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400">{t('completed')}</span>
                             <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400">{selectedAnime.year}</span>
                             <div className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                               <Eye size={12} className="text-indigo-400" /> {selectedAnime.views || 0}
+                               <Eye size={12} className="text-red-400" /> {selectedAnime.views || 0}
                             </div>
                             <div className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-amber-500 flex items-center gap-2">
                                <Star size={12} fill="currentColor" /> {selectedAnime.rating}
@@ -895,7 +895,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                           {selectedAnime.description && selectedAnime.description.length > 150 && (
                             <button 
                               onClick={() => setExpandedDesc(!expandedDesc)}
-                              className="text-indigo-400 font-black text-[10px] uppercase tracking-widest hover:text-indigo-300 transition-colors"
+                              className="text-red-400 font-black text-[10px] uppercase tracking-widest hover:text-red-300 transition-colors"
                             >
                               {expandedDesc ? t('readLess') : t('readMore')}
                             </button>
@@ -905,7 +905,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                        {/* Comments Section */}
                        <div className="pt-10 border-t border-white/5 space-y-8 text-left">
                           <div className="flex items-center gap-3">
-                             <MessageSquare size={20} className="text-indigo-500" />
+                             <MessageSquare size={20} className="text-red-500" />
                              <h3 className="text-xl font-black uppercase tracking-tighter">{t('comments')} ({comments.length})</h3>
                           </div>
 
@@ -920,7 +920,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                />
                                <button 
                                  disabled={submittingComment || !newComment.trim()}
-                                 className="absolute bottom-4 right-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-600/30"
+                                 className="absolute bottom-4 right-4 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white p-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-red-600/30"
                                >
                                  {submittingComment ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                                </button>
@@ -947,11 +947,11 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                              <img src={comment.avatarUrl} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                           </div>
                                         ) : (
-                                          <div className="w-8 h-8 bg-indigo-600/20 rounded-full flex items-center justify-center border border-white/10 shrink-0">
-                                             <User size={14} className="text-indigo-500" />
+                                          <div className="w-8 h-8 bg-red-600/20 rounded-full flex items-center justify-center border border-white/10 shrink-0">
+                                             <User size={14} className="text-red-500" />
                                           </div>
                                         )}
-                                        <span className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">{comment.username}</span>
+                                        <span className="text-[10px] font-black uppercase text-red-400 tracking-widest">{comment.username}</span>
                                      </div>
                                      {(user?.uid === comment.userId || user?.uid === 'mosinjonovjasurbek00@gmail.com') && (
                                        <button 
@@ -996,7 +996,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                          <div className="flex items-center gap-4">
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">DUBLYAJ:</span>
                             <div className="flex gap-2">
-                               <button className="bg-indigo-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-indigo-600/30 text-white">
+                               <button className="bg-red-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-red-600/30 text-white">
                                   <Check size={12} /> 日本語
                                </button>
                             </div>
@@ -1014,8 +1014,8 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                              }}
                              className="group flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 px-5 py-2.5 rounded-xl transition-all active:scale-95"
                            >
-                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-indigo-400 transition-colors">Keyingi qism</span>
-                             <ChevronRight size={16} className="text-indigo-500" />
+                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-red-400 transition-colors">Keyingi qism</span>
+                             <ChevronRight size={16} className="text-red-500" />
                            </button>
                          )}
                       </div>
@@ -1025,7 +1025,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                         {/* Video Loading State */}
                         {currentEpisode && videoLoading && (
                           <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-                            <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
+                            <Loader2 className="w-10 h-10 animate-spin text-red-500 mb-4" />
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white animate-pulse">Yuklanmoqda...</p>
                           </div>
                         )}
@@ -1105,9 +1105,9 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                              );
                            })()
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-indigo-950/20 to-black p-6 text-center">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-indigo-600/20 rounded-full flex items-center justify-center animate-pulse">
-                              <Play size={32} className="sm:w-10 sm:h-10 text-indigo-500 ml-1.5 sm:ml-2" />
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-red-950/20 to-black p-6 text-center">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-red-600/20 rounded-full flex items-center justify-center animate-pulse">
+                              <Play size={32} className="sm:w-10 sm:h-10 text-red-500 ml-1.5 sm:ml-2" />
                             </div>
                             <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">{t('selectEpisodeFirst')}</p>
                           </div>
@@ -1120,10 +1120,9 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                       <div className="px-8 pt-8 pb-4">
                          <h3 className="text-2xl font-black uppercase tracking-tighter">{t('episodes')}</h3>
                       </div>
-                      
-                      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar">
+                                        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar">
                         {loadingEpisodes ? (
-                          <div className="flex justify-center p-10"><Loader2 className="animate-spin text-indigo-500" /></div>
+                          <div className="flex justify-center p-10"><Loader2 className="animate-spin text-red-500" /></div>
                         ) : (
                           episodes.map(ep => (
                             <button
@@ -1132,23 +1131,23 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                               className={cn(
                                 "w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4",
                                 currentEpisode?.id === ep.id 
-                                  ? "bg-indigo-600/10 border-indigo-600/40 shadow-lg" 
+                                  ? "bg-red-600/10 border-red-600/40 shadow-lg" 
                                   : "bg-white/5 border-white/5 hover:bg-white/10"
                               )}
                             >
                               <div className={cn(
                                 "w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0",
-                                currentEpisode?.id === ep.id ? "bg-indigo-600 text-white" : "bg-white/10 text-slate-400"
+                                currentEpisode?.id === ep.id ? "bg-red-600 text-white" : "bg-white/10 text-slate-400"
                               )}>
                                 {ep.episodeNumber}
                               </div>
                               <div className="flex-1 min-w-0">
-                                 <h4 className={cn("font-black text-[12px] uppercase truncate", currentEpisode?.id === ep.id ? "text-indigo-400" : "text-white")}>
+                                 <h4 className={cn("font-black text-[12px] uppercase truncate", currentEpisode?.id === ep.id ? "text-red-400" : "text-white")}>
                                   {ep.title || `${ep.episodeNumber}-qism`}
                                  </h4>
                                  <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mt-1">TV</p>
                               </div>
-                              {currentEpisode?.id === ep.id && <Activity size={12} className="text-indigo-500 animate-pulse" />}
+                              {currentEpisode?.id === ep.id && <Activity size={12} className="text-red-500 animate-pulse" />}
                             </button>
                           ))
                         )}
@@ -1173,7 +1172,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.5, y: 50 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-10 right-10 z-[150] w-14 h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl flex items-center justify-center shadow-[0_0_50px_rgba(79,70,229,0.3)] active:scale-95 transition-all border border-indigo-400 group"
+            className="fixed bottom-10 right-10 z-[150] w-14 h-14 bg-red-600 hover:bg-red-500 text-white rounded-2xl flex items-center justify-center shadow-[0_0_50px_rgba(220,38,38,0.3)] active:scale-95 transition-all border border-red-400 group"
           >
             <motion.div
               animate={{ y: [0, -4, 0] }}

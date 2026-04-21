@@ -140,7 +140,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
 
            {loading ? (
              <div className="flex justify-center py-10">
-               <Loader2 className="animate-spin text-indigo-500" size={32} />
+               <Loader2 className="animate-spin text-red-500" size={32} />
              </div>
            ) : (
              <div className="space-y-8">
@@ -159,7 +159,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-red-500 transition-all font-medium"
                       placeholder={t('username')}
                     />
                   </div>
@@ -172,19 +172,19 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                     {/* Custom Upload Button */}
                     <div className="relative aspect-square">
-                       <label className="cursor-pointer w-full h-full rounded-2xl border-2 border-dashed border-white/10 hover:border-indigo-500 bg-white/[0.02] flex flex-col items-center justify-center gap-1 transition-all group">
+                       <label className="cursor-pointer w-full h-full rounded-2xl border-2 border-dashed border-white/10 hover:border-red-500 bg-white/[0.02] flex flex-col items-center justify-center gap-1 transition-all group">
                           <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                           {customPreview ? (
                             <>
                               <img src={customPreview} className="w-full h-full object-cover rounded-[14px]" />
                               {(customPreview || (!avatarUrl && customPreview)) && (
-                                <div className="absolute inset-0 ring-2 ring-indigo-500 rounded-2xl flex items-center justify-center bg-black/40">
+                                <div className="absolute inset-0 ring-2 ring-red-500 rounded-2xl flex items-center justify-center bg-black/40">
                                    <Check size={16} className="text-white" />
                                 </div>
                               )}
                             </>
                           ) : (
-                            <Upload size={18} className="text-slate-600 group-hover:text-indigo-400 transition-colors" />
+                            <Upload size={18} className="text-slate-600 group-hover:text-red-400 transition-colors" />
                           )}
                        </label>
                     </div>
@@ -199,7 +199,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                         }}
                         className={cn(
                           "relative aspect-square rounded-2xl overflow-hidden border-2 transition-all",
-                          avatarUrl === url ? "border-indigo-500 scale-105 shadow-lg shadow-indigo-500/20" : "border-transparent hover:border-white/10"
+                          avatarUrl === url ? "border-red-500 scale-105 shadow-lg shadow-red-500/20" : "border-transparent hover:border-white/10"
                         )}
                       >
                          <img src={url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -217,7 +217,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                  <button
                    onClick={handleSave}
                    disabled={saving || !username.trim()}
-                   className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-2xl py-4 font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/20"
+                   className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white rounded-2xl py-4 font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-red-600/20"
                  >
                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                    {saving ? t('saving') : t('save')}

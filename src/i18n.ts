@@ -10,7 +10,7 @@ export const translations = {
     logout: 'Chiqish',
     editProfile: 'Profilni tahrirlash',
     search: 'Izlash...',
-    all: 'Barchasi',
+    all: 'Hammasi',
     movies: 'Filmlar',
     series: 'Seriallar',
     saved: 'Saqlanganlar',

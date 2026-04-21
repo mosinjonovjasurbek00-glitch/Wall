@@ -489,7 +489,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-indigo-600 shadow-[0_10px_40px_rgba(79,70,229,0.4)] text-white px-6 py-4 rounded-2xl flex items-center gap-3 border border-indigo-500/20"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-red-600 shadow-[0_10px_40px_rgba(220,38,38,0.4)] text-white px-6 py-4 rounded-2xl flex items-center gap-3 border border-red-500/20"
           >
             <Check size={20} />
             <span className="text-xs font-black uppercase tracking-widest">{t('successMessage')}</span>
@@ -542,10 +542,10 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
 
       {telegramStatus && (
         <div className="max-w-7xl mx-auto mb-6">
-          <div className="glass rounded-2xl p-4 flex items-center justify-between border border-indigo-500/20">
+          <div className="glass rounded-2xl p-4 flex items-center justify-between border border-red-500/20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center">
-                <Send className="text-indigo-400" size={20} />
+              <div className="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center">
+                <Send className="text-red-400" size={20} />
               </div>
               <div className="flex flex-col">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('telegramConnection')}</h4>
@@ -565,7 +565,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
           onClick={() => { setActiveTab('anime'); setSelectedAnimeForEpisodes(null); }}
           className={cn(
             "px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all",
-            activeTab === 'anime' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
+            activeTab === 'anime' ? "bg-red-600 text-white shadow-xl shadow-red-500/20" : "text-slate-400 hover:text-white"
           )}
         >
           <Film size={16} /> {t('animeTab')}
@@ -574,7 +574,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
           onClick={() => setActiveTab('episodes')}
           className={cn(
             "px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all",
-            activeTab === 'episodes' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
+            activeTab === 'episodes' ? "bg-red-600 text-white shadow-xl shadow-red-500/20" : "text-slate-400 hover:text-white"
           )}
         >
           <List size={16} /> {t('episodes')}
@@ -583,7 +583,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
           onClick={() => setActiveTab('messages')}
           className={cn(
             "px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all",
-            activeTab === 'messages' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
+            activeTab === 'messages' ? "bg-red-600 text-white shadow-xl shadow-red-500/20" : "text-slate-400 hover:text-white"
           )}
         >
           <MessageSquare size={16} /> {t('messages')}
@@ -592,7 +592,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
           onClick={() => setActiveTab('admins')}
           className={cn(
             "px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all",
-            activeTab === 'admins' ? "bg-indigo-600 text-white shadow-xl shadow-indigo-500/20" : "text-slate-400 hover:text-white"
+            activeTab === 'admins' ? "bg-red-600 text-white shadow-xl shadow-red-500/20" : "text-slate-400 hover:text-white"
           )}
         >
           <User size={16} /> {t('adminsTab')}
@@ -651,14 +651,14 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                       <button 
                         type="button"
                         onClick={() => setAnimeLanguage('uz')}
-                        className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", animeLanguage === 'uz' ? "bg-indigo-600 border-indigo-500 text-white shadow-lg" : "bg-white/5 border border-white/10 text-slate-400")}
+                        className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", animeLanguage === 'uz' ? "bg-red-600 border-red-500 text-white shadow-lg" : "bg-white/5 border border-white/10 text-slate-400")}
                       >
                          O'zbek (UZ)
                       </button>
                       <button 
                         type="button"
                         onClick={() => setAnimeLanguage('ru')}
-                        className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", animeLanguage === 'ru' ? "bg-indigo-600 border-indigo-500 text-white shadow-lg" : "bg-white/5 border border-white/10 text-slate-400")}
+                        className={cn("flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", animeLanguage === 'ru' ? "bg-red-600 border-red-500 text-white shadow-lg" : "bg-white/5 border border-white/10 text-slate-400")}
                       >
                          Русский (RU)
                       </button>
@@ -666,7 +666,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                   </div>
 
                   <div className="flex items-center gap-3 p-4 glass rounded-2xl cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setIsBanner(!isBanner)}>
-                     <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", isBanner ? "bg-indigo-600 border-indigo-500 shadow-lg shadow-indigo-500/30" : "border-white/10")}>
+                     <div className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", isBanner ? "bg-red-600 border-red-500 shadow-lg shadow-red-500/30" : "border-white/10")}>
                         {isBanner && <Check size={14} className="text-white" />}
                      </div>
                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t('addToBanner')}</span>
@@ -674,7 +674,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
 
                   {uploadProgress !== null && (
                     <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${uploadProgress}%` }} className="bg-indigo-500 h-full" />
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${uploadProgress}%` }} className="bg-red-500 h-full" />
                     </div>
                   )}
 
@@ -695,14 +695,14 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                       <img src={anime.posterUrl} className="w-16 h-24 object-cover rounded-xl" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", anime.language === 'ru' ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400")}>{anime.language === 'ru' ? 'RU' : 'UZ'}</span>
+                          <span className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", anime.language === 'ru' ? "bg-red-500/20 text-red-400" : "bg-red-500/10 text-red-300")}>{anime.language === 'ru' ? 'RU' : 'UZ'}</span>
                           <h3 className="font-black text-sm uppercase truncate">{anime.title}</h3>
                         </div>
                         <p className="text-[10px] text-slate-500 uppercase font-black">{anime.category} • {anime.year} • {anime.views || 0} {t('views')}</p>
                         <div className="flex gap-2 mt-2">
                           <button 
                             onClick={() => { setSelectedAnimeForEpisodes(anime); setActiveTab('episodes'); }}
-                            className="bg-indigo-600/20 text-indigo-400 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter hover:bg-indigo-600 hover:text-white transition-all"
+                            className="bg-red-600/20 text-red-400 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter hover:bg-red-600 hover:text-white transition-all"
                           >
                             {t('episodes')}
                           </button>
@@ -748,7 +748,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                     </button>
                     <h2 className="text-xl font-black uppercase tracking-tighter mb-2">{selectedAnimeForEpisodes.title}</h2>
                     <div className="flex justify-between items-center mb-6">
-                      <p className="text-[10px] text-indigo-400 font-black uppercase">{editingEpisode ? t('editEpisode') : t('addEpisode')}</p>
+                      <p className="text-[10px] text-red-400 font-black uppercase">{editingEpisode ? t('editEpisode') : t('addEpisode')}</p>
                       {editingEpisode && (
                         <button onClick={() => setEditingEpisode(null)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">{t('cancel')}</button>
                       )}
@@ -777,7 +777,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                       {episodes.map(ep => (
                         <div key={ep.id} className="glass rounded-2xl p-4 flex items-center justify-between group">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center font-black text-indigo-400">
+                            <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center font-black text-red-400">
                               {ep.episodeNumber}
                             </div>
                             <div>
@@ -788,7 +788,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                           <div className="flex gap-2">
                             <button 
                               onClick={() => setEditingEpisode(ep)}
-                              className="p-2 text-white/20 hover:text-indigo-400 transition-colors"
+                              className="p-2 text-white/20 hover:text-red-400 transition-colors"
                             >
                               <LinkIcon size={16} className="rotate-45" />
                             </button>
@@ -835,17 +835,17 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
           >
             <div className="flex items-center justify-between mb-10">
               <h2 className="text-3xl font-black uppercase tracking-tighter">{t('userMessages')}</h2>
-              <div className="bg-indigo-600/20 px-4 py-2 rounded-xl border border-indigo-500/20">
-                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{messages.length} {t('msgCount')}</span>
+              <div className="bg-red-600/20 px-4 py-2 rounded-xl border border-red-500/20">
+                <span className="text-[10px] font-black uppercase tracking-widest text-red-400">{messages.length} {t('msgCount')}</span>
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {messages.map(msg => (
-                <div key={msg.id} className="glass rounded-[2rem] p-8 relative group border border-white/5 hover:border-indigo-500/30 transition-all">
+                <div key={msg.id} className="glass rounded-[2rem] p-8 relative group border border-white/5 hover:border-red-500/30 transition-all">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-indigo-500 border border-white/10">
+                      <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-red-500 border border-white/10">
                         {msg.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -866,7 +866,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                   </div>
                   
                   <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest">
-                    <div className="flex items-center gap-2 text-indigo-400">
+                    <div className="flex items-center gap-2 text-red-400">
                       <Send size={12} />
                       <span>{msg.contact}</span>
                     </div>
@@ -916,8 +916,8 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                   </button>
                 </form>
 
-                <div className="mt-10 p-6 bg-indigo-600/10 rounded-2xl border border-indigo-500/20">
-                  <div className="flex items-center gap-3 text-indigo-400 mb-3">
+                <div className="mt-10 p-6 bg-red-600/10 rounded-2xl border border-red-500/20">
+                  <div className="flex items-center gap-3 text-red-400 mb-3">
                     <AlertCircle size={16} />
                     <span className="text-[9px] font-black uppercase tracking-widest">{t('note')}</span>
                   </div>
@@ -934,10 +934,10 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                 
                 <div className="space-y-4">
                   {users.map(u => (
-                    <div key={u.id} className="glass rounded-2xl p-4 sm:p-6 flex items-center justify-between group border border-white/5 hover:border-indigo-500/20 transition-all">
+                    <div key={u.id} className="glass rounded-2xl p-4 sm:p-6 flex items-center justify-between group border border-white/5 hover:border-red-500/20 transition-all">
                       <div className="flex items-center gap-5">
-                        <div className="w-12 h-12 bg-indigo-600/10 rounded-xl flex items-center justify-center border border-indigo-500/20">
-                          <User size={24} className="text-indigo-500" />
+                        <div className="w-12 h-12 bg-red-600/10 rounded-xl flex items-center justify-center border border-red-500/20">
+                          <User size={24} className="text-red-500" />
                         </div>
                         <div>
                           <h4 className="font-black text-sm uppercase tracking-tight">@{u.username}</h4>

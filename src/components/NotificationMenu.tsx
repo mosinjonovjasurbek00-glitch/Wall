@@ -100,7 +100,7 @@ export default function NotificationMenu({ language = 'uz' }: NotificationMenuPr
         onClick={toggleMenu}
         className={cn(
           "w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all relative border",
-          isOpen ? "bg-indigo-600 border-indigo-500 text-white" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+          isOpen ? "bg-red-600 border-red-500 text-white" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
         )}
       >
         <Bell size={16} className="sm:w-5 sm:h-5" />
@@ -146,7 +146,7 @@ export default function NotificationMenu({ language = 'uz' }: NotificationMenuPr
                           <div className="flex gap-4">
                             <div className={cn(
                               "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border",
-                              notif.type === 'welcome' ? "bg-indigo-600/20 border-indigo-500/20 text-indigo-400" :
+                              notif.type === 'welcome' ? "bg-red-600/20 border-red-500/20 text-red-400" :
                               notif.type === 'update' ? "bg-amber-600/20 border-amber-500/20 text-amber-400" :
                               "bg-white/5 border-white/10 text-slate-400"
                             )}>
@@ -178,7 +178,7 @@ export default function NotificationMenu({ language = 'uz' }: NotificationMenuPr
                   <div className="p-4 bg-white/5 text-center">
                     <button 
                       onClick={() => setIsOpen(false)}
-                      className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] hover:text-white transition-colors"
+                      className="text-[9px] font-black text-red-400 uppercase tracking-[0.2em] hover:text-white transition-colors"
                     >
                       {t('close')}
                     </button>

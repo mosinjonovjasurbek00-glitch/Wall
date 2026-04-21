@@ -177,7 +177,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="glass w-full max-w-sm rounded-[2.5rem] relative overflow-hidden shadow-[0_0_100px_rgba(79,70,229,0.2)] flex flex-col max-h-[90vh]"
+        className="glass w-full max-w-sm rounded-[2.5rem] relative overflow-hidden shadow-[0_0_100px_rgba(220,38,38,0.2)] flex flex-col max-h-[90vh]"
       >
         {/* Header Actions */}
         <div className="flex items-center justify-between p-6 pb-0 relative z-10">
@@ -206,7 +206,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
           <div className="text-center mb-6">
             <div className="flex justify-center mb-3">
                  <h2 className="text-2xl font-black uppercase tracking-tighter italic">
-                   Animem<span className="text-indigo-500">.uz</span>
+                   Animem<span className="text-red-500"> Uz</span>
                  </h2>
             </div>
             <p className="text-[9px] text-slate-500 uppercase tracking-[0.3em] font-black">
@@ -225,8 +225,8 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
               exit={{ opacity: 0, x: -20 }}
               className="text-center space-y-6"
             >
-              <div className="w-20 h-20 bg-indigo-600/20 rounded-full flex items-center justify-center mx-auto">
-                <ShieldCheck size={40} className="text-indigo-500" />
+              <div className="w-20 h-20 bg-red-600/20 rounded-full flex items-center justify-center mx-auto">
+                <ShieldCheck size={40} className="text-red-500" />
               </div>
               <p className="text-xs text-slate-400 font-black uppercase tracking-widest leading-relaxed">
                 {t('verificationSent')}
@@ -305,14 +305,14 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
                     <button 
                       type="button" 
                       onClick={generateCaptcha} 
-                      className="text-indigo-500 hover:rotate-180 transition-transform duration-500"
+                      className="text-red-500 hover:rotate-180 transition-transform duration-500"
                       title={t('refresh')}
                     >
                       <RefreshCcw size={14} />
                     </button>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="flex-1 px-4 py-3 bg-white/5 rounded-xl text-center font-mono text-lg font-black tracking-tighter text-indigo-400">
+                    <div className="flex-1 px-4 py-3 bg-white/5 rounded-xl text-center font-mono text-lg font-black tracking-tighter text-red-500">
                       {mathQuest.q}
                     </div>
                     <input 
@@ -329,7 +329,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
                 <button 
                   type="submit" 
                   disabled={loading}
-                  className="glass-button-primary w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 active:scale-95"
+                  className="glass-button-primary w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-red-600/20 active:scale-95"
                 >
                   {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : (mode === 'login' ? t('signIn') : t('signUp'))}
                 </button>
@@ -354,7 +354,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
               <div className="text-center pt-2">
                 <button 
                   onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                  className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition-colors"
+                  className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-red-500 transition-colors"
                 >
                   {mode === 'login' ? t('noAccount') : t('hasAccount')}
                 </button>
