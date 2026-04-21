@@ -159,27 +159,38 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
 
   return (
     <div className="relative w-full h-full bg-black flex items-center justify-center">
-      <video 
-        ref={videoRef}
-        className="w-full h-full object-contain outline-none focus:outline-none" 
-        key={resolvedSrc || src}
-        controls
-        playsInline 
-        autoPlay
-        onTimeUpdate={(e) => {
-          const video = e.currentTarget;
-          if (typeof setCurrentTime === 'function') setCurrentTime(video.currentTime);
-        }}
-        onCanPlay={() => setVideoLoading(false)}
-        onLoadedData={() => setVideoLoading(false)}
-        onWaiting={() => setVideoLoading(true)}
-        onPlaying={() => setVideoLoading(false)}
-        onError={() => {
-          console.error("Video playback error for src:", resolvedSrc || src);
-          setVideoLoading(false);
-          setLoadError(true);
-        }}
-      />
+      {resolvedSrc?.includes('rumble.com/embed') ? (
+        <iframe 
+          key={resolvedSrc}
+          src={resolvedSrc} 
+          className="w-full h-full border-none" 
+          allowFullScreen 
+          allow="autoplay; encrypted-media" 
+          onLoad={() => setVideoLoading(false)}
+        />
+      ) : (
+        <video 
+          ref={videoRef}
+          className="w-full h-full object-contain outline-none focus:outline-none" 
+          key={resolvedSrc || src}
+          controls
+          playsInline 
+          autoPlay
+          onTimeUpdate={(e) => {
+            const video = e.currentTarget;
+            if (typeof setCurrentTime === 'function') setCurrentTime(video.currentTime);
+          }}
+          onCanPlay={() => setVideoLoading(false)}
+          onLoadedData={() => setVideoLoading(false)}
+          onWaiting={() => setVideoLoading(true)}
+          onPlaying={() => setVideoLoading(false)}
+          onError={() => {
+            console.error("Video playback error for src:", resolvedSrc || src);
+            setVideoLoading(false);
+            setLoadError(true);
+          }}
+        />
+      )}
 
       {/* Error Overlay */}
       <AnimatePresence>

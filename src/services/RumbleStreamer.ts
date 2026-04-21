@@ -2,9 +2,9 @@ import axios from "axios";
 
 export const rumbleStreamer = {
   async getDirectUrl(rumbleUrl: string): Promise<string | null> {
+    let embedUrl = rumbleUrl;
     try {
       // 1. Normalize URL to embed format
-      let embedUrl = rumbleUrl;
       if (rumbleUrl.includes('rumble.com/') && !rumbleUrl.includes('/embed/')) {
          const match = rumbleUrl.match(/rumble\.com\/(v[a-zA-Z0-9]+)/);
          if (match) {
@@ -19,7 +19,17 @@ export const rumbleStreamer = {
 
       const response = await axios.get(embedUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+          'Sec-Ch-Ua-Mobile': '?0',
+          'Sec-Ch-Ua-Platform': '"Windows"',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          'Upgrade-Insecure-Requests': '1',
           'Referer': 'https://rumble.com/'
         },
         timeout: 10000
@@ -114,10 +124,10 @@ export const rumbleStreamer = {
       }
 
       console.error("[Rumble] Could not find any video source in HTML");
-      return null;
+      return embedUrl; // Provide embed link as a last-resort fallback instead of null
     } catch (error) {
       console.error("[Rumble] Error extracting video URL:", error);
-      return null;
+      return embedUrl; // If Vercel blocks us, fallback to iframe embed URL
     }
   }
 };
