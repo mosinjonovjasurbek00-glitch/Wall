@@ -53,6 +53,7 @@ const getDbAdmin = () => {
 const getAuthAdmin = () => getAuth();
 
 import { tgStreamer } from "./src/services/TelegramStreamer";
+import { rumbleStreamer } from "./src/services/RumbleStreamer";
 
 // Orqa fonda telegram mijozni ishga tushirish (xatolik bermasligi uchun catch)
 tgStreamer.init().catch(err => console.error("Telegram Streamer xatosi:", err));
@@ -66,6 +67,23 @@ async function startServer() {
   // Katta videolarni serverdan parchalab uzatish yo'li
   app.get("/api/telegram/stream", async (req, res) => {
     await tgStreamer.handleStream(req, res);
+  });
+
+  // Rumble videolarni to'g'ridan-to'g'ri MP4 manzilini olish yo'li
+  app.get("/api/rumble/stream", async (req, res) => {
+    const url = req.query.url as string;
+    if (!url) return res.status(400).send("URL is required");
+
+    try {
+      const directUrl = await rumbleStreamer.getDirectUrl(url);
+      if (directUrl) {
+         res.redirect(directUrl);
+      } else {
+         res.status(404).send("Could not find direct video URL for this Rumble link");
+      }
+    } catch (error) {
+      res.status(500).send("Rumble extractor error");
+    }
   });
 
   // Proxy route

@@ -29,6 +29,8 @@
         "episodeNumber": { "type": "number", "description": "Episode sequence" },
         "title": { "type": "string", "description": "Episode title (optional)" },
         "videoUrl": { "type": "string", "description": "URL to play the episode" },
+        "openingStart": { "type": "number", "description": "Start of opening in seconds" },
+        "openingEnd": { "type": "number", "description": "End of opening in seconds" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["animeId", "episodeNumber", "videoUrl", "createdAt"]
@@ -51,8 +53,8 @@
       "properties": {
         "uid": { "type": "string" },
         "email": { "type": "string" },
-        "phoneNumber": { "type": "string" },
         "username": { "type": "string" },
+        "photoURL": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "user"] }
       },
       "required": ["uid", "role"]

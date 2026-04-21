@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendEmailVerification, signInWithCustomToken } from 'firebase/auth';
-import { initializeFirestore, doc, setDoc, serverTimestamp, getDocFromServer } from 'firebase/firestore';
+import { initializeFirestore, doc, setDoc, serverTimestamp, getDocFromServer, updateDoc } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getMessaging, onMessage } from 'firebase/messaging';
 import firebaseConfig from '../firebase-applet-config.json';
@@ -51,8 +51,10 @@ export const syncUserToFirestore = async (user: any) => {
   const userDocRef = doc(db, 'users', user.uid);
   await setDoc(userDocRef, {
     uid: user.uid,
-    email: user.email,
-    username: user.displayName || user.email.split('@')[0],
+    email: user.email || '',
+    username: user.displayName || user.email?.split('@')[0] || 'User',
+    photoURL: user.photoURL || '',
+    role: 'user', // Default role
     updatedAt: serverTimestamp()
   }, { merge: true });
 };

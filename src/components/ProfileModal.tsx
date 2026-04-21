@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Upload, Check, Loader2, User, LogOut } from 'lucide-react';
-import { db, auth } from '../firebase';
+import { db, auth, logout } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { cn } from '../lib/utils';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -28,6 +28,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
   const [username, setUsername] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [loading, setLoading] = useState(true);
+
   const [saving, setSaving] = useState(false);
   const [customPreview, setCustomPreview] = useState<string | null>(null);
 
@@ -38,7 +39,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
         if (userDoc.exists()) {
           const data = userDoc.data();
           setUsername(data.username || user.displayName || '');
-          setAvatarUrl(data.avatarUrl || '');
+          setAvatarUrl(data.photoURL || '');
         }
       }
       setLoading(false);
@@ -103,7 +104,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
 
       await updateDoc(doc(db, 'users', user.uid), {
         username: username.trim(),
-        avatarUrl: finalAvatarUrl,
+        photoURL: finalAvatarUrl,
       });
       onClose();
     } catch (err) {
@@ -225,7 +226,6 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
 
                  <button
                    onClick={() => {
-                     const { logout } = require('../firebase');
                      logout();
                      onClose();
                    }}

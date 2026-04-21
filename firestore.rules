@@ -46,7 +46,9 @@ service cloud.firestore {
       return data.keys().hasAll(['animeId', 'episodeNumber', 'videoUrl', 'createdAt']) &&
              data.animeId is string &&
              data.episodeNumber is number &&
-             data.videoUrl is string;
+             data.videoUrl is string &&
+             (!('openingStart' in data) || data.openingStart is number) &&
+             (!('openingEnd' in data) || data.openingEnd is number);
     }
 
     function isValidComment(data) {

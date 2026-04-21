@@ -27,6 +27,8 @@ interface EpisodeDoc {
   episodeNumber: number;
   title?: string;
   videoUrl: string;
+  openingStart?: number;
+  openingEnd?: number;
   createdAt: any;
 }
 
@@ -34,11 +36,59 @@ interface CommentDoc {
   id: string;
   userId: string;
   username: string;
-  avatarUrl?: string;
+  photoURL?: string;
+  avatarUrl?: string; // Support legacy
   content: string;
   createdAt: any;
 }
 
+const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }: any) => {
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+
+    let hls: any = null;
+
+    if (src.includes('.m3u8')) {
+      if (Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(src);
+        hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = src;
+      }
+    } else {
+      video.src = src;
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
+  }, [src, videoRef]);
+
+  return (
+    <video 
+      ref={videoRef}
+      controls 
+      className="w-full h-full object-contain" 
+      key={src}
+      playsInline 
+      autoPlay
+      onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+      onCanPlay={() => setVideoLoading(false)}
+      onWaiting={() => setVideoLoading(true)}
+      onPlaying={() => setVideoLoading(false)}
+      onError={() => {
+        console.error("Video playback error for src:", src);
+        setVideoLoading(false);
+      }}
+    />
+  );
+};
+
+import Hls from 'hls.js';
 import { Language, useTranslation } from '../i18n';
 
 interface AnimePortalProps {
@@ -73,6 +123,8 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [showFilters, setShowFilters] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
+  const [currentTime, setCurrentTime] = useState(0);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
   const itemsPerPage = 12;
 
   const bannerAnime = animeList.filter(a => a.isBanner);
@@ -220,12 +272,12 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
       // Get the latest profile data from Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const customUsername = userDoc.exists() ? userDoc.data().username : null;
-      const customAvatarUrl = userDoc.exists() ? userDoc.data().avatarUrl : null;
+      const customPhotoURL = userDoc.exists() ? (userDoc.data().photoURL || userDoc.data().avatarUrl) : null;
 
       await addDoc(collection(db, 'anime', selectedAnime.id, 'comments'), {
         userId: user.uid,
-        username: customUsername || user.displayName || user.email?.split('@')[0] || 'Foydalanuvchi',
-        avatarUrl: customAvatarUrl || user.photoURL || '',
+        username: customUsername || user.displayName || user.email?.split('@')[0] || user.phoneNumber || 'Foydalanuvchi',
+        photoURL: customPhotoURL || user.photoURL || '',
         content: newComment.trim(),
         createdAt: serverTimestamp()
       });
@@ -266,6 +318,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     if (currentEpisode?.id === ep.id) return;
     setVideoLoading(true);
     setCurrentEpisode(ep);
+    setCurrentTime(0);
     
     if (auth.currentUser && selectedAnime) {
       const historyId = `${auth.currentUser.uid}_${selectedAnime.id}`;
@@ -287,6 +340,13 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     setExpandedDesc(false);
     if (mode === 'player') {
       setDoc(doc(db, 'anime', anime.id), { views: increment(1) }, { merge: true });
+    }
+  };
+
+  const skipOpening = () => {
+    if (videoRef.current && currentEpisode?.openingEnd) {
+      videoRef.current.currentTime = currentEpisode.openingEnd;
+      setCurrentTime(currentEpisode.openingEnd);
     }
   };
 
@@ -1050,39 +1110,38 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                              if (url.includes('t.me/')) {
                                const proxyUrl = `/api/telegram/stream?url=${encodeURIComponent(url)}`;
                                return (
-                                 <video 
-                                   controls 
-                                   className="w-full h-full object-contain" 
-                                   key={proxyUrl} 
-                                   playsInline 
-                                   autoPlay
-                                   onCanPlay={() => setVideoLoading(false)}
-                                   onWaiting={() => setVideoLoading(true)}
-                                   onPlaying={() => setVideoLoading(false)}
-                                   onError={() => setVideoLoading(false)}
-                                 >
-                                     <source src={proxyUrl} type="video/mp4" />
-                                 </video>
+                                 <UniversalVideoPlayer 
+                                   src={proxyUrl}
+                                   videoRef={videoRef}
+                                   setVideoLoading={setVideoLoading}
+                                   setCurrentTime={setCurrentTime}
+                                 />
                                );
                              }
 
-                             const isDirectVideo = url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi)$/) || url.includes('stream') || url.includes('/file/');
+                              // Handle Rumble URLs via our direct extractor proxy to use custom player
+                              if (url.includes('rumble.com/')) {
+                                const proxyUrl = `/api/rumble/stream?url=${encodeURIComponent(url)}`;
+                                return (
+                                  <UniversalVideoPlayer 
+                                    src={proxyUrl}
+                                    videoRef={videoRef}
+                                    setVideoLoading={setVideoLoading}
+                                    setCurrentTime={setCurrentTime}
+                                  />
+                                );
+                              }
+
+                              const isDirectVideo = url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi|m3u8)$/) || url.includes('stream') || url.includes('/file/');
 
                              if (isDirectVideo) {
                                return (
-                                 <video 
-                                   controls 
-                                   className="w-full h-full object-contain" 
-                                   key={url} 
-                                   playsInline 
-                                   autoPlay
-                                   onCanPlay={() => setVideoLoading(false)}
-                                   onWaiting={() => setVideoLoading(true)}
-                                   onPlaying={() => setVideoLoading(false)}
-                                   onError={() => setVideoLoading(false)}
-                                 >
-                                   <source src={url} type="video/mp4" />
-                                 </video>
+                                 <UniversalVideoPlayer 
+                                   src={url}
+                                   videoRef={videoRef}
+                                   setVideoLoading={setVideoLoading}
+                                   setCurrentTime={setCurrentTime}
+                                 />
                                );
                              }
                              
@@ -1112,6 +1171,31 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                             <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">{t('selectEpisodeFirst')}</p>
                           </div>
                         )}
+
+                        {/* Skip Opening Button */}
+                        <AnimatePresence>
+                          {currentEpisode && 
+                           (currentEpisode.openingStart !== undefined && currentEpisode.openingStart !== null) && 
+                           (currentEpisode.openingEnd !== undefined && currentEpisode.openingEnd !== null) && 
+                           Number(currentEpisode.openingEnd) > 0 &&
+                           currentTime >= Number(currentEpisode.openingStart) && 
+                           currentTime < Number(currentEpisode.openingEnd) && (
+                            <motion.button
+                              key="skip-opening-btn"
+                              initial={{ opacity: 0, scale: 0.8, x: 20 }}
+                              animate={{ opacity: 1, scale: 1, x: 0 }}
+                              exit={{ opacity: 0, scale: 0.8, x: 20 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                skipOpening();
+                              }}
+                              className="absolute bottom-16 right-8 z-[999] bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_10px_40px_rgba(220,38,38,0.4)] border border-red-400 flex items-center gap-3 active:scale-90 transition-all cursor-pointer"
+                            >
+                               <Sparkles size={16} className="text-white" />
+                               Openingdan o'tish
+                            </motion.button>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </div>
 

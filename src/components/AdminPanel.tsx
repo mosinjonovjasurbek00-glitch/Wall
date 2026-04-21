@@ -29,6 +29,8 @@ interface EpisodeDoc {
   episodeNumber: number;
   title?: string;
   videoUrl: string;
+  openingStart?: number;
+  openingEnd?: number;
   createdAt: any;
 }
 
@@ -103,6 +105,8 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
   const [epNumber, setEpNumber] = useState(1);
   const [epTitle, setEpTitle] = useState('');
   const [epVideoUrl, setEpVideoUrl] = useState('');
+  const [epOpeningStart, setEpOpeningStart] = useState(''); // Formatted as MM:SS
+  const [epOpeningEnd, setEpOpeningEnd] = useState('');     // Formatted as MM:SS
 
   const sendPush = async (title: string, body: string, imageUrl: string, animeId: string) => {
     try {
@@ -201,15 +205,37 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
     }
   }, [editingAnime]);
 
+  const formatSecondsToMMSS = (seconds: number | undefined): string => {
+    if (seconds === undefined || seconds === null) return '';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const parseMMSSToSeconds = (timeStr: string): number | undefined => {
+    if (!timeStr) return undefined;
+    if (timeStr.includes(':')) {
+      const [mins, secs] = timeStr.split(':').map(Number);
+      if (isNaN(mins) || isNaN(secs)) return undefined;
+      return mins * 60 + secs;
+    }
+    const secs = Number(timeStr);
+    return isNaN(secs) ? undefined : secs;
+  };
+
   useEffect(() => {
     if (editingEpisode) {
       setEpNumber(editingEpisode.episodeNumber);
       setEpTitle(editingEpisode.title || '');
       setEpVideoUrl(editingEpisode.videoUrl);
+      setEpOpeningStart(formatSecondsToMMSS(editingEpisode.openingStart));
+      setEpOpeningEnd(formatSecondsToMMSS(editingEpisode.openingEnd));
     } else {
       setEpNumber(episodes.length + 1);
       setEpTitle('');
       setEpVideoUrl('');
+      setEpOpeningStart('');
+      setEpOpeningEnd('');
     }
   }, [editingEpisode, episodes.length]);
 
@@ -287,13 +313,19 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
     if (!selectedAnimeForEpisodes) return;
     setSubmitting(true);
     try {
-      const epData = {
+      const epData: any = {
         animeId: selectedAnimeForEpisodes.id,
         episodeNumber: epNumber,
         title: epTitle,
         videoUrl: epVideoUrl,
         updatedAt: serverTimestamp()
       };
+
+      const openingStartSec = parseMMSSToSeconds(epOpeningStart);
+      const openingEndSec = parseMMSSToSeconds(epOpeningEnd);
+      
+      if (openingStartSec !== undefined) epData.openingStart = openingStartSec;
+      if (openingEndSec !== undefined) epData.openingEnd = openingEndSec;
 
       if (editingEpisode) {
         await updateDoc(doc(db, 'anime', selectedAnimeForEpisodes.id, 'episodes', editingEpisode.id), epData);
@@ -330,6 +362,8 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
       setEpNumber(prev => prev + 1);
       setEpTitle('');
       setEpVideoUrl('');
+      setEpOpeningStart('');
+      setEpOpeningEnd('');
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
@@ -761,6 +795,18 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                          <input type="text" placeholder={t('videoUrl')} className="glass-input w-full" value={epVideoUrl} onChange={e => setEpVideoUrl(e.target.value)} required />
                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-1">{t('telegramHint')}</p>
                       </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black uppercase text-slate-500 ml-1">Opening Start (MM:SS)</label>
+                            <input type="text" placeholder="2:14" className="glass-input w-full" value={epOpeningStart} onChange={e => setEpOpeningStart(e.target.value)} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black uppercase text-slate-500 ml-1">Opening End (MM:SS)</label>
+                            <input type="text" placeholder="5:14" className="glass-input w-full" value={epOpeningEnd} onChange={e => setEpOpeningEnd(e.target.value)} />
+                          </div>
+                        </div>
+                        <p className="text-[9px] text-amber-500 font-bold uppercase tracking-wider ml-1">Eslatma: Openingdan o'tish faqat Direct Link va Telegram orqali yuklangan videolar uchun ishlaydi. Iframe (YouTube, OK.ru) videolarida ishlamaydi.</p>
                       
                       <button type="submit" disabled={submitting} className="glass-button-primary w-full py-4 flex items-center justify-center gap-2">
                         {submitting ? <Loader2 className="animate-spin" /> : <Plus />}
