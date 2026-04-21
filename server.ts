@@ -94,6 +94,52 @@ async function startServer() {
     }
   });
 
+  // Dynamic Sitemap Generation
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const db = getDbAdmin();
+      const animeSnapshot = await db.collection('anime').get();
+      const animeDocs = animeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+      const categories = [
+        'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 
+        'Mecha', 'Mystery', 'Psychological', 'Romance', 'Sci-Fi', 
+        'Slice of Life', 'Sports', 'Supernatural', 'Thriller', 'Horror',
+        'Isekai', 'Shounen', 'Seinen', 'Shoujo', 'Music'
+      ];
+
+      const baseUrl = "https://animem.uz";
+      const now = new Date().toISOString().split('T')[0];
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n`;
+
+      // 1. Home
+      xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+
+      // 2. Categories
+      categories.forEach(cat => {
+        xml += `  <url>\n    <loc>${baseUrl}/?category=${encodeURIComponent(cat)}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+      });
+
+      // 3. Individual Anime
+      animeDocs.forEach(anime => {
+        const lastMod = anime.updatedAt ? 
+          (typeof anime.updatedAt.toMillis === 'function' ? new Date(anime.updatedAt.toMillis()).toISOString().split('T')[0] : now) : now;
+        
+        xml += `  <url>\n    <loc>${baseUrl}/?anime=${anime.id}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+      });
+
+      xml += `</urlset>`;
+
+      res.header('Content-Type', 'application/xml');
+      res.send(xml);
+    } catch (error) {
+      console.error("Sitemap error:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
   // Bot API for Telegram or other integrations (Open Professional Version)
   app.get("/api/bot/latest-activity", async (req, res) => {
     try {

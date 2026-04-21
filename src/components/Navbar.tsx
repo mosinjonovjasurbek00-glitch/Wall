@@ -56,7 +56,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
           >
             <div className="w-8 h-8 sm:w-12 sm:h-12 bg-indigo-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.5)] group-hover:scale-110 transition-transform ring-2 sm:ring-4 ring-indigo-500/20 overflow-hidden">
               <img 
-                src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
+                src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" 
                 alt="Logo" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"

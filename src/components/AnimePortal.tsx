@@ -148,6 +148,45 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
 
   const availableYears = Array.from(new Set(animeList.map(a => a.year?.toString()).filter(Boolean))).sort((a, b) => b.localeCompare(a));
 
+  // Deep linking logic
+  useEffect(() => {
+    if (loading || animeList.length === 0) return;
+    
+    const params = new URLSearchParams(window.location.search);
+    const animeId = params.get('anime');
+    const epNum = params.get('episode');
+    const catParam = params.get('category');
+
+    if (catParam && CATEGORIES.includes(catParam)) {
+      setSelectedCategory(catParam);
+    }
+
+    if (animeId) {
+      const anime = animeList.find(a => a.id === animeId);
+      if (anime) {
+        setSelectedAnime(anime);
+        setModalMode(epNum ? 'player' : 'details');
+        
+        // If episode number is provided, we wait for episodes to load then set it
+        // but the episodes useEffect already handles selecting the first one.
+        // We can let the episodes useEffect handle the specific episode once loaded.
+      }
+    }
+  }, [loading, animeList.length]);
+
+  // Handle specific episode from URL once loaded
+  useEffect(() => {
+    if (!selectedAnime || episodes.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const epNum = params.get('episode');
+    if (epNum) {
+      const ep = episodes.find(e => e.episodeNumber.toString() === epNum);
+      if (ep) {
+        setCurrentEpisode(ep);
+      }
+    }
+  }, [selectedAnime, episodes]);
+
   // Calculate pagination
   const totalPages = Math.ceil(filteredAnime.length / itemsPerPage);
   const paginatedAnime = filteredAnime.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -394,7 +433,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
              <div className="flex items-center gap-3 text-indigo-400">
                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg overflow-hidden border border-indigo-500/20">
                  <img 
-                   src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
+                   src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" 
                    alt="Icon" 
                    className="w-full h-full object-cover"
                    referrerPolicy="no-referrer"

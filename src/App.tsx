@@ -114,7 +114,7 @@ export default function App() {
             className="w-24 h-24 sm:w-32 sm:h-32 bg-indigo-600 rounded-[2.5rem] overflow-hidden border-2 border-white/5 relative z-10"
           >
             <img 
-              src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
+              src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" 
               alt="Loading..."
               className="w-full h-full object-cover grayscale-[0.2]"
               referrerPolicy="no-referrer"
@@ -203,7 +203,7 @@ export default function App() {
             <div className="flex items-center justify-center md:justify-start gap-4">
               <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10">
                 <img 
-                  src="https://img.freepik.com/premium-photo/cute-anime-boy-wallpaper_776894-110627.jpg?semt=ais_hybrid&w=740&q=80" 
+                  src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" 
                   alt="Footer Logo" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
