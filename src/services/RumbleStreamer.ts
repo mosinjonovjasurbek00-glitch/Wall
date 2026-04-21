@@ -30,9 +30,9 @@ export const rumbleStreamer = {
           'Sec-Fetch-Site': 'none',
           'Sec-Fetch-User': '?1',
           'Upgrade-Insecure-Requests': '1',
-          'Referer': 'https://rumble.com/'
+          'Referer': embedUrl
         },
-        timeout: 10000
+        timeout: 15000 
       });
 
       const html = response.data;
