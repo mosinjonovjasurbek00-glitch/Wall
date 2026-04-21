@@ -491,6 +491,11 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     setCurrentEpisode(null);
     setEpisodes([]);
     setExpandedDesc(false);
+    
+    // URLni dinamik yangilash (DOMen/anime/ID)
+    const newUrl = `${window.location.origin}/anime/${anime.id}`;
+    window.history.pushState({ animeId: anime.id }, '', newUrl);
+
     if (mode === 'player') {
       setDoc(doc(db, 'anime', anime.id), { views: increment(1) }, { merge: true });
     }
