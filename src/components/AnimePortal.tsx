@@ -4,6 +4,7 @@ import { db, auth, loginWithGoogle } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs, addDoc, limit } from 'firebase/firestore';
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Monitor, Settings, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2, Filter, ChevronDown, RotateCcw, XCircle, Share2, Copy } from 'lucide-react';
+import { ShareModal } from './ShareModal';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { CATEGORIES, categoryKeys } from '../constants';
@@ -1415,6 +1416,14 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        url={window.location.href} 
+        title={selectedAnime?.title || ''} 
+        t={t} 
+      />
 
       {/* Back to Top Button */}
       <AnimatePresence>
