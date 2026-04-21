@@ -74,16 +74,18 @@ async function setupServer() {
 
     try {
       const directUrl = await rumbleStreamer.getDirectUrl(url);
-      if (directUrl) {
+      
+      // If directUrl is the same as the original embed URL, it means extraction failed
+      if (directUrl && !directUrl.includes('/embed/')) {
          if (format === 'json') {
            return res.json({ url: directUrl });
          }
          res.redirect(directUrl);
       } else {
          if (format === 'json') {
-           return res.json({ error: "Could not find direct video URL" });
+           return res.json({ error: "No direct URL", embedUrl: url });
          }
-         res.status(404).send("Could not find direct video URL for this Rumble link");
+         res.status(404).send("No direct video URL");
       }
     } catch (error) {
       if (format === 'json') {
