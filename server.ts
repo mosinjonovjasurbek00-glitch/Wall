@@ -55,9 +55,6 @@ const getAuthAdmin = () => getAuth();
 import { tgStreamer } from "./src/services/TelegramStreamer";
 import { rumbleStreamer } from "./src/services/RumbleStreamer";
 
-// Orqa fonda telegram mijozni ishga tushirish (xatolik bermasligi uchun catch)
-tgStreamer.init().catch(err => console.error("Telegram Streamer xatosi:", err));
-
 export const app = express();
 const PORT = 3000;
 
@@ -391,10 +388,12 @@ async function setupServer() {
 // Global setup call
 setupServer().catch(console.error);
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  startTelegramBridge().catch(console.error);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    startTelegramBridge().catch(console.error);
+  });
+}
 
 export default app;
 
