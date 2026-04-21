@@ -64,15 +64,6 @@ const PORT = 3000;
 async function setupServer() {
   app.use(express.json());
   
-  // Conditionally load Vite only in dev
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  }
-
   // Katta videolarni serverdan parchalab uzatish yo'li
   app.get("/api/telegram/stream", async (req, res) => {
     await tgStreamer.handleStream(req, res);
@@ -81,16 +72,26 @@ async function setupServer() {
   // Rumble videolarni to'g'ridan-to'g'ri MP4 manzilini olish yo'li
   app.get("/api/rumble/stream", async (req, res) => {
     const url = req.query.url as string;
+    const format = req.query.format as string;
     if (!url) return res.status(400).send("URL is required");
 
     try {
       const directUrl = await rumbleStreamer.getDirectUrl(url);
       if (directUrl) {
+         if (format === 'json') {
+           return res.json({ url: directUrl });
+         }
          res.redirect(directUrl);
       } else {
+         if (format === 'json') {
+           return res.json({ error: "Could not find direct video URL" });
+         }
          res.status(404).send("Could not find direct video URL for this Rumble link");
       }
     } catch (error) {
+      if (format === 'json') {
+         return res.json({ error: "Rumble extractor error" });
+      }
       res.status(500).send("Rumble extractor error");
     }
   });
@@ -371,8 +372,13 @@ async function setupServer() {
     }
   });
 
+  // CRITICAL: Middleware/Static fallback MUST be last
   if (process.env.NODE_ENV !== "production") {
-    // Vite middleware handled at the start of setupServer
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));

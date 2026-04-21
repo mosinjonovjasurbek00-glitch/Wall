@@ -44,174 +44,138 @@ interface CommentDoc {
 }
 
 const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }: any) => {
-  const [isPlaying, setIsPlaying] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [showControls, setShowControls] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = React.useRef<any>(null);
+  const [resolvedSrc, setResolvedSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const resolveSrc = async () => {
+      if (!src) return;
+      
+      // If it's already a direct link or not our rumble proxy, use it
+      if (!src.includes('/api/rumble/stream')) {
+        setResolvedSrc(src);
+        return;
+      }
+
+      setVideoLoading(true);
+      setLoadError(false);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      
+      try {
+        const fetchUrl = `${src}${src.includes('?') ? '&' : '?'}format=json`;
+        const response = await fetch(fetchUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        // Handle non-ok responses (like 404, 500)
+        if (!response.ok) {
+           const text = await response.text();
+           console.error("[Player] Fetch failed status:", response.status, text.substring(0, 100));
+           throw new Error(`Server returned ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          if (data.url) {
+            setResolvedSrc(data.url);
+          } else {
+            console.error("[Player] Source resolution failed (JSON data):", data.error);
+            setLoadError(true);
+            setVideoLoading(false);
+          }
+        }
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        if (isMounted) {
+          console.error("[Player] Extraction fetch error:", err.message);
+          setLoadError(true);
+          setVideoLoading(false);
+        }
+      }
+    };
+
+    resolveSrc();
+    return () => { isMounted = false; };
+  }, [src]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !src) return;
+    if (!video || !resolvedSrc) return;
 
     setLoadError(false);
+    // Loading starts
+    setVideoLoading(true);
+
     let hls: any = null;
 
     const initVideo = () => {
-      if (src.includes('.m3u8')) {
+      if (resolvedSrc.includes('.m3u8')) {
         if (Hls.isSupported()) {
           if (hls) hls.destroy();
           hls = new Hls();
-          hls.loadSource(src);
+          
+          hls.on(Hls.Events.ERROR, function(event: any, data: any) {
+            if (data.fatal) {
+              console.error("[HLS] Fatal error:", data);
+              setLoadError(true);
+              setVideoLoading(false);
+              switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  hls.startLoad();
+                  break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  hls.recoverMediaError();
+                  break;
+                default:
+                  hls.destroy();
+                  break;
+              }
+            }
+          });
+
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            setVideoLoading(false);
+          });
+
+          hls.loadSource(resolvedSrc);
           hls.attachMedia(video);
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = src;
+          video.src = resolvedSrc;
         }
       } else {
-        video.src = src;
+        video.src = resolvedSrc;
       }
     };
 
     initVideo();
 
-    const handlePlay = () => {
-      setIsPlaying(true);
-      setLoadError(false);
-    };
-    const handlePause = () => setIsPlaying(false);
-    const handleLoadedMetadata = () => {
-      if (video.duration) setDuration(video.duration);
-    };
-    
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-
     return () => {
       if (hls) hls.destroy();
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, [src, videoRef]);
-
-  const togglePlay = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      video.play().catch(err => {
-        console.error("Play failed:", err);
-        // Sometimes play fails if user hasn't interacted
-      });
-    } else {
-      video.pause();
-    }
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const video = videoRef.current;
-    if (!video || !video.duration || isNaN(video.duration)) return;
-    
-    const val = parseFloat(e.target.value);
-    if (isNaN(val)) return;
-
-    const time = (val / 100) * video.duration;
-    if (!isNaN(time)) {
-      video.currentTime = time;
-    }
-    setProgress(val);
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const video = videoRef.current;
-    if (!video) return;
-    const val = parseFloat(e.target.value);
-    setVolume(val);
-    video.volume = val;
-    setIsMuted(val === 0);
-  };
-
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const video = videoRef.current;
-    if (!video) return;
-    const newMuted = !isMuted;
-    setIsMuted(newMuted);
-    video.muted = newMuted;
-    if (!newMuted && volume === 0) {
-      setVolume(0.5);
-      video.volume = 0.5;
-    }
-  };
-
-  const toggleFullscreen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!containerRef.current) return;
-    
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-      });
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
-
-  const handleMouseMove = () => {
-    setShowControls(true);
-    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-    controlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) setShowControls(false);
-    }, 3000);
-  };
-
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return "00:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const skipRequest = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
+  }, [src, resolvedSrc, videoRef]);
 
   return (
-    <div 
-      ref={containerRef}
-      className="relative w-full h-full bg-black group overflow-hidden" 
-      onMouseMove={handleMouseMove}
-      onClick={togglePlay}
-    >
+    <div className="relative w-full h-full bg-black flex items-center justify-center">
       <video 
         ref={videoRef}
-        className="w-full h-full object-contain" 
-        key={src}
+        className="w-full h-full object-contain outline-none focus:outline-none" 
+        key={resolvedSrc || src}
+        controls
         playsInline 
         autoPlay
         onTimeUpdate={(e) => {
           const video = e.currentTarget;
           if (typeof setCurrentTime === 'function') setCurrentTime(video.currentTime);
-          if (video.duration && !isNaN(video.duration)) {
-             const p = (video.currentTime / video.duration) * 100;
-             setProgress(isNaN(p) ? 0 : p);
-          } else {
-             setProgress(0);
-          }
         }}
         onCanPlay={() => setVideoLoading(false)}
+        onLoadedData={() => setVideoLoading(false)}
         onWaiting={() => setVideoLoading(true)}
         onPlaying={() => setVideoLoading(false)}
         onError={() => {
-          console.error("Video playback error for src:", src);
+          console.error("Video playback error for src:", resolvedSrc || src);
           setVideoLoading(false);
           setLoadError(true);
         }}
@@ -220,7 +184,7 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
       {/* Error Overlay */}
       <AnimatePresence>
         {loadError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20 p-6 text-center">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-[150] p-6 text-center">
             <div className="max-w-md">
               <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <XCircle className="w-10 h-10 text-red-500" />
@@ -229,107 +193,21 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
               <p className="text-white/60 text-sm mb-6">
                 Bu video manzilini to'g'ridan-to'g'ri ochishda xatolik yuz berdi. Iltimos, boshqa epizodni kuring yoki sahifani yangilang.
               </p>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.location.reload();
-                }}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-colors"
-              >
-                Sahifani yangilash
-              </button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.location.reload();
+                  }}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-colors shadow-lg"
+                >
+                  Sahifani yangilash
+                </button>
+              </div>
             </div>
           </div>
         )}
       </AnimatePresence>
-
-      {/* Large Center Play Button */}
-      <AnimatePresence>
-        {!isPlaying && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          >
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-              <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white fill-white ml-1" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Custom Controls Overlay */}
-      <motion.div 
-        animate={{ opacity: showControls ? 1 : 0, y: showControls ? 0 : 20 }}
-        className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent pt-20"
-        onClick={skipRequest}
-      >
-        {/* Progress Bar */}
-        <div className="relative w-full h-1.5 mb-4 group/progress cursor-pointer">
-          <input 
-            type="range" 
-            min="0" 
-            max="100" 
-            value={progress} 
-            onChange={handleSeek}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          />
-          <div className="absolute inset-0 bg-white/20 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-blue-600 transition-all duration-100 ease-linear rounded-full"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div 
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
-            style={{ left: `${progress}%`, marginLeft: '-6px' }}
-          />
-        </div>
-
-        {/* Control Buttons Bar */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 sm:gap-6">
-            <button onClick={togglePlay} className="text-white hover:text-blue-400 transition-colors">
-              {isPlaying ? <Pause className="w-5 h-5 sm:w-6 sm:h-6 fill-white" /> : <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-white" />}
-            </button>
-            
-            <div className="flex items-center gap-2 group/volume">
-              <button onClick={toggleMute} className="text-white hover:text-blue-400 transition-colors">
-                {isMuted || volume === 0 ? <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" /> : <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />}
-              </button>
-              <input 
-                type="range" min="0" max="1" step="0.1" 
-                value={isMuted ? 0 : volume} 
-                onChange={handleVolumeChange}
-                className="w-0 group-hover/volume:w-16 sm:group-hover/volume:w-20 transition-all duration-300 h-1 accent-white appearance-none bg-white/20 rounded-lg cursor-pointer"
-              />
-            </div>
-
-            <div className="text-white text-xs sm:text-sm font-medium tabular-nums">
-              {formatTime(videoRef.current?.currentTime || 0)} <span className="text-white/40 mx-1">/</span> {formatTime(duration)}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-5">
-            <div className="hidden sm:flex items-center justify-center px-1.5 py-0.5 border border-white/30 rounded text-[10px] font-bold text-white leading-none hover:bg-white/10 transition-colors cursor-pointer">
-              HD
-            </div>
-            <button className="text-white hover:text-blue-400 transition-colors hidden sm:block" title="Picture in Picture">
-              <Monitor className="w-5 h-5" onClick={(e) => {
-                e.stopPropagation();
-                if (videoRef.current) videoRef.current.requestPictureInPicture().catch(console.error);
-              }} />
-            </button>
-            <button className="text-white hover:text-blue-400 transition-colors" title="Settings">
-              <Settings className="w-5 h-5 sm:w-6 sm:h-6" onClick={(e) => e.stopPropagation()} />
-            </button>
-            <button onClick={toggleFullscreen} className="text-white hover:text-blue-400 transition-colors">
-              {isFullscreen ? <Minimize className="w-5 h-5 sm:w-6 sm:h-6" /> : <Maximize className="w-5 h-5 sm:w-6 sm:h-6" />}
-            </button>
-          </div>
-        </div>
-      </motion.div>
     </div>
   );
 };
@@ -354,6 +232,8 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
   const [episodes, setEpisodes] = useState<EpisodeDoc[]>([]);
   const [currentEpisode, setCurrentEpisode] = useState<EpisodeDoc | null>(null);
   const [videoLoading, setVideoLoading] = useState(false);
+  const [forceLegacy, setForceLegacy] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const [comments, setComments] = useState<CommentDoc[]>([]);
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -368,9 +248,20 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [showFilters, setShowFilters] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
-  const [currentTime, setCurrentTime] = useState(0);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const itemsPerPage = 12;
+
+  // Global fallback timeout for stuck loading states
+  useEffect(() => {
+    let timeout: any;
+    if (videoLoading) {
+      timeout = setTimeout(() => {
+        setVideoLoading(false);
+        console.warn("[Player] Global loading timeout reached. Force clearing loading state.");
+      }, 15000); // 15 seconds max global load time before giving up
+    }
+    return () => clearTimeout(timeout);
+  }, [videoLoading]);
 
   const bannerAnime = animeList.filter(a => a.isBanner);
   const featuredAnime = bannerAnime.length > 0 ? bannerAnime[bannerIndex] : (animeList.find(a => a.rating >= 9) || animeList[0]);
@@ -421,6 +312,10 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
     });
     return () => unsubscribe();
   }, [selectedAnime]);
+
+  useEffect(() => {
+    setForceLegacy(false);
+  }, [selectedAnime?.id, currentEpisode?.id]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1329,9 +1224,9 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                       <div className="aspect-video bg-black rounded-2xl sm:rounded-[2rem] overflow-hidden relative shadow-2xl border border-white/5 group">
                         {/* Video Loading State */}
                         {currentEpisode && videoLoading && (
-                          <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+                          <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300">
                             <Loader2 className="w-10 h-10 animate-spin text-red-500 mb-4" />
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white animate-pulse">Yuklanmoqda...</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white animate-pulse mb-6">Yuklanmoqda...</p>
                           </div>
                         )}
                         
@@ -1352,7 +1247,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                              if (url.startsWith('//')) url = 'https:' + url;
                              
                              // Handle Telegram URLs explicitly via our streaming API proxy
-                             if (url.includes('t.me/')) {
+                             if (url.includes('t.me/') && !forceLegacy) {
                                const proxyUrl = `/api/telegram/stream?url=${encodeURIComponent(url)}`;
                                return (
                                  <UniversalVideoPlayer 
@@ -1365,7 +1260,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                              }
 
                               // Handle Rumble URLs via our direct extractor proxy to use custom player
-                              if (url.includes('rumble.com/')) {
+                              if (url.includes('rumble.com/') && !forceLegacy) {
                                 const proxyUrl = `/api/rumble/stream?url=${encodeURIComponent(url)}`;
                                 return (
                                   <UniversalVideoPlayer 
@@ -1377,7 +1272,7 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                 );
                               }
 
-                              const isDirectVideo = url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi|m3u8)$/) || url.includes('stream') || url.includes('/file/');
+                              const isDirectVideo = (url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi|m3u8)$/) || url.includes('stream') || url.includes('/file/')) && !forceLegacy;
 
                              if (isDirectVideo) {
                                return (
