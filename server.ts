@@ -54,6 +54,8 @@ const getAuthAdmin = () => getAuth();
 
 import { tgStreamer } from "./src/services/TelegramStreamer";
 import { rumbleStreamer } from "./src/services/RumbleStreamer";
+import { dailymotionStreamer } from "./src/services/DailymotionStreamer";
+import { vkStreamer } from "./src/services/VkStreamer";
 
 export const app = express();
 const PORT = 3000;
@@ -92,6 +94,40 @@ async function setupServer() {
          return res.json({ error: "Rumble extractor error" });
       }
       res.status(500).send("Rumble extractor error");
+    }
+  });
+
+  // Dailymotion videolarni to'g'ridan-to'g'ri olish yo'li
+  app.get("/api/dailymotion/stream", async (req, res) => {
+    const url = req.query.url as string;
+    if (!url) return res.status(400).send("URL is required");
+
+    try {
+      const directUrl = await dailymotionStreamer.getDirectUrl(url);
+      if (directUrl) {
+         res.redirect(directUrl);
+      } else {
+         res.status(404).send("Could not find direct video URL");
+      }
+    } catch (error) {
+      res.status(500).send("Dailymotion error");
+    }
+  });
+
+  // VK videolarni to'g'ridan-to'g'ri olish yo'li
+  app.get("/api/vk/stream", async (req, res) => {
+    const url = req.query.url as string;
+    if (!url) return res.status(400).send("URL is required");
+
+    try {
+      const directUrl = await vkStreamer.getDirectUrl(url);
+      if (directUrl) {
+         res.redirect(directUrl);
+      } else {
+         res.status(404).send("Could not find direct video URL");
+      }
+    } catch (error) {
+      res.status(500).send("VK error");
     }
   });
 

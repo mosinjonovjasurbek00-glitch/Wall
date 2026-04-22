@@ -1275,9 +1275,9 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                );
                              }
 
-                              // Handle Rumble URLs using server-side direct stream proxy
-                              if (url.includes('rumble.com/')) {
-                                  const proxyUrl = `/api/rumble/stream?url=${encodeURIComponent(url)}`;
+                              // Handle Telegram URLs using our fast streaming proxy
+                              if (url.includes('t.me/') || url.includes('telegram')) {
+                                  const proxyUrl = `/api/telegram/stream?url=${encodeURIComponent(url)}`;
                                   return (
                                     <UniversalVideoPlayer 
                                       src={proxyUrl}
@@ -1287,6 +1287,21 @@ export default function AnimePortal({ selectedCategory, setSelectedCategory, ani
                                     />
                                   );
                               }
+
+                              // Handle VK URLs using our fast streaming proxy
+                              if (url.includes('vk.com/')) {
+                                  const proxyUrl = `/api/vk/stream?url=${encodeURIComponent(url)}`;
+                                  return (
+                                    <UniversalVideoPlayer 
+                                      src={proxyUrl}
+                                      videoRef={videoRef}
+                                      setVideoLoading={setVideoLoading}
+                                      setCurrentTime={setCurrentTime}
+                                    />
+                                  );
+                              }
+                              
+                              // Dailymotion and others are removed to ensure only fast streaming is used, no iframe fallback.
 
                               const isDirectVideo = (url.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi|m3u8)$/) || url.includes('stream') || url.includes('/file/')) && !forceLegacy;
 
