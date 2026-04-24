@@ -22,6 +22,7 @@ export default function App() {
   const [user, loading] = useAuthState(auth);
   const [initialLoading, setInitialLoading] = useState(true);
   const [firestoreAdmin, setFirestoreAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState('gallery');
 
   useEffect(() => {
     if (!loading) {
@@ -32,6 +33,11 @@ export default function App() {
   const [view, setView] = useState<'gallery' | 'admin'>('gallery');
   const [showContact, setShowContact] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'gallery') setView('gallery');
+    // We can add more logic here if other sidebar tabs map to different views
+  }, [activeTab]);
 
   useEffect(() => {
     localStorage.setItem('language', language);
@@ -48,6 +54,7 @@ export default function App() {
     });
   }, []);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [animeList, setAnimeList] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -143,8 +150,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#000000] selection:bg-red-500/30 font-sans overflow-x-hidden">
-      <FallingLeaves />
-
       <Navbar 
         isAdmin={isAdmin} 
         view={view} 
@@ -155,6 +160,10 @@ export default function App() {
         onLoginClick={() => setShowAuthModal(true)}
         language={language}
         setLanguage={setLanguage}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
 
       <AnimatePresence>
@@ -163,7 +172,7 @@ export default function App() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-24 left-6 right-6 z-[80] bg-red-500/20 backdrop-blur-md border border-red-500/30 p-4 rounded-2xl flex items-center justify-between gap-4 max-w-2xl mx-auto"
+            className="fixed top-24 left-24 right-6 z-[80] bg-red-500/20 backdrop-blur-md border border-red-500/30 p-4 rounded-2xl flex items-center justify-between gap-4 max-w-2xl mx-auto"
           >
             <div className="flex items-center gap-3 text-red-400">
                <AlertCircle size={20} />
@@ -174,7 +183,7 @@ export default function App() {
         )}
       </AnimatePresence>
       
-      <main className="relative pt-20 sm:pt-28">
+      <main className="relative px-4 lg:px-8 pt-20 sm:pt-28 min-h-screen">
       {view === 'gallery' ? (
         <AnimePortal 
           selectedCategory={selectedCategory}
@@ -182,6 +191,11 @@ export default function App() {
           animeList={filteredAnimeListByLang}
           loading={dataLoading}
           language={language}
+          showWatchlistOnly={activeTab === 'watchlist' || activeTab === 'saved'}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
         />
       ) : isAdmin ? (
         <AdminPanel language={language} setLanguage={setLanguage} />
@@ -197,7 +211,7 @@ export default function App() {
       )}
       </main>
 
-      <footer className="py-24 px-12 lg:px-24 border-t border-white/5 bg-black/50 backdrop-blur-2xl relative z-10">
+      <footer className="py-24 px-4 lg:px-8 border-t border-white/5 bg-[#050505] backdrop-blur-2xl relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col gap-6 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-4">
@@ -219,28 +233,28 @@ export default function App() {
                 href="https://t.me/animem_uz1" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-red-600 hover:text-white transition-all border border-white/5 group shadow-lg hover:shadow-red-500/20"
+                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full hover:bg-white/10 transition-all border border-white/5 group"
                 title="Telegram"
               >
-                <Send size={20} className="group-hover:scale-110 transition-transform" />
+                <Send size={20} className="text-white group-hover:scale-110 transition-transform" />
               </a>
               <a 
                 href="https://www.instagram.com/animem_uz/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-pink-600 hover:text-white transition-all border border-white/5 group shadow-lg hover:shadow-pink-500/20"
+                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full hover:bg-white/10 transition-all border border-white/5 group"
                 title="Instagram"
               >
-                <Instagram size={20} className="group-hover:scale-110 transition-transform" />
+                <Instagram size={20} className="text-white group-hover:scale-110 transition-transform" />
               </a>
               <a 
                 href="https://www.youtube.com/@animemuz1" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-red-600 hover:text-white transition-all border border-white/5 group shadow-lg hover:shadow-red-500/20"
+                className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full hover:bg-white/10 transition-all border border-white/5 group"
                 title="YouTube"
               >
-                <Youtube size={20} className="group-hover:scale-110 transition-transform" />
+                <Youtube size={20} className="text-white group-hover:scale-110 transition-transform" />
               </a>
             </div>
             <button 

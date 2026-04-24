@@ -1,6 +1,6 @@
 import { auth, logout } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { LogOut, LayoutDashboard, Film, Play, User, Globe, Bell } from 'lucide-react';
+import { LogOut, LayoutDashboard, Film, Play, User, Globe, Bell, Search, ChevronDown, Menu, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -21,20 +21,24 @@ interface NavbarProps {
   onLoginClick: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
-export default function Navbar({ isAdmin, view, setView, selectedCategory, setSelectedCategory, imageCount, onLoginClick, language, setLanguage }: NavbarProps) {
+export default function Navbar({ isAdmin, view, setView, selectedCategory, setSelectedCategory, imageCount, onLoginClick, language, setLanguage, searchTerm, setSearchTerm, activeTab, setActiveTab }: NavbarProps) {
   const [user] = useAuthState(auth);
   const t = useTranslation(language);
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     let unsubscribe = () => {};
     if (user) {
-      // Real-time listener so avatar updates immediately after saving
       unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -46,116 +50,225 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
     return () => unsubscribe();
   }, [user]);
 
+  const handleNavClick = (key: string) => {
+    setView('gallery');
+    
+    if (key === 'home') {
+      setActiveTab('gallery');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (key === 'anime') {
+      setActiveTab('anime');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (key === 'news') {
+      setActiveTab('news');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    setSearchTerm('');
+    setMobileMenuOpen(false);
+  };
+
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-[100] px-2 sm:px-6 py-3 sm:py-8 font-sans">
-        <div className="max-w-7xl mx-auto glass rounded-full px-3 sm:px-10 py-1.5 sm:py-3.5 flex items-center justify-between border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-          <div 
-            className="flex items-center gap-2 sm:gap-4 cursor-pointer group flex-shrink-0"
-            onClick={() => setView('gallery')}
+      <nav className="fixed top-0 left-0 right-0 z-[100] h-16 sm:h-20 bg-[var(--bg-deep)]/80 backdrop-blur-md px-4 lg:px-8 flex items-center justify-between font-sans border-b border-white/[0.05]">
+        {/* Left: Logo */}
+        <div 
+          className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0 flex-1 lg:flex-1"
+          onClick={() => {
+            setView('gallery');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setSearchTerm('');
+            setSelectedCategory('All');
+          }}
+        >
+          <img src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-red-500/20 group-hover:border-red-500/50 transition-colors" />
+          <span className="font-black text-lg sm:text-2xl tracking-tighter uppercase flex items-center text-white">
+            ANIMEM<span className="text-[var(--accent)]">.UZ</span>
+          </span>
+        </div>
+
+        {/* Center: Desktop Menu Items */}
+        <div className="hidden lg:flex items-center justify-center gap-8">
+          {['home', 'anime', 'news'].map((key) => (
+            <button 
+              key={key}
+              onClick={() => handleNavClick(key)}
+              className={cn(
+                "nav-link",
+                (key === 'home' && activeTab === 'gallery') && "text-[var(--accent)]",
+                (key === 'anime' && activeTab === 'anime') && "text-[var(--accent)]",
+                (key === 'news' && activeTab === 'news') && "text-[var(--accent)]"
+              )}
+            >
+              {t(key as any)}
+            </button>
+          ))}
+        </div>
+
+        {/* Right Section */}
+        <div className="flex items-center gap-3 sm:gap-6 flex-1 justify-end">
+          {/* Desktop Search Bar */}
+          <div className="hidden xl:flex items-center relative group max-w-[280px] w-full">
+            <input 
+              type="text" 
+              placeholder={language === 'uz' ? 'Qidiruv...' : 'Поиск...'}
+              className="w-full h-10 bg-white/[0.03] border border-white/5 rounded-full pl-6 pr-12 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 focus:bg-white/[0.06] transition-all text-white"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="absolute right-4 text-slate-500">
+              <Search size={14} />
+            </div>
+            <div className="absolute right-10 px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[8px] font-bold text-slate-500 pointer-events-none">
+              Ctrl K
+            </div>
+          </div>
+
+          {/* Mobile Search Toggle */}
+          <button 
+            className="xl:hidden w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center hover:bg-white/[0.06] transition-all"
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
           >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-red-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.5)] group-hover:scale-110 transition-transform ring-2 sm:ring-4 ring-red-500/20 overflow-hidden">
-              <img 
-                src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" 
-                alt="Logo" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-black text-sm sm:text-2xl tracking-tighter italic leading-none">
-                ANIMEM<span className="text-red-400"> Uz</span>
-              </span>
-              <span className="hidden sm:block text-[8px] font-black text-slate-500 tracking-[0.4em] uppercase mt-1">{t('database')}</span>
-            </div>
-          </div>
+            <Search size={16} className={isSearchOpen ? "text-red-400" : "text-slate-400"} />
+          </button>
 
-          <div className="hidden md:flex items-center gap-4 lg:gap-8 px-4 lg:px-8 border-l border-white/5 ml-2 lg:ml-4">
-            <button 
-              onClick={() => { setView('gallery'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
-            >
-              {t('home')}
-            </button>
-            <button 
-              onClick={() => { 
-                setView('gallery'); 
-                const searchInput = document.getElementById('search-input');
-                if (searchInput) {
-                  searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  setTimeout(() => searchInput.focus(), 600);
-                }
-              }}
-              className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
-            >
-              {t('catalog')}
-            </button>
-            <button 
-              onClick={() => { setView('gallery'); document.getElementById('categories-section')?.scrollIntoView({ behavior: 'smooth' }); }}
-              className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
-            >
-              {t('genres')}
-            </button>
-          </div>
+          <NotificationMenu language={language} />
 
-          <div className="flex items-center gap-1 sm:gap-4 min-w-0">
-            {/* Language Switcher */}
-            <button 
-              onClick={() => setLanguage(language === 'uz' ? 'ru' : 'uz')}
-              className="bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full px-4 py-2 font-black text-[10px] sm:text-xs tracking-widest flex items-center gap-2 transition-all active:scale-95"
-            >
-               <Globe size={14} className="text-red-400" />
-               {language === 'uz' ? 'RU' : 'UZ'}
-            </button>
-
-            <div className="h-6 sm:h-8 w-px bg-white/10 mx-1 sm:mx-2 hidden sm:block" />
-
+          {/* Auth/User */}
+          <div className="flex items-center gap-3 sm:gap-4">
             {user ? (
-              <div className="flex items-center gap-1 sm:gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 {isAdmin && (
                   <button
                     onClick={() => setView(view === 'gallery' ? 'admin' : 'gallery')}
-                    className={cn(
-                      "w-9 h-9 sm:w-12 sm:h-12 rounded-full transition-all border flex items-center justify-center",
-                      view === 'admin' ? "bg-red-600 border-red-500" : "bg-white/5 border-white/10 hover:bg-white/10"
-                    )}
+                    className="hidden sm:flex w-10 h-10 rounded-full bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] items-center justify-center transition-all"
                     title={view === 'gallery' ? t('adminPanel') : t('gallery')}
                   >
-                    {view === 'gallery' ? <LayoutDashboard size={16} className="sm:w-5 sm:h-5" /> : <Film size={16} className="sm:w-5 sm:h-5" />}
+                    {view === 'gallery' ? <LayoutDashboard size={18} className="text-red-400" /> : <Film size={18} className="text-red-400" />}
                   </button>
                 )}
-
-                <NotificationMenu language={language} />
                 
-                <div className="flex items-center gap-1.5 sm:gap-4 pl-1.5 sm:pl-4 border-l border-white/10">
-                  <div className="hidden lg:flex flex-col items-end">
-                     <span className="text-[10px] font-black uppercase tracking-tighter truncate max-w-[120px]">@{username || (language === 'uz' ? 'Foydalanuvchi' : 'Пользователь')}</span>
-                     <span className="text-[7px] font-black text-red-500 uppercase tracking-widest">{isAdmin ? t('admin') : t('member')}</span>
-                  </div>
-                  <button 
-                    onClick={() => setShowProfileModal(true)}
-                    className="w-9 h-9 sm:w-12 sm:h-12 rounded-full border border-white/10 bg-white/5 flex items-center justify-center shrink-0 overflow-hidden hover:border-red-500 transition-colors"
-                    title={t('editProfile')}
-                  >
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    ) : (
-                      <User size={16} className="text-slate-400 sm:w-5 sm:h-5" />
-                    )}
-                  </button>
-                </div>
+                <button 
+                  onClick={() => setShowProfileModal(true)}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/5 bg-red-500/10 flex items-center justify-center shrink-0 overflow-hidden hover:border-red-500/50 transition-all shadow-[0_0_15px_rgba(220,38,38,0.2)]"
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <User size={16} className="text-red-400" />
+                  )}
+                </button>
               </div>
             ) : (
               <button 
                 onClick={onLoginClick}
-                className="bg-white text-black px-10 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-400 transition-all active:scale-95"
+                className="bg-red-600 hover:bg-red-500 text-white px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-red-600/20 flex items-center gap-2"
               >
-                {t('login')}
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/20 flex items-center justify-center">
+                   <Play size={10} fill="white" className="ml-0.5" />
+                </div>
+                <span className="hidden sm:inline">{t('signIn' as any)}</span>
               </button>
             )}
+
+            {/* Lang Switcher - Hide on very small screens, put in mobile menu */}
+            <button 
+              onClick={() => setLanguage(language === 'uz' ? 'ru' : 'uz')}
+              className="hidden sm:flex w-10 h-10 rounded-full bg-white/[0.03] border border-white/5 items-center justify-center group hover:bg-white/[0.06] transition-all"
+            >
+              <Globe size={18} className="text-slate-500 group-hover:text-white transition-colors" />
+            </button>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center hover:bg-white/[0.06] transition-all"
+            >
+              {mobileMenuOpen ? <X size={18} className="text-white" /> : <Menu size={18} className="text-white" />}
+            </button>
           </div>
         </div>
       </nav>
+
+      {/* Mobile Search Bar Dropdown */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="fixed top-16 sm:top-20 left-0 right-0 z-[90] bg-[var(--bg-deep)] border-b border-white/5 xl:hidden overflow-hidden"
+          >
+            <div className="p-4 relative">
+              <input 
+                type="text" 
+                placeholder={language === 'uz' ? 'Qidiruv...' : 'Поиск...'}
+                className="w-full h-12 bg-white/[0.03] border border-white/5 rounded-2xl pl-6 pr-12 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 focus:bg-white/[0.06] transition-all text-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus
+              />
+              <div className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-500">
+                <Search size={18} />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-[80] bg-[var(--bg-deep)]/95 backdrop-blur-xl lg:hidden pt-24 sm:pt-28 pb-6 px-6 overflow-y-auto flex flex-col"
+          >
+            <div className="flex flex-col gap-6">
+              {['home', 'anime', 'news'].map((key) => (
+                <button 
+                  key={key}
+                  onClick={() => handleNavClick(key)}
+                  className={cn(
+                    "text-2xl font-black uppercase text-left transition-colors",
+                    (key === 'home' && activeTab === 'gallery') ||
+                    (key === 'anime' && activeTab === 'anime') ||
+                    (key === 'news' && activeTab === 'news')
+                      ? "text-red-500" 
+                      : "text-white"
+                  )}
+                >
+                  {t(key as any)}
+                </button>
+              ))}
+              
+              <div className="h-px w-full bg-white/10 my-4" />
+
+              <button 
+                onClick={() => setLanguage(language === 'uz' ? 'ru' : 'uz')}
+                className="flex items-center gap-4 text-xl font-black uppercase text-white"
+              >
+                <Globe size={24} className="text-slate-400" />
+                {language === 'uz' ? 'Русский' : 'O\'zbek'}
+              </button>
+
+              {isAdmin && user && (
+                <button
+                  onClick={() => {
+                    setView(view === 'gallery' ? 'admin' : 'gallery');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-4 text-xl font-black uppercase text-red-400 mt-4"
+                >
+                  {view === 'gallery' ? <LayoutDashboard size={24} /> : <Film size={24} />}
+                  {view === 'gallery' ? t('adminPanel') : t('gallery')}
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showProfileModal && (
@@ -169,3 +282,4 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
     </>
   );
 }
+

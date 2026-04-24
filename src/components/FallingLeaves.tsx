@@ -24,7 +24,7 @@ export const FallingLeaves = () => {
       duration: Math.random() * 15 + 10,
       delay: Math.random() * 10,
       horizontalMovement: Math.random() * 60 - 30,
-      color: i % 3 === 0 ? 'bg-orange-500/30' : (i % 3 === 1 ? 'bg-pink-400/30' : 'bg-amber-400/30')
+      color: i % 3 === 0 ? 'bg-indigo-500/20' : (i % 3 === 1 ? 'bg-violet-400/20' : 'bg-fuchsia-400/20')
     }));
   }, []);
 

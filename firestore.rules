@@ -2,41 +2,45 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Default deny
+    // 0. Default Deny Catch-all
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Connection test path
+    // 0.1 Connection Test
     match /_connection_test_/{docId} {
       allow read: if true;
     }
 
     // ===============================================================
-    // Helper Functions
+    // Section 1: Global Safety Primitives
     // ===============================================================
+
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
     
-    function isAuthenticated() {
-      return request.auth != null;
+    // Admin check: Prioritizes verified email for high-privilege access
+    function isAdmin() { 
+      return isSignedIn() && (
+        (request.auth.token.email != null && 
+         request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com") ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
     }
 
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
 
-    function isAdmin() {
-      return isAuthenticated() && 
-        (
-          (request.auth.token.email != null && request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com") ||
-          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
-        );
-    }
+    // ===============================================================
+    // Section 2: Entity Validation Blueprints
+    // ===============================================================
 
     function isValidAnime(data) {
       return data.keys().hasAll(['title', 'posterUrl', 'category', 'type', 'createdAt', 'authorUid']) &&
              data.title is string && data.title.size() <= 200 &&
-             data.posterUrl is string &&
+             data.posterUrl is string && data.posterUrl.size() <= 1000 &&
              data.category is string &&
              data.type in ['movie', 'series'] &&
              data.authorUid == request.auth.uid;
@@ -44,103 +48,118 @@ service cloud.firestore {
 
     function isValidEpisode(data) {
       return data.keys().hasAll(['animeId', 'episodeNumber', 'videoUrl', 'createdAt']) &&
-             data.animeId is string &&
+             data.animeId is string && data.animeId.size() <= 64 &&
              data.episodeNumber is number &&
-             data.videoUrl is string &&
-             (!('openingStart' in data) || data.openingStart is number) &&
-             (!('openingEnd' in data) || data.openingEnd is number);
+             data.videoUrl is string && data.videoUrl.size() <= 2000;
     }
 
     function isValidComment(data) {
       return data.keys().hasAll(['userId', 'username', 'content', 'createdAt']) &&
              data.userId == request.auth.uid &&
-             data.username is string &&
-             data.content is string &&
-             data.content.size() >= 1 &&
-             data.content.size() <= 1000;
+             data.username is string && data.username.size() <= 100 &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 2000;
     }
 
-    function isValidNotification(data) {
-      return data.keys().hasAll(['type', 'title', 'message', 'animeId', 'createdAt']) &&
-             data.type in ['anime', 'episode'] &&
-             data.title is string && data.title.size() <= 200 &&
-             data.message is string && data.message.size() <= 500 &&
-             data.animeId is string;
-    }
-
-    function isValidHistory(data) {
-      return data.keys().hasAll(['userId', 'animeId', 'episodeId', 'episodeNumber', 'updatedAt']) &&
-             data.userId == request.auth.uid &&
-             data.animeId is string &&
-             data.episodeId is string &&
-             data.episodeNumber is number &&
-             data.updatedAt == request.time;
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'updatedAt']) &&
+             data.uid == request.auth.uid &&
+             data.email is string && data.email.size() <= 128;
     }
 
     // ===============================================================
-    // Rules
+    // Section 3: Hardened Rulesets
     // ===============================================================
 
+    // [Pillar 6: PII Isolation] Users collection contains emails
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      // Allow creation if the user is authenticated (matching their own UID)
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      // Allow update for role change by admin, or user updating their own profile (preventing self-promotion to admin)
-      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin());
+      // Only admins can list users
+      allow list: if isAdmin();
+      
+      allow create: if isOwner(userId) && 
+                      isValidUser(incoming()) && 
+                      incoming().role == 'user'; // Prevent self-elevation on create
+      
+      allow update: if (
+        isAdmin() || 
+        (isOwner(userId) && 
+         isValidUser(incoming()) && 
+         incoming().role == existing().role) // Prevent self-elevation on update
+      );
+      
       allow delete: if isAdmin();
     }
 
     match /anime/{animeId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidAnime(request.resource.data);
-      allow delete, update: if isAdmin();
+      allow create: if isAdmin() && isValidAnime(incoming());
+      
+      // [Pillar 4: Tiered Identity] Admins can manage all
+      allow update: if isAdmin() && isValidAnime(incoming());
+      allow delete: if isAdmin();
 
       match /episodes/{episodeId} {
         allow read: if true;
-        allow create, update: if isAdmin() && isValidEpisode(request.resource.data);
+        allow create: if isAdmin() && isValidEpisode(incoming());
+        allow update: if isAdmin() && isValidEpisode(incoming());
         allow delete: if isAdmin();
       }
 
       match /comments/{commentId} {
         allow read: if true;
-        allow create: if isAuthenticated() && isValidComment(request.resource.data);
-        allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+        allow create: if isSignedIn();
+        allow delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
       }
     }
 
-    match /ads/{adId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
+    match /watchlist/{id} {
+      // [Pillar 8: Secure List Queries] Force filter by userId
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && existing().userId == request.auth.uid;
+      
+      allow create: if isSignedIn() && 
+                    incoming().userId == request.auth.uid &&
+                    exists(/databases/$(database)/documents/anime/$(incoming().animeId));
+      
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
 
-    match /watchlist/{id} {
-      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    match /history/{id} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && existing().userId == request.auth.uid;
+      
+      allow create: if isSignedIn() && 
+                    incoming().userId == request.auth.uid &&
+                    incoming().updatedAt == request.time;
+      
+      allow update: if isSignedIn() && 
+                    existing().userId == request.auth.uid &&
+                    incoming().userId == request.auth.uid &&
+                    incoming().updatedAt == request.time &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['episodeId', 'episodeNumber', 'updatedAt']);
+      
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
 
     match /messages/{messageId} {
-      allow create: if true;
+      allow create: if incoming().size() <= 10 && 
+                      incoming().message.size() <= 5000;
       allow read, delete: if isAdmin();
     }
 
     match /public_notifications/{notificationId} {
       allow read: if true;
-      allow create: if isAdmin() && isValidNotification(request.resource.data);
-      allow delete: if isAdmin();
-      allow update: if false;
+      allow create, delete: if isAdmin();
     }
 
-    match /history/{id} {
-      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
-      allow create, update: if isAuthenticated() && isValidHistory(request.resource.data);
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    match /ads/{adId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /fcm_tokens/{tokenId} {
       allow read: if isAdmin();
-      allow create, update: if isAuthenticated();
-      allow delete: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.userId); // Adjust logic if needed
+      allow write: if isSignedIn() && (incoming().userId == request.auth.uid || existing().userId == request.auth.uid);
     }
   }
 }

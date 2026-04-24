@@ -49,14 +49,30 @@ export { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfi
 export const syncUserToFirestore = async (user: any) => {
   if (!user) return;
   const userDocRef = doc(db, 'users', user.uid);
-  await setDoc(userDocRef, {
-    uid: user.uid,
-    email: user.email || '',
-    username: user.displayName || user.email?.split('@')[0] || 'User',
-    photoURL: user.photoURL || '',
-    role: 'user', // Default role
-    updatedAt: serverTimestamp()
-  }, { merge: true });
+  
+  try {
+    // We check if the user already exists to avoid overwriting their role (especially admins)
+    // If we can't read it (permission denied), we just try to set it; the rules will protect it.
+    const userSnap = await getDocFromServer(userDocRef).catch(() => null);
+    
+    const userData: any = {
+      uid: user.uid,
+      email: user.email || '',
+      username: user.displayName || user.email?.split('@')[0] || 'User',
+      photoURL: user.photoURL || '',
+      updatedAt: serverTimestamp()
+    };
+
+    // Only set default role if user doesn't exist
+    if (!userSnap?.exists()) {
+      userData.role = 'user';
+    }
+
+    await setDoc(userDocRef, userData, { merge: true });
+    console.log('[Firebase] User synced successfully:', user.email);
+  } catch (error: any) {
+    console.error('[Firebase] Failed to sync user:', error.message, error.code);
+  }
 };
 
 export const loginWithGoogle = async () => {
@@ -65,12 +81,11 @@ export const loginWithGoogle = async () => {
         await syncUserToFirestore(result.user);
         return result;
     } catch (error: any) {
-        // Agar popup bloklansa yoki muhit (masalan Telegram in-app browser) ko'tarmasa
         if (error.code === 'auth/popup-blocked' || error.message.includes('popup')) {
              console.warn("Popup bloklandi. Redirect orqali kirishga urinish...");
              const { signInWithRedirect } = await import('firebase/auth');
              await signInWithRedirect(auth, googleProvider);
-             return null; // Redirect sahifani yangilaydi
+             return null;
         }
         throw error;
     }
@@ -79,17 +94,19 @@ export const loginWithGoogle = async () => {
 // Test connection on boot as recommended
 async function testConnection() {
   try {
-    console.log('Testing Firestore connection to database:', firebaseConfig.firestoreDatabaseId || "(default)");
+    const dbId = firebaseConfig.firestoreDatabaseId || "(default)";
+    console.log('Testing Firestore connection to database:', dbId);
+    
     // Attempting a simple read to check connectivity
+    // Using getDocFromServer to bypass local cache
     await getDocFromServer(doc(db, '_connection_test_', 'check'));
-    console.log('Firebase connection successful');
+    console.log('Firebase connection successful to:', dbId);
   } catch (error: any) {
     if (error.code === 'unavailable') {
       console.error("Firestore is unavailable [code=unavailable].");
-      console.warn("Possible causes: 1) Internet connection issue, 2) Firestore database not initialized in Firebase console, 3) Incorrect Database ID.");
-      console.info("Using Database ID:", firebaseConfig.firestoreDatabaseId || "(default)");
+      console.warn("Possible causes: 1) Network blocked, 2) Firestore database not initialized, 3) Incorrect Database ID.");
     } else if (error.code === 'permission-denied') {
-      console.warn("Firestore connection check failed with Permission Denied. This is expected if security rules are tight, but suggests the database IS reachable.");
+      console.log("Firestore reachability confirmed (Permission Denied but contacted).");
     } else {
       console.error("Firebase connection test failed:", error.message, error.code);
     }

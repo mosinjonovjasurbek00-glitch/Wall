@@ -105,6 +105,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
   const [epNumber, setEpNumber] = useState(1);
   const [epTitle, setEpTitle] = useState('');
   const [epVideoUrl, setEpVideoUrl] = useState('');
+  const [epVideoFile, setEpVideoFile] = useState<File | null>(null);
   const [epOpeningStart, setEpOpeningStart] = useState(''); // Formatted as MM:SS
   const [epOpeningEnd, setEpOpeningEnd] = useState('');     // Formatted as MM:SS
 
@@ -313,11 +314,28 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
     if (!selectedAnimeForEpisodes) return;
     setSubmitting(true);
     try {
+      let finalVideoUrl = epVideoUrl;
+      // Upload file to Firebase Storage if selected
+      if (epVideoFile) {
+        setUploadProgress(0);
+        const storageRef = ref(storage, `episodes/${selectedAnimeForEpisodes.id}/${Date.now()}_${epVideoFile.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, epVideoFile);
+        
+        finalVideoUrl = await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed', 
+            (snapshot) => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
+            reject,
+            () => getDownloadURL(uploadTask.snapshot.ref).then(resolve).catch(reject)
+          );
+        });
+        setUploadProgress(null);
+      }
+
       const epData: any = {
         animeId: selectedAnimeForEpisodes.id,
         episodeNumber: epNumber,
         title: epTitle,
-        videoUrl: epVideoUrl,
+        videoUrl: finalVideoUrl,
         updatedAt: serverTimestamp()
       };
 
@@ -647,7 +665,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-black uppercase tracking-tighter">{editingAnime ? t('edit') : t('newAnime')}</h2>
                   {editingAnime && (
-                    <button onClick={() => setEditingAnime(null)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">{t('cancel')}</button>
+                     <button onClick={() => setEditingAnime(null)} className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-400">{t('cancel')}</button>
                   )}
                 </div>
                 <form onSubmit={handleAnimeSubmit} className="space-y-4">
@@ -657,7 +675,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                   <div className="space-y-2">
                     <label className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{t('posterOrUrl')}</label>
                     <div className="flex gap-2">
-                       <input type="file" onChange={e => setPosterFile(e.target.files?.[0] || null)} className="text-[10px] flex-1" />
+                       <input type="file" onChange={e => setPosterFile(e.target.files?.[0] || null)} className="text-[10px] flex-1 text-slate-400 file:bg-white/5 file:border-0 file:rounded-lg file:px-3 file:py-1 file:text-[10px] file:text-white file:font-black file:uppercase file:cursor-pointer hover:file:bg-white/10" />
                     </div>
                     <input type="text" placeholder={t('posterOrUrl')} className="glass-input w-full" value={posterUrl} onChange={e => setPosterUrl(e.target.value)} />
                   </div>
@@ -712,7 +730,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                     </div>
                   )}
 
-                  <button type="submit" disabled={submitting} className="glass-button-primary w-full py-4 flex items-center justify-center gap-2">
+                  <button type="submit" disabled={submitting} className="glass-button-primary w-full py-4 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 shadow-red-600/20">
                     {submitting ? <Loader2 className="animate-spin" /> : <Plus />}
                     {t('save')}
                   </button>
@@ -725,12 +743,12 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                 <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">{t('animeList')}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {animeList.map(anime => (
-                    <div key={anime.id} className="glass rounded-2xl p-3 flex gap-4 items-center group relative overflow-hidden">
+                    <div key={anime.id} className="glass rounded-2xl p-3 flex gap-4 items-center group relative overflow-hidden bg-white/[0.02]">
                       <img src={anime.posterUrl} className="w-16 h-24 object-cover rounded-xl" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", anime.language === 'ru' ? "bg-red-500/20 text-red-400" : "bg-red-500/10 text-red-300")}>{anime.language === 'ru' ? 'RU' : 'UZ'}</span>
-                          <h3 className="font-black text-sm uppercase truncate">{anime.title}</h3>
+                          <h3 className="font-black text-sm uppercase truncate text-white">{anime.title}</h3>
                         </div>
                         <p className="text-[10px] text-slate-500 uppercase font-black">{anime.category} • {anime.year} • {anime.views || 0} {t('views')}</p>
                         <div className="flex gap-2 mt-2">
@@ -792,9 +810,16 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                       <input type="number" placeholder={t('episodeNumber')} className="glass-input w-full" value={epNumber} onChange={e => setEpNumber(Number(e.target.value))} required />
                       <input type="text" placeholder={t('episodeTitle')} className="glass-input w-full" value={epTitle} onChange={e => setEpTitle(e.target.value)} />
                       <div className="space-y-1">
-                         <input type="text" placeholder={t('videoUrl')} className="glass-input w-full" value={epVideoUrl} onChange={e => setEpVideoUrl(e.target.value)} required />
+                         <input type="text" placeholder={t('videoUrl')} className="glass-input w-full" value={epVideoUrl} onChange={e => setEpVideoUrl(e.target.value)} />
+                         <input type="file" accept="video/*" onChange={e => { const file = e.target.files?.[0]; if (file) setEpVideoFile(file); }} className="text-[10px] w-full text-slate-400 file:bg-white/5 file:border-0 file:rounded-lg file:px-3 file:py-1 file:text-[10px] file:text-white file:font-black file:uppercase file:cursor-pointer hover:file:bg-white/10" />
                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-1">{t('telegramHint')}</p>
                       </div>
+
+                      {uploadProgress !== null && (
+                        <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden mb-4">
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${uploadProgress}%` }} className="bg-red-500 h-full" />
+                        </div>
+                      )}
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
@@ -808,9 +833,9 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                         </div>
                         <p className="text-[9px] text-amber-500 font-bold uppercase tracking-wider ml-1">Eslatma: Openingdan o'tish faqat Direct Link va Telegram orqali yuklangan videolar uchun ishlaydi. Iframe (YouTube, OK.ru) videolarida ishlamaydi.</p>
                       
-                      <button type="submit" disabled={submitting} className="glass-button-primary w-full py-4 flex items-center justify-center gap-2">
+                      <button type="submit" disabled={submitting} className="glass-button-primary w-full py-4 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 shadow-red-600/20">
                         {submitting ? <Loader2 className="animate-spin" /> : <Plus />}
-                        {t('add')}
+                        {editingEpisode ? t('edit') : t('add')}
                       </button>
                     </form>
                   </div>
@@ -821,13 +846,13 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                     <h2 className="text-2xl font-black uppercase tracking-tighter mb-6">{t('episodes')}</h2>
                     <div className="space-y-3">
                       {episodes.map(ep => (
-                        <div key={ep.id} className="glass rounded-2xl p-4 flex items-center justify-between group">
+                        <div key={ep.id} className="glass rounded-2xl p-4 flex items-center justify-between group bg-white/[0.02] border border-white/5 hover:border-red-500/20 transition-all">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center font-black text-red-400">
+                            <div className="w-10 h-10 bg-red-600/10 rounded-xl flex items-center justify-center font-black text-red-400 border border-red-500/20">
                               {ep.episodeNumber}
                             </div>
                             <div>
-                              <h4 className="font-black text-xs uppercase">{ep.title || `${t('episodeFallback')}${ep.episodeNumber}`}</h4>
+                              <h4 className="font-black text-xs uppercase text-white">{ep.title || `${t('episodeFallback')}${ep.episodeNumber}`}</h4>
                               <p className="text-[8px] text-slate-500 uppercase tracking-widest truncate max-w-xs">{ep.videoUrl}</p>
                             </div>
                           </div>
@@ -880,7 +905,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
             className="glass rounded-3xl p-8 sm:p-12"
           >
             <div className="flex items-center justify-between mb-10">
-              <h2 className="text-3xl font-black uppercase tracking-tighter">{t('userMessages')}</h2>
+              <h2 className="text-3xl font-black uppercase tracking-tighter text-white">{t('userMessages')}</h2>
               <div className="bg-red-600/20 px-4 py-2 rounded-xl border border-red-500/20">
                 <span className="text-[10px] font-black uppercase tracking-widest text-red-400">{messages.length} {t('msgCount')}</span>
               </div>
@@ -888,14 +913,14 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {messages.map(msg => (
-                <div key={msg.id} className="glass rounded-[2rem] p-8 relative group border border-white/5 hover:border-red-500/30 transition-all">
+                <div key={msg.id} className="glass rounded-[2rem] p-8 relative group border border-white/5 hover:border-red-500/30 transition-all bg-white/[0.01]">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-red-500 border border-white/10">
                         {msg.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <h4 className="font-black text-sm uppercase tracking-tight">{msg.name}</h4>
+                        <h4 className="font-black text-sm uppercase tracking-tight text-white">{msg.name}</h4>
                         <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{msg.email}</p>
                       </div>
                     </div>
@@ -956,7 +981,7 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                     />
                   </div>
                   
-                  <button type="submit" disabled={submitting} className="glass-button-primary w-full py-5 flex items-center justify-center gap-3">
+                  <button type="submit" disabled={submitting} className="glass-button-primary w-full py-5 flex items-center justify-center gap-3 bg-red-600 hover:bg-red-500 shadow-red-600/20">
                     {submitting ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
                     <span className="text-[10px] font-black uppercase tracking-widest">{t('assignAdmin')}</span>
                   </button>
@@ -975,18 +1000,18 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
             </div>
 
             <div className="lg:col-span-2">
-              <div className="glass rounded-[2.5rem] p-8 sm:p-12 border border-white/5">
-                <h2 className="text-2xl font-black uppercase tracking-tighter mb-10">{t('adminList')}</h2>
+              <div className="glass rounded-[2.5rem] p-8 sm:p-12 border border-white/5 bg-white/[0.01]">
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-10 text-white">{t('adminList')}</h2>
                 
                 <div className="space-y-4">
                   {users.map(u => (
-                    <div key={u.id} className="glass rounded-2xl p-4 sm:p-6 flex items-center justify-between group border border-white/5 hover:border-red-500/20 transition-all">
+                    <div key={u.id} className="glass rounded-2xl p-4 sm:p-6 flex items-center justify-between group border border-white/5 hover:border-red-500/20 transition-all bg-white/[0.02]">
                       <div className="flex items-center gap-5">
                         <div className="w-12 h-12 bg-red-600/10 rounded-xl flex items-center justify-center border border-red-500/20">
                           <User size={24} className="text-red-500" />
                         </div>
                         <div>
-                          <h4 className="font-black text-sm uppercase tracking-tight">@{u.username}</h4>
+                          <h4 className="font-black text-sm uppercase tracking-tight text-white">@{u.username}</h4>
                           <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{u.email}</p>
                         </div>
                       </div>

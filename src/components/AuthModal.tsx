@@ -219,7 +219,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
         <div className="overflow-y-auto p-8 pt-4 sm:p-10 sm:pt-4 custom-scrollbar">
           <div className="text-center mb-6">
             <div className="flex justify-center mb-3">
-                 <h2 className="text-2xl font-black uppercase tracking-tighter italic">
+                 <h2 className="text-2xl font-black uppercase tracking-tighter italic text-white">
                    Animem<span className="text-red-500"> Uz</span>
                  </h2>
             </div>
@@ -247,7 +247,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
               </p>
               <button 
                 onClick={() => setMode('login')}
-                className="glass-button w-full py-4 text-[10px] flex items-center justify-center gap-2"
+                className="glass-button w-full py-4 text-[10px] flex items-center justify-center gap-2 border-red-500/20 text-red-400"
               >
                 <ArrowLeft size={16} /> {t('backToLogin')}
               </button>
@@ -263,22 +263,22 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
               {mode === 'login' && (
                 <form onSubmit={handleEmailLogin} className="space-y-4">
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-400" size={18} />
                     <input 
                       type="email" 
                       placeholder={t('emailAddressTitle')}
-                      className="glass-input w-full pl-12 h-14"
+                      className="glass-input w-full pl-12 h-14 bg-white/[0.02] border-white/5 focus:border-red-500/30 text-white"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       required
                     />
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-red-400" size={18} />
                     <input 
                       type="password" 
                       placeholder={t('passwordTitle')}
-                      className="glass-input w-full pl-12 h-14"
+                      className="glass-input w-full pl-12 h-14 bg-white/[0.02] border-white/5 focus:border-red-500/30 text-white"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       required
@@ -295,14 +295,14 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
                       </div>
                       <input 
                         type="number"
-                        className="w-24 glass-input text-center h-12 text-sm font-black"
+                        className="w-24 glass-input text-center h-12 text-sm font-black bg-white/[0.05] border-white/10"
                         value={userAnswer}
                         onChange={e => setUserAnswer(e.target.value)}
                         required
                       />
                     </div>
                   </div>
-                  <button type="submit" disabled={loading} className="glass-button-primary w-full py-4 text-[10px] font-black uppercase tracking-[0.2em]">
+                  <button type="submit" disabled={loading} className="glass-button-primary w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] bg-red-600 hover:bg-red-500 shadow-red-600/20">
                     {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : t('signIn')}
                   </button>
                 </form>
@@ -315,7 +315,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
                     <input 
                       type="text" 
                       placeholder={t('fullName')}
-                      className="glass-input w-full pl-12 h-14"
+                      className="glass-input w-full pl-12 h-14 bg-white/[0.02] border-white/5 focus:border-red-500/30"
                       value={name}
                       onChange={e => setName(e.target.value)}
                       required
@@ -326,7 +326,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
                     <input 
                       type="email" 
                       placeholder={t('emailAddressTitle')}
-                      className="glass-input w-full pl-12 h-14"
+                      className="glass-input w-full pl-12 h-14 bg-white/[0.02] border-white/5 focus:border-red-500/30"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       required
@@ -337,7 +337,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
                     <input 
                       type="password" 
                       placeholder={t('passwordTitle')}
-                      className="glass-input w-full pl-12 h-14"
+                      className="glass-input w-full pl-12 h-14 bg-white/[0.02] border-white/5 focus:border-red-500/30"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       required
@@ -348,7 +348,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
                     <input 
                       type="password" 
                       placeholder={t('confirmPassword')}
-                      className="glass-input w-full pl-12 h-14"
+                      className="glass-input w-full pl-12 h-14 bg-white/[0.02] border-white/5 focus:border-red-500/30"
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
                       required
@@ -365,14 +365,14 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
                       </div>
                       <input 
                         type="number"
-                        className="w-24 glass-input text-center h-12 text-sm font-black"
+                        className="w-24 glass-input text-center h-12 text-sm font-black bg-white/[0.05] border-white/10"
                         value={userAnswer}
                         onChange={e => setUserAnswer(e.target.value)}
                         required
                       />
                     </div>
                   </div>
-                  <button type="submit" disabled={loading} className="glass-button-primary w-full py-4 text-[10px] font-black uppercase tracking-[0.2em]">
+                  <button type="submit" disabled={loading} className="glass-button-primary w-full py-4 text-[10px] font-black uppercase tracking-[0.2em] bg-red-600 hover:bg-red-500 shadow-red-600/20">
                     {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : t('signUp')}
                   </button>
                 </form>
@@ -400,7 +400,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
               <div className="text-center pt-2">
                 <button 
                   onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                  className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-red-500 transition-colors"
+                  className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-red-400 transition-colors"
                 >
                   {mode === 'login' ? t('noAccount') : t('hasAccount')}
                 </button>
@@ -413,7 +413,7 @@ export const AuthModal = ({ onSuccess, onClose, language = 'uz' }: AuthModalProp
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-4 text-red-500 bg-red-500/10 p-4 rounded-xl border border-red-500/20 text-[9px] font-black uppercase tracking-widest text-center mx-8 mb-8"
+            className="mt-4 text-red-400 bg-red-500/10 p-4 rounded-xl border border-red-500/20 text-[9px] font-black uppercase tracking-widest text-center mx-8 mb-8"
           >
             {error}
           </motion.div>

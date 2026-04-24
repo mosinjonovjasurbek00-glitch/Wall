@@ -137,11 +137,11 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
              <X size={20} />
            </button>
 
-           <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-white mb-6">{t('editProfile')}</h2>
+            <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-white mb-6">{t('editProfile')}</h2>
 
            {loading ? (
              <div className="flex justify-center py-10">
-               <Loader2 className="animate-spin text-red-500" size={32} />
+               <Loader2 className="animate-spin text-indigo-500" size={32} />
              </div>
            ) : (
              <div className="space-y-8">
@@ -160,7 +160,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-red-500 transition-all font-medium"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all font-medium"
                       placeholder={t('username')}
                     />
                   </div>
@@ -173,7 +173,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                     {/* Custom Upload Button */}
                     <div className="relative aspect-square">
-                       <label className="cursor-pointer w-full h-full rounded-2xl border-2 border-dashed border-white/10 hover:border-red-500 bg-white/[0.02] flex flex-col items-center justify-center gap-1 transition-all group">
+                       <label className="cursor-pointer w-full h-full rounded-2xl border-2 border-dashed border-white/10 hover:border-indigo-500 bg-white/[0.02] flex flex-col items-center justify-center gap-1 transition-all group">
                           <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                           {customPreview ? (
                             <>
@@ -185,7 +185,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                               )}
                             </>
                           ) : (
-                            <Upload size={18} className="text-slate-600 group-hover:text-red-400 transition-colors" />
+                            <Upload size={18} className="text-slate-600 group-hover:text-indigo-400 transition-colors" />
                           )}
                        </label>
                     </div>
@@ -200,7 +200,7 @@ export default function ProfileModal({ onClose, isOpen, language = 'uz' }: Profi
                         }}
                         className={cn(
                           "relative aspect-square rounded-2xl overflow-hidden border-2 transition-all",
-                          avatarUrl === url ? "border-red-500 scale-105 shadow-lg shadow-red-500/20" : "border-transparent hover:border-white/10"
+                          avatarUrl === url ? "border-indigo-500 scale-105 shadow-lg shadow-indigo-500/20" : "border-transparent hover:border-white/10"
                         )}
                       >
                          <img src={url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />

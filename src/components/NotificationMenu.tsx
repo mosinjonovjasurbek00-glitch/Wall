@@ -100,12 +100,12 @@ export default function NotificationMenu({ language = 'uz' }: NotificationMenuPr
         onClick={toggleMenu}
         className={cn(
           "w-9 h-9 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all relative border",
-          isOpen ? "bg-red-600 border-red-500 text-white" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
+          isOpen ? "bg-red-600 border-red-500 text-white shadow-lg shadow-red-600/30" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"
         )}
       >
         <Bell size={16} className="sm:w-5 sm:h-5" />
         {hasNew && notifications.length > 0 && (
-          <span className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 border-2 border-[#020202] rounded-full animate-bounce" />
+          <span className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 border-2 border-[#020202] rounded-full animate-bounce shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
         )}
       </button>
 
@@ -122,10 +122,10 @@ export default function NotificationMenu({ language = 'uz' }: NotificationMenuPr
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               className="fixed left-4 right-4 top-20 sm:absolute sm:inset-x-auto sm:top-full sm:mt-4 sm:right-0 sm:w-[380px] z-[120]"
             >
-              <div className="bg-slate-900 border border-white/10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,1)] overflow-hidden flex flex-col max-h-[500px]">
-                <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+              <div className="glass border border-white/10 rounded-[2.5rem] shadow-[0_20px_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[500px]">
+                <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
                   <h3 className="text-white font-black text-sm uppercase tracking-tighter">{t('notifications')}</h3>
-                  <span className="text-[10px] font-black text-slate-500 px-3 py-1 bg-white/5 rounded-full">{notifications.length} {t('msgCount')}</span>
+                  <span className="text-[10px] font-black text-red-400 px-3 py-1 bg-red-500/10 rounded-full">{notifications.length} {t('msgCount')}</span>
                 </div>
 
                 <div className="overflow-y-auto custom-scrollbar flex-1">
@@ -141,12 +141,12 @@ export default function NotificationMenu({ language = 'uz' }: NotificationMenuPr
                       {notifications.map((notif) => (
                         <div 
                           key={notif.id}
-                          className="p-5 border-b border-white/5 hover:bg-white/5 transition-colors relative group"
+                          className="p-5 border-b border-white/5 hover:bg-white/[0.03] transition-colors relative group"
                         >
                           <div className="flex gap-4">
                             <div className={cn(
                               "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border",
-                              notif.type === 'welcome' ? "bg-red-600/20 border-red-500/20 text-red-400" :
+                              notif.type === 'welcome' ? "bg-indigo-600/20 border-indigo-500/20 text-indigo-400" :
                               notif.type === 'update' ? "bg-amber-600/20 border-amber-500/20 text-amber-400" :
                               "bg-white/5 border-white/10 text-slate-400"
                             )}>
@@ -175,7 +175,7 @@ export default function NotificationMenu({ language = 'uz' }: NotificationMenuPr
                 </div>
                 
                 {notifications.length > 0 && (
-                  <div className="p-4 bg-white/5 text-center">
+                  <div className="p-4 bg-white/[0.02] text-center">
                     <button 
                       onClick={() => setIsOpen(false)}
                       className="text-[9px] font-black text-red-400 uppercase tracking-[0.2em] hover:text-white transition-colors"

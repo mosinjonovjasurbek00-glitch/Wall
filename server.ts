@@ -56,6 +56,7 @@ import { tgStreamer } from "./src/services/TelegramStreamer";
 import { rumbleStreamer } from "./src/services/RumbleStreamer";
 import { dailymotionStreamer } from "./src/services/DailymotionStreamer";
 import { vkStreamer } from "./src/services/VkStreamer";
+import { dtubeStreamer } from "./src/services/DTubeStreamer";
 
 export const app = express();
 const PORT = 3000;
@@ -117,17 +118,54 @@ async function setupServer() {
   // VK videolarni to'g'ridan-to'g'ri olish yo'li
   app.get("/api/vk/stream", async (req, res) => {
     const url = req.query.url as string;
+    const format = req.query.format as string;
     if (!url) return res.status(400).send("URL is required");
 
     try {
       const directUrl = await vkStreamer.getDirectUrl(url);
       if (directUrl) {
+         if (format === 'json') {
+           return res.json({ url: directUrl });
+         }
          res.redirect(directUrl);
       } else {
+         if (format === 'json') {
+           return res.json({ error: "Could not find direct video URL" });
+         }
          res.status(404).send("Could not find direct video URL");
       }
     } catch (error) {
+      if (format === 'json') {
+        return res.json({ error: "VK error" });
+      }
       res.status(500).send("VK error");
+    }
+  });
+
+  // DTube videolarni to'g'ridan-to'g'ri olish yo'li
+  app.get("/api/dtube/stream", async (req, res) => {
+    const url = req.query.url as string;
+    const format = req.query.format as string;
+    if (!url) return res.status(400).send("URL is required");
+
+    try {
+      const directUrl = await dtubeStreamer.getDirectUrl(url);
+      if (directUrl) {
+         if (format === 'json') {
+           return res.json({ url: directUrl });
+         }
+         res.redirect(directUrl);
+      } else {
+         if (format === 'json') {
+           return res.json({ error: "Could not find direct video URL" });
+         }
+         res.status(404).send("Could not find direct video URL");
+      }
+    } catch (error) {
+      if (format === 'json') {
+         return res.json({ error: "DTube error" });
+      }
+      res.status(500).send("DTube error");
     }
   });
 

@@ -76,18 +76,18 @@ export default function NotificationSystem({ language = 'uz' }: NotificationSyst
           exit={{ opacity: 0, scale: 0.9, x: 20 }}
           className="fixed bottom-6 right-6 z-[999] w-[320px] sm:w-[380px]"
         >
-          <div className="bg-slate-900 border border-white/10 overflow-hidden rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,1)] flex flex-col">
+          <div className="glass overflow-hidden rounded-[2rem] shadow-[0_20px_100px_rgba(0,0,0,0.8)] border border-white/10 flex flex-col relative">
             {/* Progress Bar */}
             <motion.div 
               initial={{ width: "100%" }}
               animate={{ width: "0%" }}
               transition={{ duration: 8, ease: "linear" }}
-              className="h-1 bg-red-500 absolute top-0 left-0"
+              className="h-1 bg-red-500 absolute top-0 left-0 z-10"
             />
 
-            <div className="p-5 flex gap-4">
+            <div className="p-5 flex gap-4 pt-6">
               {/* Poster or Icon */}
-              <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 bg-white/5">
+              <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-xl overflow-hidden flex-shrink-0 border border-white/10 bg-white/5 shadow-2xl">
                 {lastNotification.posterUrl ? (
                   <img 
                     src={lastNotification.posterUrl} 
@@ -105,7 +105,7 @@ export default function NotificationSystem({ language = 'uz' }: NotificationSyst
               {/* Content */}
               <div className="flex-1 min-w-0 pt-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(220,38,38,0.8)] animate-pulse" />
                   <span className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400">{t('new')} {lastNotification.type === 'anime' ? t('newAnime') : t('episode')}</span>
                 </div>
                 
@@ -121,18 +121,15 @@ export default function NotificationSystem({ language = 'uz' }: NotificationSyst
                   <button 
                     onClick={() => {
                         setShow(false);
-                        // We can't easily trigger a navigation from here without more props, 
-                        // but we can at least close and assume the user knows where to find it 
-                        // or provide a more complex routing system later.
-                        window.location.reload(); // Refreshing to see new content is simple
+                        window.location.reload(); 
                     }}
-                    className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95"
+                    className="bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-red-600/20"
                   >
                     <Play size={12} fill="currentColor" /> {t('watch')}
                   </button>
                   <button 
                     onClick={() => setShow(false)}
-                    className="text-slate-600 hover:text-white transition-colors p-2"
+                    className="text-slate-500 hover:text-white transition-colors p-2 bg-white/5 rounded-lg"
                   >
                     <X size={16} />
                   </button>

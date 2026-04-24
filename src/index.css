@@ -1,77 +1,77 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Outfit", sans-serif;
-  --breakpoint-xs: 400px;
+  --bg-deep: #050505;
+  --accent: #ef4444;
+  --accent-rgb: 239, 68, 68;
 }
 
 @layer base {
   body {
-    @apply bg-[#000000] text-slate-50 min-h-screen selection:bg-red-500/30;
-    position: relative;
-  }
-
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background: radial-gradient(at 0% 0%, rgba(239, 68, 68, 0.12) 0px, transparent 50%), #000000;
-    pointer-events: none;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+    @apply bg-[var(--bg-deep)] text-white selection:bg-red-500/30 overflow-x-hidden relative;
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/5;
   }
   
-  .glass-hover {
-    @apply transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:shadow-red-500/10;
+  .glass-card {
+    @apply bg-white/[0.02] backdrop-blur-md border border-white/[0.05] hover:border-red-500/30 transition-all duration-500;
   }
 
-  .glass-input {
-    @apply bg-white/5 border border-white/10 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:bg-white/10 transition-all;
+  .sidebar-icon {
+    @apply w-12 h-12 flex items-center justify-center transition-all duration-300 relative rounded-2xl text-slate-500 hover:text-white hover:bg-[var(--accent)]/20;
   }
 
-  .glass-button {
-    @apply px-6 py-2 rounded-xl font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  .sidebar-icon.active {
+    @apply bg-[var(--accent)] text-white shadow-[0_0_20px_rgba(var(--accent-rgb),0.4)];
+  }
+
+  .sidebar-icon.active::after {
+    content: '';
+    @apply absolute -right-4 w-1 h-6 bg-[var(--accent)] rounded-l-full;
+  }
+
+  .nav-link {
+    @apply text-[13px] font-bold text-slate-400 hover:text-white transition-all duration-300 uppercase tracking-widest relative py-2;
   }
 
   .glass-button-primary {
-    @apply px-6 py-2 rounded-xl font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-500/20;
+    @apply px-10 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-red-600/20 transition-all active:scale-95 flex items-center justify-center gap-3;
   }
 
   .glass-button-secondary {
-    @apply px-6 py-2 rounded-xl font-medium transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none bg-white/10 hover:bg-white/20 text-white border border-white/10;
+    @apply px-4 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center;
   }
+}
 
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
 
-  img {
-    -webkit-user-drag: none;
-    -khtml-user-drag: none;
-    -moz-user-drag: none;
-    -o-user-drag: none;
-    user-drag: none;
-    user-select: none;
-  }
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  user-select: none;
 }
