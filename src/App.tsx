@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { auth, db, syncUserToFirestore } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc, setDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
@@ -61,6 +63,68 @@ export default function App() {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const isAdmin = firestoreAdmin || (user?.email?.toLowerCase() === "mosinjonovjasurbek00@gmail.com");
+
+  return (
+    <HelmetProvider>
+      <BrowserRouter>
+        <AppContent 
+          language={language}
+          setLanguage={setLanguage}
+          user={user}
+          loading={loading}
+          initialLoading={initialLoading}
+          firestoreAdmin={firestoreAdmin}
+          setFirestoreAdmin={setFirestoreAdmin}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          view={view}
+          setView={setView}
+          showContact={showContact}
+          setShowContact={setShowContact}
+          showAuthModal={showAuthModal}
+          setShowAuthModal={setShowAuthModal}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          animeList={animeList}
+          setAnimeList={setAnimeList}
+          dataLoading={dataLoading}
+          setDataLoading={setDataLoading}
+          fetchError={fetchError}
+          setFetchError={setFetchError}
+          isAdmin={isAdmin}
+        />
+      </BrowserRouter>
+    </HelmetProvider>
+  );
+}
+
+function AppContent({ 
+  language, setLanguage, user, loading, initialLoading, firestoreAdmin, setFirestoreAdmin, 
+  activeTab, setActiveTab, view, setView, showContact, setShowContact, 
+  showAuthModal, setShowAuthModal, selectedCategory, setSelectedCategory, 
+  searchTerm, setSearchTerm, animeList, setAnimeList, dataLoading, 
+  setDataLoading, fetchError, setFetchError, isAdmin 
+}: any) {
+  const t = useTranslation(language);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!loading) {
+      // Potentially handle role sync here if needed, but it's already in the parent App
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    // Sync activeTab with URL if necessary, or just rely on state
+    if (location.pathname === '/') setActiveTab('gallery');
+    else if (location.pathname === '/news') setActiveTab('news');
+    else if (location.pathname === '/watchlist') setActiveTab('watchlist');
+    else if (location.pathname.startsWith('/anime/')) setActiveTab('gallery');
+    else if (location.pathname.startsWith('/watch/')) setActiveTab('gallery');
+  }, [location.pathname]);
 
   useEffect(() => {
     const qAnime = query(collection(db, 'anime'));
@@ -184,31 +248,106 @@ export default function App() {
       </AnimatePresence>
       
       <main className="relative px-4 lg:px-8 pt-20 sm:pt-28 min-h-screen">
-      {view === 'gallery' ? (
-        <AnimePortal 
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          animeList={filteredAnimeListByLang}
-          loading={dataLoading}
-          language={language}
-          showWatchlistOnly={activeTab === 'watchlist' || activeTab === 'saved'}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-        />
-      ) : isAdmin ? (
-        <AdminPanel language={language} setLanguage={setLanguage} />
-      ) : (
-        <div className="pt-40 flex flex-col items-center justify-center px-6">
-          <div className="glass p-16 rounded-[2rem] text-center max-w-lg">
-            <ShieldAlert className="text-red-500 w-20 h-20 mx-auto mb-8 animate-bounce" />
-            <h2 className="text-4xl font-black tracking-tighter mb-4 uppercase">{t('noAccess')}</h2>
-            <p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed uppercase tracking-widest">{t('noAccessDesc')}</p>
-            <button onClick={() => setView('gallery')} className="glass-button-primary w-full py-5 text-xs">{t('backToHome')}</button>
-          </div>
-        </div>
-      )}
+        <Routes>
+          <Route path="/" element={
+            <AnimePortal 
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              animeList={filteredAnimeListByLang}
+              loading={dataLoading}
+              language={language}
+              showWatchlistOnly={activeTab === 'watchlist' || activeTab === 'saved'}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+            />
+          } />
+          <Route path="/news" element={
+            <AnimePortal 
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              animeList={filteredAnimeListByLang}
+              loading={dataLoading}
+              language={language}
+              showWatchlistOnly={false}
+              activeTab="news"
+              setActiveTab={setActiveTab}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+            />
+          } />
+          <Route path="/watchlist" element={
+            <AnimePortal 
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              animeList={filteredAnimeListByLang}
+              loading={dataLoading}
+              language={language}
+              showWatchlistOnly={true}
+              activeTab="watchlist"
+              setActiveTab={setActiveTab}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+            />
+          } />
+          <Route path="/anime/:animeSlug" element={
+            <AnimePortal 
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              animeList={filteredAnimeListByLang}
+              loading={dataLoading}
+              language={language}
+              showWatchlistOnly={false}
+              activeTab="gallery"
+              setActiveTab={setActiveTab}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+            />
+          } />
+          <Route path="/watch/:animeSlug/:episodeNumber" element={
+            <AnimePortal 
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              animeList={filteredAnimeListByLang}
+              loading={dataLoading}
+              language={language}
+              showWatchlistOnly={false}
+              activeTab="gallery"
+              setActiveTab={setActiveTab}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+            />
+          } />
+          <Route path="/category/:categoryName" element={
+            <AnimePortal 
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              animeList={filteredAnimeListByLang}
+              loading={dataLoading}
+              language={language}
+              showWatchlistOnly={false}
+              activeTab="gallery"
+              setActiveTab={setActiveTab}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+            />
+          } />
+          <Route path="/admin" element={
+            isAdmin ? (
+              <AdminPanel language={language} setLanguage={setLanguage} />
+            ) : (
+              <div className="pt-40 flex flex-col items-center justify-center px-6">
+                <div className="glass p-16 rounded-[2rem] text-center max-w-lg">
+                  <ShieldAlert className="text-red-500 w-20 h-20 mx-auto mb-8 animate-bounce" />
+                  <h2 className="text-4xl font-black tracking-tighter mb-4 uppercase">{t('noAccess')}</h2>
+                  <p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed uppercase tracking-widest">{t('noAccessDesc')}</p>
+                  <button onClick={() => navigate('/')} className="glass-button-primary w-full py-5 text-xs">{t('backToHome')}</button>
+                </div>
+              </div>
+            )
+          } />
+        </Routes>
       </main>
 
       <footer className="py-24 px-4 lg:px-8 border-t border-white/5 bg-[#050505] backdrop-blur-2xl relative z-10">

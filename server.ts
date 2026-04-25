@@ -220,16 +220,28 @@ async function setupServer() {
 
       // 2. Categories
       categories.forEach(cat => {
-        xml += `  <url>\n    <loc>${baseUrl}/?category=${encodeURIComponent(cat)}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+        xml += `  <url>\n    <loc>${baseUrl}/category/${encodeURIComponent(cat.toLowerCase())}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
       });
 
-      // 3. Individual Anime
-      animeDocs.forEach(anime => {
+      // 3. Individual Anime and Episodes
+      for (const anime of animeDocs) {
         const lastMod = anime.updatedAt ? 
           (typeof anime.updatedAt.toMillis === 'function' ? new Date(anime.updatedAt.toMillis()).toISOString().split('T')[0] : now) : now;
         
-        xml += `  <url>\n    <loc>${baseUrl}/?anime=${anime.id}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
-      });
+        // Anime details page
+        xml += `  <url>\n    <loc>${baseUrl}/anime/${anime.id}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+
+        // Episodes (limiting to first 50 to avoid massive sitemaps for now)
+        try {
+          const epSnap = await db.collection('anime').doc(anime.id).collection('episodes').limit(50).get();
+          epSnap.forEach(epDoc => {
+            const ep = epDoc.data();
+            xml += `  <url>\n    <loc>${baseUrl}/watch/${anime.id}/${ep.episodeNumber}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.5</priority>\n  </url>\n`;
+          });
+        } catch (e) {
+          console.warn(`Could not fetch episodes for sitemap for anime ${anime.id}`);
+        }
+      }
 
       xml += `</urlset>`;
 

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Hls from 'hls.js';
+import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import { slugify } from '../lib/slugs';
 import { db, auth, loginWithGoogle } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs, addDoc, limit } from 'firebase/firestore';
@@ -268,6 +271,10 @@ export default function AnimePortal({
   searchTerm,
   setSearchTerm
 }: AnimePortalProps) {
+  const navigate = useNavigate();
+  const { animeSlug: urlAnimeSlug, episodeNumber: urlEpisodeNumber, categoryName: urlCategoryName } = useParams();
+  const location = useLocation();
+
   const t = useTranslation(language);
   const [user] = useAuthState(auth);
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set());
@@ -402,44 +409,42 @@ export default function AnimePortal({
 
   const availableYears = Array.from(new Set(animeList.map(a => a.year?.toString()).filter(Boolean))).sort((a, b) => b.localeCompare(a));
 
-  // Deep linking logic
+  // Deep linking logic with react-router-dom
   useEffect(() => {
     if (loading || animeList.length === 0) return;
     
-    const params = new URLSearchParams(window.location.search);
-    const animeId = params.get('anime');
-    const epNum = params.get('episode');
-    const catParam = params.get('category');
-
-    if (catParam && CATEGORIES.includes(catParam)) {
-      setSelectedCategory(catParam);
-    }
-
-    if (animeId) {
-      const anime = animeList.find(a => a.id === animeId);
-      if (anime) {
-        setSelectedAnime(anime);
-        setModalMode(epNum ? 'player' : 'details');
-        
-        // If episode number is provided, we wait for episodes to load then set it
-        // but the episodes useEffect already handles selecting the first one.
-        // We can let the episodes useEffect handle the specific episode once loaded.
+    // Handle category from URL
+    if (urlCategoryName) {
+      const matchedCat = CATEGORIES.find(c => c.toLowerCase() === urlCategoryName.toLowerCase());
+      if (matchedCat) {
+        setSelectedCategory(matchedCat);
       }
     }
-  }, [loading, animeList.length]);
+
+    if (urlAnimeSlug) {
+      const anime = animeList.find(a => slugify(a.title) === urlAnimeSlug || a.id === urlAnimeSlug);
+      if (anime) {
+        setSelectedAnime(anime);
+        setModalMode(location.pathname.includes('/watch/') ? 'player' : 'details');
+      }
+    } else {
+        // If no animeId in URL, close modal if it was open
+        if (selectedAnime) {
+            setSelectedAnime(null);
+            setCurrentEpisode(null);
+        }
+    }
+  }, [loading, animeList, urlAnimeSlug, urlCategoryName, location.pathname]);
 
   // Handle specific episode from URL once loaded
   useEffect(() => {
-    if (!selectedAnime || episodes.length === 0) return;
-    const params = new URLSearchParams(window.location.search);
-    const epNum = params.get('episode');
-    if (epNum) {
-      const ep = episodes.find(e => e.episodeNumber.toString() === epNum);
-      if (ep) {
-        setCurrentEpisode(ep);
-      }
+    if (!selectedAnime || episodes.length === 0 || !urlEpisodeNumber) return;
+    
+    const ep = episodes.find(e => e.episodeNumber.toString() === urlEpisodeNumber);
+    if (ep) {
+      setCurrentEpisode(ep);
     }
-  }, [selectedAnime, episodes]);
+  }, [selectedAnime, episodes, urlEpisodeNumber]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredAnime.length / itemsPerPage);
@@ -521,6 +526,11 @@ export default function AnimePortal({
 
   const handleEpisodeSelect = async (ep: EpisodeDoc) => {
     if (currentEpisode?.id === ep.id) return;
+    
+    if (selectedAnime) {
+      navigate(`/watch/${slugify(selectedAnime.title)}/${ep.episodeNumber}`);
+    }
+    
     setVideoLoading(true);
     setCurrentEpisode(ep);
     setCurrentTime(0);
@@ -538,15 +548,14 @@ export default function AnimePortal({
   };
 
   const handleOpenAnime = (anime: AnimeDoc, mode: 'details' | 'player' = 'details') => {
-    setSelectedAnime(anime);
-    setModalMode(mode);
-    setCurrentEpisode(null);
-    setEpisodes([]);
-    setExpandedDesc(false);
-    
-    // URLni dinamik yangilash (DOMen/anime/ID)
-    const newUrl = `${window.location.origin}/anime/${anime.id}`;
-    window.history.pushState({ animeId: anime.id }, '', newUrl);
+    const slug = slugify(anime.title);
+    if (mode === 'details') {
+      navigate(`/anime/${slug}`);
+    } else {
+      // For player, we navigate to the first episode if not already loaded, 
+      // or specific episode logic will handle it.
+      navigate(`/watch/${slug}/1`);
+    }
 
     if (mode === 'player') {
       setDoc(doc(db, 'anime', anime.id), { views: increment(1) }, { merge: true });
@@ -568,6 +577,17 @@ export default function AnimePortal({
 
   return (
     <div className="flex flex-col min-w-0">
+      <Helmet>
+        <title>{selectedAnime ? `${selectedAnime.title} - Animem.uz` : 'Animem.uz - Eng so\'nggi animelar markazi'}</title>
+        <meta name="description" content={selectedAnime ? selectedAnime.description : 'Animem.uz - O\'zbekistondagi eng yirik anime portali. Barcha animelar o\'zbek tilida, sifatli ovozda va HD formatda.'} />
+        <meta property="og:title" content={selectedAnime ? `${selectedAnime.title} - Animem.uz` : 'Animem.uz - Anime Portali'} />
+        <meta property="og:description" content={selectedAnime ? selectedAnime.description : 'Barcha animelar o\'zbek tilida.'} />
+        <meta property="og:image" content={selectedAnime ? selectedAnime.posterUrl : 'https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg'} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={selectedAnime ? `${selectedAnime.title} - Animem.uz` : 'Animem.uz'} />
+        <meta name="twitter:description" content={selectedAnime ? selectedAnime.description : 'Animem.uzda tomosha qiling.'} />
+        <meta name="twitter:image" content={selectedAnime ? selectedAnime.posterUrl : 'https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg'} />
+      </Helmet>
       {/* Main Container */}
       <div className="flex-1 flex flex-col lg:flex-row min-w-0">
         {/* Middle Content */}
@@ -1284,13 +1304,14 @@ export default function AnimePortal({
               <h3 className="text-xl font-bold text-white mb-6">Ulashish</h3>
               
               <div className="bg-[#0A0A0A] border border-white/5 rounded-xl p-4 mb-4 text-sm text-slate-300 font-mono break-all leading-relaxed">
-                https://www.animem.uz/anime/{selectedAnime?.id || 'id'}
+                {window.location.origin}{currentEpisode ? `/watch/${slugify(selectedAnime?.title || '')}/${currentEpisode.episodeNumber}` : `/anime/${slugify(selectedAnime?.title || '')}`}
               </div>
               
               <div className="space-y-3">
                 <button 
                   onClick={() => {
-                    navigator.clipboard.writeText(`https://www.animem.uz/anime/${selectedAnime?.id || 'id'}`);
+                    const shareUrl = `${window.location.origin}${currentEpisode ? `/watch/${slugify(selectedAnime?.title || '')}/${currentEpisode.episodeNumber}` : `/anime/${slugify(selectedAnime?.title || '')}`}`;
+                    navigator.clipboard.writeText(shareUrl);
                   }}
                   className="w-full flex items-center gap-3 bg-[#2A2A2A] hover:bg-[#333333] text-white py-3.5 px-4 rounded-xl transition-colors text-sm font-medium"
                 >
@@ -1299,7 +1320,7 @@ export default function AnimePortal({
                 </button>
                 
                 <a
-                  href={`https://t.me/share/url?url=https://www.animem.uz/anime/${selectedAnime?.id || 'id'}`}
+                  href={`https://t.me/share/url?url=${encodeURIComponent(window.location.origin + (currentEpisode ? `/watch/${slugify(selectedAnime?.title || '')}/${currentEpisode.episodeNumber}` : `/anime/${slugify(selectedAnime?.title || '')}`))}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center gap-3 bg-[#1D4ED8] hover:bg-[#1e40af] text-white py-3.5 px-4 rounded-xl transition-colors text-sm font-medium"
@@ -1309,7 +1330,7 @@ export default function AnimePortal({
                 </a>
                 
                 <a
-                  href={`https://api.whatsapp.com/send?text=https://www.animem.uz/anime/${selectedAnime?.id || 'id'}`}
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(window.location.origin + (currentEpisode ? `/watch/${slugify(selectedAnime?.title || '')}/${currentEpisode.episodeNumber}` : `/anime/${slugify(selectedAnime?.title || '')}`))}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center gap-3 bg-[#059669] hover:bg-[#047857] text-white py-3.5 px-4 rounded-xl transition-colors text-sm font-medium"

@@ -1,5 +1,6 @@
 import { auth, logout } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogOut, LayoutDashboard, Film, Play, User, Globe, Bell, Search, ChevronDown, Menu, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState, useEffect } from 'react';
@@ -29,6 +30,8 @@ interface NavbarProps {
 
 export default function Navbar({ isAdmin, view, setView, selectedCategory, setSelectedCategory, imageCount, onLoginClick, language, setLanguage, searchTerm, setSearchTerm, activeTab, setActiveTab }: NavbarProps) {
   const [user] = useAuthState(auth);
+  const navigate = useNavigate();
+  const location = useLocation();
   const t = useTranslation(language);
   const [username, setUsername] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -51,15 +54,16 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
   }, [user]);
 
   const handleNavClick = (key: string) => {
-    setView('gallery');
-    
     if (key === 'home') {
+      navigate('/');
       setActiveTab('gallery');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (key === 'anime') {
+      navigate('/');
       setActiveTab('anime');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (key === 'news') {
+      navigate('/news');
       setActiveTab('news');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -75,7 +79,8 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
         <div 
           className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0 flex-1 lg:flex-1"
           onClick={() => {
-            setView('gallery');
+            navigate('/');
+            setActiveTab('gallery');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setSearchTerm('');
             setSelectedCategory('All');
@@ -140,11 +145,11 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
               <div className="flex items-center gap-3 sm:gap-4">
                 {isAdmin && (
                   <button
-                    onClick={() => setView(view === 'gallery' ? 'admin' : 'gallery')}
+                    onClick={() => navigate(location.pathname === '/admin' ? '/' : '/admin')}
                     className="hidden sm:flex w-10 h-10 rounded-full bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] items-center justify-center transition-all"
-                    title={view === 'gallery' ? t('adminPanel') : t('gallery')}
+                    title={location.pathname === '/admin' ? t('gallery') : t('adminPanel')}
                   >
-                    {view === 'gallery' ? <LayoutDashboard size={18} className="text-red-400" /> : <Film size={18} className="text-red-400" />}
+                    {location.pathname === '/admin' ? <Film size={18} className="text-red-400" /> : <LayoutDashboard size={18} className="text-red-400" />}
                   </button>
                 )}
                 
@@ -256,13 +261,13 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
               {isAdmin && user && (
                 <button
                   onClick={() => {
-                    setView(view === 'gallery' ? 'admin' : 'gallery');
+                    navigate(location.pathname === '/admin' ? '/' : '/admin');
                     setMobileMenuOpen(false);
                   }}
                   className="flex items-center gap-4 text-xl font-black uppercase text-red-400 mt-4"
                 >
-                  {view === 'gallery' ? <LayoutDashboard size={24} /> : <Film size={24} />}
-                  {view === 'gallery' ? t('adminPanel') : t('gallery')}
+                  {location.pathname === '/admin' ? <Film size={24} /> : <LayoutDashboard size={24} />}
+                  {location.pathname === '/admin' ? t('gallery') : t('adminPanel')}
                 </button>
               )}
             </div>
