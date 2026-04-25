@@ -16,6 +16,8 @@ import { FallingLeaves } from './components/FallingLeaves';
 import { AuthModal } from './components/AuthModal';
 import NotificationSystem from './components/NotificationSystem';
 import PushNotificationInitializer from './components/PushNotificationInitializer';
+import Sidebar from './components/Sidebar';
+import Chat from './components/Chat';
 import { Language, useTranslation } from './i18n';
 
 export default function App() {
@@ -230,6 +232,8 @@ function AppContent({
         setActiveTab={setActiveTab}
       />
 
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} />
+
       <AnimatePresence>
         {fetchError && (
           <motion.div 
@@ -247,7 +251,7 @@ function AppContent({
         )}
       </AnimatePresence>
       
-      <main className="relative px-4 lg:px-8 pt-20 sm:pt-28 min-h-screen">
+      <main className="relative px-4 lg:px-8 pt-20 sm:pt-28 min-h-screen lg:ml-24">
         <Routes>
           <Route path="/" element={
             <AnimePortal 
@@ -285,11 +289,16 @@ function AppContent({
               loading={dataLoading}
               language={language}
               showWatchlistOnly={true}
-              activeTab="watchlist"
+              activeTab="saved"
               setActiveTab={setActiveTab}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
             />
+          } />
+          <Route path="/chat" element={
+            <div className="pt-4 sm:pt-10">
+              <Chat />
+            </div>
           } />
           <Route path="/anime/:animeSlug" element={
             <AnimePortal 

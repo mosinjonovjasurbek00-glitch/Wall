@@ -764,6 +764,11 @@ export default function AnimePortal({
                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">{anime.year}</span>
                                <div className="w-1 h-1 bg-slate-700 rounded-full" />
                                <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">{anime.type || 'TV'}</span>
+                               <div className="w-1 h-1 bg-slate-700 rounded-full" />
+                               <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                                  <Eye size={10} />
+                                  <span>{anime.views || 0}</span>
+                               </div>
                             </div>
                          </div>
                       </div>

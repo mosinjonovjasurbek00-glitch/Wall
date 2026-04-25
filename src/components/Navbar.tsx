@@ -66,6 +66,14 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
       navigate('/news');
       setActiveTab('news');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (key === 'saved') {
+      navigate('/watchlist');
+      setActiveTab('saved');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (key === 'chat') {
+      navigate('/chat');
+      setActiveTab('chat');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
     setSearchTerm('');
@@ -74,10 +82,10 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-[100] h-16 sm:h-20 bg-[var(--bg-deep)]/80 backdrop-blur-md px-4 lg:px-8 flex items-center justify-between font-sans border-b border-white/[0.05]">
+      <nav className="fixed top-0 left-0 lg:left-24 right-0 z-[100] h-16 sm:h-20 bg-[#050505]/95 backdrop-blur-xl px-4 lg:px-12 flex items-center justify-between font-sans border-b border-white/[0.05]">
         {/* Left: Logo */}
         <div 
-          className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0 flex-1 lg:flex-1"
+          className="flex items-center gap-2 sm:gap-4 cursor-pointer group shrink-0 flex-1 lg:flex-1"
           onClick={() => {
             navigate('/');
             setActiveTab('gallery');
@@ -86,9 +94,9 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
             setSelectedCategory('All');
           }}
         >
-          <img src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-red-500/20 group-hover:border-red-500/50 transition-colors" />
-          <span className="font-black text-lg sm:text-2xl tracking-tighter uppercase flex items-center text-white">
-            ANIMEM<span className="text-[var(--accent)]">.UZ</span>
+          <img src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" alt="Logo" className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-red-500/30 group-hover:border-red-500/60 transition-all duration-500 shadow-[0_0_20px_rgba(220,38,38,0.2)] group-hover:scale-105" />
+          <span className="font-black text-xl sm:text-2xl tracking-tighter uppercase flex items-center text-white drop-shadow-2xl">
+            ANIMEM<span className="text-red-600">.UZ</span>
           </span>
         </div>
 
@@ -231,7 +239,7 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
             className="fixed inset-0 z-[80] bg-[var(--bg-deep)]/95 backdrop-blur-xl lg:hidden pt-24 sm:pt-28 pb-6 px-6 overflow-y-auto flex flex-col"
           >
             <div className="flex flex-col gap-6">
-              {['home', 'anime', 'news'].map((key) => (
+              {['home', 'anime', 'news', 'saved', 'chat'].map((key) => (
                 <button 
                   key={key}
                   onClick={() => handleNavClick(key)}
@@ -239,7 +247,9 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
                     "text-2xl font-black uppercase text-left transition-colors",
                     (key === 'home' && activeTab === 'gallery') ||
                     (key === 'anime' && activeTab === 'anime') ||
-                    (key === 'news' && activeTab === 'news')
+                    (key === 'news' && activeTab === 'news') ||
+                    (key === 'saved' && activeTab === 'saved') ||
+                    (key === 'chat' && activeTab === 'chat')
                       ? "text-red-500" 
                       : "text-white"
                   )}

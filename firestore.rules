@@ -24,7 +24,7 @@ service cloud.firestore {
     function isAdmin() { 
       return isSignedIn() && (
         (request.auth.token.email != null && 
-         request.auth.token.email.lower() == "mosinjonovjasurbek00@gmail.com") ||
+         request.auth.token.email == "mosinjonovjasurbek00@gmail.com") ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
@@ -58,6 +58,15 @@ service cloud.firestore {
              data.userId == request.auth.uid &&
              data.username is string && data.username.size() <= 100 &&
              data.content is string && data.content.size() >= 1 && data.content.size() <= 2000;
+    }
+
+    function isValidChatMessage(data) {
+      return data.keys().hasAll(['userId', 'username', 'content', 'type', 'role', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.username is string && data.username.size() <= 100 &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 2000 &&
+             data.type in ['text', 'sticker'] &&
+             data.createdAt == request.time;
     }
 
     function isValidUser(data) {
@@ -94,8 +103,11 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAdmin() && isValidAnime(incoming());
       
-      // [Pillar 4: Tiered Identity] Admins can manage all
-      allow update: if isAdmin() && isValidAnime(incoming());
+      // [Pillar 4: Tiered Identity] Admins can manage all, others can only increment views
+      allow update: if isAdmin() || (
+        incoming().diff(existing()).affectedKeys().hasOnly(['views']) &&
+        incoming().views == existing().views + 1
+      );
       allow delete: if isAdmin();
 
       match /episodes/{episodeId} {
@@ -160,6 +172,15 @@ service cloud.firestore {
     match /fcm_tokens/{tokenId} {
       allow read: if isAdmin();
       allow write: if isSignedIn() && (incoming().userId == request.auth.uid || existing().userId == request.auth.uid);
+    }
+
+    match /chat_messages/{messageId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidChatMessage(incoming()) && (
+        (incoming().role == 'admin' && isAdmin()) ||
+        (incoming().role == 'user')
+      );
+      allow delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
     }
   }
 }

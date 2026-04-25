@@ -99,6 +99,21 @@
       },
       "required": ["type", "title", "message", "animeId", "createdAt"]
     },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A message in the general chat",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "sticker"] },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "username", "content", "type", "role", "createdAt"]
+    },
     "History": {
       "title": "History",
       "description": "User's watch history",
@@ -145,6 +160,10 @@
     "/history/{historyId}": {
       "schema": "History",
       "description": "User viewing progress"
+    },
+    "/chat_messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "General chat messages"
     }
   }
 }
