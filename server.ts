@@ -2,12 +2,14 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 import axios from "axios";
 import dotenv from "dotenv";
 import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import firebaseConfig from "./firebase-applet-config.json" with { type: "json" };
+import { slugify } from "./src/lib/slugs.js";
 
 dotenv.config();
 
@@ -395,6 +397,50 @@ async function setupServer() {
     }
   });
 
+  // SEO Injection Helper
+  const injectMetaTags = async (req: express.Request, html: string) => {
+    const path = req.path;
+    let title = "Animem Uz - O'zbekistondagi eng yaxshi anime portali";
+    let description = "Eng so'nggi animelar o'zbek va rus tillarida. HD formatda bepul tomosha qiling!";
+    let image = "https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg";
+    let url = `https://animem.uz${path}`;
+
+    // Regex for /anime/:slug or /watch/:slug/:ep
+    const animeMatch = path.match(/^\/(anime|watch)\/([^\/]+)/);
+    
+    if (animeMatch) {
+      const slug = animeMatch[2];
+      try {
+        const db = getDbAdmin();
+        const animeSnapshot = await db.collection('anime').get();
+        const anime = animeSnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() as any }))
+          .find(a => slugify(a.title) === slug || a.id === slug);
+
+        if (anime) {
+          title = `${anime.title} - Animem Uz`;
+          description = (anime.description || "").substring(0, 160);
+          image = anime.posterUrl || image;
+        }
+      } catch (e) {
+        console.error("SEO injection data fetch error:", e);
+      }
+    }
+
+    return html
+      .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
+      .replace(/<meta name="title" content=".*?" \/>/, `<meta name="title" content="${title}" />`)
+      .replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`)
+      .replace(/<meta property="og:title" content=".*?" \/>/g, `<meta property="og:title" content="${title}" />`)
+      .replace(/<meta property="og:description" content=".*?" \/>/g, `<meta property="og:description" content="${description}" />`)
+      .replace(/<meta property="og:image" content=".*?" \/>/g, `<meta property="og:image" content="${image}" />`)
+      .replace(/<meta property="og:url" content=".*?" \/>/g, `<meta property="og:url" content="${url}" />`)
+      .replace(/<meta property="twitter:title" content=".*?" \/>/g, `<meta property="twitter:title" content="${title}" />`)
+      .replace(/<meta property="twitter:description" content=".*?" \/>/g, `<meta property="twitter:description" content="${description}" />`)
+      .replace(/<meta property="twitter:image" content=".*?" \/>/g, `<meta property="twitter:image" content="${image}" />`)
+      .replace(/<meta property="twitter:url" content=".*?" \/>/g, `<meta property="twitter:url" content="${url}" />`);
+  };
+
   // Debug route for Telegram Bridge
   app.get("/api/debug/telegram-test", async (req, res) => {
     const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -464,11 +510,31 @@ async function setupServer() {
       appType: "spa",
     });
     app.use(vite.middlewares);
+    
+    // SEO Injection for Dev
+    app.get("*", async (req, res, next) => {
+      try {
+        const url = req.originalUrl;
+        let html = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
+        html = await vite.transformIndexHtml(url, html);
+        html = await injectMetaTags(req, html);
+        res.status(200).set({ "Content-Type": "text/html" }).end(html);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+    app.use(express.static(distPath, { index: false })); // Disable automatic index serving
+    app.get("*", async (req, res) => {
+      try {
+        let html = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
+        html = await injectMetaTags(req, html);
+        res.status(200).set({ "Content-Type": "text/html" }).send(html);
+      } catch (e) {
+        res.status(500).send("Server Error");
+      }
     });
   }
 }
