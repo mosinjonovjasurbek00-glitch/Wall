@@ -37,18 +37,25 @@ interface ChatMessage {
 }
 
 const STICKERS = [
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTRiZTViZTRiZTViZTRiZTViZTRiZTViZTRiZTViZTRiZTViZTRiZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/vYguXJRRH1K72vU49O/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTRiZTViZTRiZTViZTRiZTViZTRiZTViZTRiZTViZTRiZTViZTRiZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/L3X6P8P9vP9P9P9P9P9P9P9P/giphy.gif",
-  "https://user-images.githubusercontent.com/14011726/94132137-7d4fc100-fe7c-11ea-8512-69f90cb65e48.gif",
-  "https://i.pinimg.com/originals/e5/93/ab/e593ab0589d5f1b3e593ab0589d5f1b3.gif",
-  "https://i.pinimg.com/originals/bf/ec/f3/bfecf301cc9a9cc18ca3f24bf711a3d8.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/5GovlLsSaTyvEHD0W/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/13gvXfEVPEpY6A/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/uA8W2fBYT_fS8/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/D8BfInYy0B12U/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/X7OOnF962Xm7e/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/12p7LzCidC7u1O/giphy.gif",
-  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/3o7TKLv5W3zXlJjSJG/giphy.gif",
+  "https://media1.giphy.com/media/KJutGyNfmCI5kJPS8G/200w_d.gif",
+  "https://media1.giphy.com/media/bYhcsPGwjDXnIuwsSz/200w_d.gif",
+  "https://media1.giphy.com/media/mCDXo3yYjTXgGCGXIY/200w_d.gif",
+  "https://media4.giphy.com/media/GGcRBaRwdtmhNvLchh/200w_d.gif",
+  "https://media1.giphy.com/media/pVWuLuV1JESZJdebkI/200w_d.gif",
+  "https://media3.giphy.com/media/LML5ldpTKLPelFtBfY/200w_d.gif",
+  "https://media1.giphy.com/media/jleNxE9BsJVO8/200w_d.gif",
+  "https://media3.giphy.com/media/4sTXxqgdsJ8TSiL5NL/200w_d.gif",
+  "https://media2.giphy.com/media/12bF3AWU423YeA/200w_d.gif",
+  "https://media2.giphy.com/media/IKFVtPf8jP6KJH16dB/200w_d.gif",
+  "https://media2.giphy.com/media/CiZ9e5IUPqeVFzc8Mp/200w_d.gif",
+  "https://media1.giphy.com/media/ZuHYyLfbWpPeo/200w_d.gif",
+  "https://media0.giphy.com/media/1K8NlomCFNuKcGlHxT/200w_d.gif",
+  "https://media0.giphy.com/media/1YI48cB3IHJJu/200w_d.gif",
+  "https://media3.giphy.com/media/YO7P8VC7nlQlO/200w_d.gif",
+  "https://media3.giphy.com/media/i1ZoaTn24AYgg/200w_d.gif"
+];
+
+const OLD_STICKERS_DUPE = [
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/3o7TKMGfN5XUo1XF5e/giphy.gif",
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/3o7TKv86U3W9C_F9Lq/giphy.gif",
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHdidmN2ZWp2ZzVqbmVpY3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4Y3R4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1z/l41lTfuxN7L3hYvXa/giphy.gif",
@@ -92,7 +99,10 @@ const STICKERS = [
 
 const EMOJIS = [
   "😀", "😂", "🥰", "😎", "🤔", "😅", "🔥", "✨", "🙌", "👍", 
-  "❤️", "💔", "💀", "🎉", "👀", "👋", "😭", "😤", "😡", "😱"
+  "❤️", "💔", "💀", "🎉", "👀", "👋", "😭", "😤", "😡", "😱",
+  "😋", "🤩", "🥳", "🤡", "🤖", "👻", "👾", "👽", "💩", "😈",
+  "🤝", "💯", "✅", "❌", "⚠️", "🆘", "🎵", "🎮", "🍿", "🍔",
+  "🦄", "🐱", "🐶", "🦊", "🦁", "🐯", "🐼", "🐨", "🐸", "🦒"
 ];
 
 export default function Chat() {
@@ -214,18 +224,18 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] max-w-4xl mx-auto bg-[#050505] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] relative">
+    <div className="flex flex-col h-[calc(100dvh-120px)] sm:h-[calc(100vh-140px)] max-w-4xl mx-auto bg-[#050505] border border-white/5 rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] relative">
       {/* Header */}
-      <div className="p-6 border-b border-white/5 bg-white/[0.01] flex items-center justify-between backdrop-blur-xl">
+      <div className="p-4 sm:p-6 border-b border-white/5 bg-white/[0.01] flex items-center justify-between backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
-            <MessageSquare className="text-red-500" size={20} />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
+            <MessageSquare className="text-red-500" size={16} />
           </div>
           <div>
-            <h2 className="text-lg font-black uppercase tracking-tight text-white">Hamjamiyat Chat</h2>
+            <h2 className="text-sm sm:text-lg font-black uppercase tracking-tight text-white">Hamjamiyat Chat</h2>
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Jonli muloqot</span>
+              <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-[8px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Jonli muloqot</span>
             </div>
           </div>
         </div>
@@ -293,8 +303,8 @@ export default function Chat() {
             )}>
               <div className="flex flex-col gap-0.5 mb-1.5">
                 {msg.role === 'admin' && (
-                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-red-500 text-left mb-0.5">
-                    Admin
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-600 text-[7px] font-black uppercase tracking-[0.2em] text-white rounded-full mb-1 shadow-[0_0_10px_rgba(220,38,38,0.5)] border border-red-500/50">
+                    <ShieldCheck size={8} /> Admin
                   </span>
                 )}
                 <div className="flex items-center gap-2">

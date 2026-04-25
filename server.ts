@@ -103,16 +103,26 @@ async function setupServer() {
   // Dailymotion videolarni to'g'ridan-to'g'ri olish yo'li
   app.get("/api/dailymotion/stream", async (req, res) => {
     const url = req.query.url as string;
+    const format = req.query.format as string;
     if (!url) return res.status(400).send("URL is required");
 
     try {
       const directUrl = await dailymotionStreamer.getDirectUrl(url);
       if (directUrl) {
+         if (format === 'json') {
+           return res.json({ url: directUrl });
+         }
          res.redirect(directUrl);
       } else {
+         if (format === 'json') {
+           return res.json({ error: "Could not find direct video URL" });
+         }
          res.status(404).send("Could not find direct video URL");
       }
     } catch (error) {
+      if (format === 'json') {
+         return res.json({ error: "Dailymotion error" });
+      }
       res.status(500).send("Dailymotion error");
     }
   });

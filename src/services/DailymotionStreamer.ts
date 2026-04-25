@@ -3,8 +3,25 @@ import axios from "axios";
 export const dailymotionStreamer = {
   async getDirectUrl(dmUrl: string): Promise<string | null> {
     try {
-      const match = dmUrl.match(/dailymotion\.com\/(?:video|hub)\/([a-zA-Z0-9]+)/);
-      if (!match) return null;
+      // Handle standard URLs: dailymotion.com/video/ID
+      let match = dmUrl.match(/dailymotion\.com\/(?:video|hub)\/([a-zA-Z0-9]+)/);
+      
+      // Handle embed/player URLs: dailymotion.com/embed/video/ID or geo.dailymotion.com/player.html?video=ID
+      if (!match) {
+        match = dmUrl.match(/dailymotion\.com\/embed\/video\/([a-zA-Z0-9]+)/);
+      }
+      if (!match) {
+        match = dmUrl.match(/geo\.dailymotion\.com\/player\.html\?video=([a-zA-Z0-9]+)/);
+      }
+      // Handle short URLs
+      if (!match) {
+        match = dmUrl.match(/dai\.ly\/([a-zA-Z0-9]+)/);
+      }
+      
+      if (!match) {
+        console.warn("[Dailymotion] Could not extract ID from URL:", dmUrl);
+        return null;
+      }
       
       const videoId = match[1];
       const apiUrl = `https://www.dailymotion.com/player/metadata/video/${videoId}`;

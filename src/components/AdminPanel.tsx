@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../firebase';
 import { collection, addDoc, deleteDoc, doc, query, onSnapshot, serverTimestamp, where, updateDoc, getDocs, orderBy, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as LinkIcon, MessageSquare, Star, Clock, Play, List, ChevronRight, ArrowLeft, Send, User, Globe } from 'lucide-react';
+import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as LinkIcon, MessageSquare, Star, Clock, Play, List, ChevronRight, ArrowLeft, Send, User, Globe, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { CATEGORIES, categoryKeys } from '../constants';
@@ -52,6 +52,13 @@ interface UserDoc {
   role: 'admin' | 'user';
 }
 
+interface NewsItemDoc {
+  id: string;
+  text: string;
+  language: Language;
+  createdAt: any;
+}
+
 interface AdminPanelProps {
   language: Language;
   setLanguage: (lang: Language) => void;
@@ -60,12 +67,16 @@ interface AdminPanelProps {
 export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
   const t = useTranslation(language);
   const [animeList, setAnimeList] = useState<AnimeDoc[]>([]);
-  const [activeTab, setActiveTab] = useState<'anime' | 'episodes' | 'messages' | 'admins'>('anime');
+  const [activeTab, setActiveTab] = useState<'anime' | 'episodes' | 'messages' | 'admins' | 'news'>('anime');
   const [selectedAnimeForEpisodes, setSelectedAnimeForEpisodes] = useState<AnimeDoc | null>(null);
   const [episodes, setEpisodes] = useState<EpisodeDoc[]>([]);
   const [messages, setMessages] = useState<MessageDoc[]>([]);
   const [users, setUsers] = useState<UserDoc[]>([]);
   const [userSearch, setUserSearch] = useState('');
+  
+  const [newsItems, setNewsItems] = useState<NewsItemDoc[]>([]);
+  const [newNewsText, setNewNewsText] = useState('');
+  const [newNewsLang, setNewNewsLang] = useState<Language>('uz');
   
   const [editingAnime, setEditingAnime] = useState<AnimeDoc | null>(null);
   const [editingEpisode, setEditingEpisode] = useState<EpisodeDoc | null>(null);
@@ -166,6 +177,16 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
       const q = query(collection(db, 'users'), where('role', '==', 'admin'));
       const unsubscribe = onSnapshot(q, (snapshot) => {
         setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserDoc[]);
+      });
+      return () => unsubscribe();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'news') {
+      const q = query(collection(db, 'news_items'), orderBy('createdAt', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setNewsItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as NewsItemDoc[]);
       });
       return () => unsubscribe();
     }
@@ -520,6 +541,38 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
     });
   };
 
+  const handleAddNewsItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNewsText) return;
+    setSubmitting(true);
+    try {
+      await addDoc(collection(db, 'news_items'), {
+        text: newNewsText,
+        language: newNewsLang,
+        createdAt: serverTimestamp()
+      });
+      setNewNewsText('');
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      console.error("News add error:", err);
+      setError(err.message || "Failed to add news");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteNewsItem = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'news_items', id));
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      console.error("News delete error:", err);
+      setError(err.message || "Failed to delete news");
+    }
+  };
+
   return (
     <div className="pt-32 pb-20 px-6 max-w-7xl mx-auto font-sans relative z-10">
       {/* Feedback Messages */}
@@ -648,6 +701,15 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
           )}
         >
           <User size={16} /> {t('adminsTab')}
+        </button>
+        <button
+          onClick={() => setActiveTab('news')}
+          className={cn(
+            "px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all",
+            activeTab === 'news' ? "bg-red-600 text-white shadow-xl shadow-red-500/20" : "text-slate-400 hover:text-white"
+          )}
+        >
+          <Sparkles size={16} /> {language === 'uz' ? 'HOT Ticker' : 'ГОРЯЧЕЕ'}
         </button>
       </div>
 
@@ -1027,6 +1089,92 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
                       )}
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'news' && (
+          <motion.div 
+            key="news-tab"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-10"
+          >
+            <div className="lg:col-span-1">
+              <div className="glass rounded-[2.5rem] p-8 sm:p-10 sticky top-32 border border-white/10">
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">Yangi Xabar</h2>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-8">Hot ticker uchun matn qo'shing</p>
+                
+                <form onSubmit={handleAddNewsItem} className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Xabar matni</label>
+                    <textarea 
+                      placeholder="Xabar matni..." 
+                      className="glass-input w-full h-32 py-4" 
+                      value={newNewsText} 
+                      onChange={e => setNewNewsText(e.target.value)} 
+                      required 
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setNewNewsLang('uz')}
+                      className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", newNewsLang === 'uz' ? "bg-red-600 text-white shadow-lg" : "bg-white/5 text-slate-400")}
+                    >
+                      O'zbek
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setNewNewsLang('ru')}
+                      className={cn("flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", newNewsLang === 'ru' ? "bg-red-600 text-white shadow-lg" : "bg-white/5 text-slate-400")}
+                    >
+                      Русский
+                    </button>
+                  </div>
+
+                  <button type="submit" disabled={submitting} className="glass-button-primary w-full py-5 flex items-center justify-center gap-3 bg-red-600 hover:bg-red-500 shadow-red-600/20">
+                    {submitting ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
+                    <span className="text-[10px] font-black uppercase tracking-widest">Qo'shish</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2">
+              <div className="glass rounded-[2.5rem] p-8 sm:p-12 border border-white/5 bg-white/[0.01]">
+                <h2 className="text-2xl font-black uppercase tracking-tighter mb-10 text-white">Xabarlar Ro'yxati</h2>
+                
+                <div className="space-y-4">
+                  {newsItems.map(item => (
+                    <div key={item.id} className="glass rounded-2xl p-6 flex justify-between items-center group border border-white/5 hover:border-red-500/20 transition-all bg-white/[0.02]">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-3">
+                           <span className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", item.language === 'ru' ? "bg-blue-500/20 text-blue-400" : "bg-emerald-500/10 text-emerald-300")}>{item.language === 'ru' ? 'RU' : 'UZ'}</span>
+                           <span className="text-[10px] font-black uppercase tracking-tight text-slate-600">
+                             {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString() : 'Just now'}
+                           </span>
+                        </div>
+                        <p className="text-sm font-bold text-white uppercase tracking-tight leading-relaxed max-w-xl">{item.text}</p>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteNewsItem(item.id)}
+                        className="p-3 text-slate-700 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  ))}
+                  {newsItems.length === 0 && (
+                    <div className="text-center py-20">
+                      <Sparkles size={48} className="text-slate-800 mx-auto mb-4" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Hozircha xabarlar yo'q</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

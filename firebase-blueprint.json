@@ -126,6 +126,17 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "animeId", "episodeNumber", "updatedAt"]
+    },
+    "NewsItem": {
+      "title": "NewsItem",
+      "description": "A sliding news ticker item",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "language": { "type": "string", "enum": ["uz", "ru"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "language", "createdAt"]
     }
   },
   "firestore": {
@@ -164,6 +175,10 @@
     "/chat_messages/{messageId}": {
       "schema": "ChatMessage",
       "description": "General chat messages"
+    },
+    "/news_items/{itemId}": {
+      "schema": "NewsItem",
+      "description": "Sliding ticker news items"
     }
   }
 }

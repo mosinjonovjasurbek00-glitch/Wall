@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -6,7 +6,7 @@ import { slugify } from '../lib/slugs';
 import { db, auth, loginWithGoogle } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, deleteDoc, writeBatch, serverTimestamp, where, increment, getDocs, addDoc, limit } from 'firebase/firestore';
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Monitor, Settings, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2, Filter, ChevronDown, RotateCcw, XCircle, Share2, Copy, Home, LayoutGrid, Bookmark, LogOut, Plus } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Monitor, Settings, Star, Calendar, Clock, Search, Eye, X as CloseIcon, Loader2, Heart, Film, Sparkles, ChevronRight, Activity, TrendingUp, Check, ArrowLeft, MessageSquare, Send, User, Trash2, Filter, ChevronDown, RotateCcw, XCircle, Share2, Copy, Home, LayoutGrid, Bookmark, LogOut, Plus, Smile } from 'lucide-react';
 import { ShareModal } from './ShareModal';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -47,21 +47,50 @@ interface CommentDoc {
   createdAt: any;
 }
 
-const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }: any) => {
+const UniversalVideoPlayer = ({ src, videoRef, videoLoading, setVideoLoading, setCurrentTime }: any) => {
   const [loadError, setLoadError] = useState(false);
   const [resolvedSrc, setResolvedSrc] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTimeState] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isIframe, setIsIframe] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimer = useRef<any>(null);
+
+  const toggleControls = () => {
+    setShowControls(true);
+    if (controlsTimer.current) clearTimeout(controlsTimer.current);
+    controlsTimer.current = setTimeout(() => {
+      if (isPlaying) setShowControls(false);
+    }, 3000);
+  };
+
+  useEffect(() => {
+    toggleControls();
+    return () => { if (controlsTimer.current) clearTimeout(controlsTimer.current); };
+  }, [isPlaying]);
 
   useEffect(() => {
     let isMounted = true;
+    setIsIframe(false);
+    setResolvedSrc(null);
+    setLoadError(false);
     
     const resolveSrc = async () => {
       if (!src) return;
       
-      // If it's already a direct link or not our rumble proxy, use it
-      if (!src.includes('/api/rumble/stream')) {
+      // Check if it's already an embed/iframe URL
+      const embedPatterns = ['/embed/', 'player.html', 'sharing', 'watch?v=', 'youtube.com', 'youtu.be', 'vimeo.com', 'ok.ru/videoembed/'];
+      const isLikelyEmbed = embedPatterns.some(p => src.includes(p)) && !src.includes('/api/');
+
+      // If it's already a direct link or not one of our redirecting proxies, use it
+      const redirectingProxies = ['/api/rumble/stream', '/api/vk/stream', '/api/dtube/stream', '/api/dailymotion/stream'];
+      const isProxy = redirectingProxies.some(p => src.includes(p));
+
+      if (!isProxy) {
+        if (isLikelyEmbed) {
+          setIsIframe(true);
+        }
         setResolvedSrc(src);
         return;
       }
@@ -77,10 +106,7 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
         const response = await fetch(fetchUrl, { signal: controller.signal });
         clearTimeout(timeoutId);
         
-        // Handle non-ok responses (like 404, 500)
         if (!response.ok) {
-           const text = await response.text();
-           console.error("[Player] Fetch failed status:", response.status, text.substring(0, 100));
            throw new Error(`Server returned ${response.status}`);
         }
 
@@ -89,17 +115,29 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
           if (data.url) {
             setResolvedSrc(data.url);
           } else {
-            console.error("[Player] Source resolution failed (JSON data):", data.error);
-            setLoadError(true);
-            setVideoLoading(false);
+            // Extraction failed, try to use original URL in iframe if it's a known embed-capable URL
+            const originalUrl = new URL(src, window.location.origin).searchParams.get('url');
+            if (originalUrl) {
+              console.log("[Player] Extraction failed, falling back to iframe for:", originalUrl);
+              setResolvedSrc(originalUrl);
+              setIsIframe(true);
+            } else {
+              setLoadError(true);
+              setVideoLoading(false);
+            }
           }
         }
       } catch (err: any) {
         clearTimeout(timeoutId);
         if (isMounted) {
-          console.error("[Player] Extraction fetch error:", err.message);
-          setLoadError(true);
-          setVideoLoading(false);
+          const originalUrl = new URL(src, window.location.origin).searchParams.get('url');
+          if (originalUrl) {
+            setResolvedSrc(originalUrl);
+            setIsIframe(true);
+          } else {
+            setLoadError(true);
+            setVideoLoading(false);
+          }
         }
       }
     };
@@ -110,10 +148,9 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !resolvedSrc) return;
+    if (!video || !resolvedSrc || isIframe) return;
 
     setLoadError(false);
-    // Loading starts
     setVideoLoading(true);
 
     let hls: any = null;
@@ -127,8 +164,7 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
           hls.on(Hls.Events.ERROR, function(event: any, data: any) {
             if (data.fatal) {
               console.error("[HLS] Fatal error:", data);
-              setLoadError(true);
-              setVideoLoading(false);
+              // If HLS fails, we might still want to try native or iframe
               switch (data.type) {
                 case Hls.ErrorTypes.NETWORK_ERROR:
                   hls.startLoad();
@@ -137,6 +173,8 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
                   hls.recoverMediaError();
                   break;
                 default:
+                  setLoadError(true);
+                  setVideoLoading(false);
                   hls.destroy();
                   break;
               }
@@ -162,19 +200,52 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
     return () => {
       if (hls) hls.destroy();
     };
-  }, [src, resolvedSrc, videoRef]);
+  }, [src, resolvedSrc, isIframe, videoRef]);
+
+  if (isIframe && resolvedSrc) {
+    return (
+      <div className="relative w-full h-full bg-black flex items-center justify-center">
+        <iframe 
+          src={resolvedSrc.includes('?') ? `${resolvedSrc}&autoplay=1` : `${resolvedSrc}?autoplay=1`}
+          className="w-full h-full border-none z-10"
+          allowFullScreen
+          allow="autoplay; fullscreen; picture-in-picture"
+          onLoad={() => setVideoLoading(false)}
+        />
+        {videoLoading && (
+          <div className="absolute inset-0 z-20 bg-black flex items-center justify-center">
+            <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="relative w-full h-full bg-black flex items-center justify-center group overflow-hidden">
+    <div 
+      className="relative w-full h-full bg-black flex items-center justify-center group overflow-hidden"
+      onClick={toggleControls}
+      onMouseMove={toggleControls}
+    >
       <video 
         ref={videoRef}
         className="w-full h-full object-contain outline-none focus:outline-none" 
         key={resolvedSrc || src}
         playsInline 
         autoPlay
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onPlay={() => {
+          setIsPlaying(true);
+          toggleControls();
+        }}
+        onPause={() => {
+          setIsPlaying(false);
+          setShowControls(true);
+        }}
+        onLoadedMetadata={(e) => {
+          const video = e.currentTarget;
+          setDuration(video.duration);
+          video.play().catch(err => console.warn("Autoplay failed:", err));
+        }}
         onTimeUpdate={(e) => {
           const video = e.currentTarget;
           if (typeof setCurrentTime === 'function') setCurrentTime(video.currentTime);
@@ -184,32 +255,80 @@ const UniversalVideoPlayer = ({ src, videoRef, setVideoLoading, setCurrentTime }
         onLoadedData={() => setVideoLoading(false)}
         onWaiting={() => setVideoLoading(true)}
         onPlaying={() => setVideoLoading(false)}
+        onClick={() => {
+          if (videoRef.current) {
+            if (videoRef.current.paused) {
+              videoRef.current.play();
+            } else {
+              videoRef.current.pause();
+            }
+          }
+        }}
         onError={() => {
           console.error("Video playback error for src:", resolvedSrc || src);
-          setVideoLoading(false);
-          setLoadError(true);
+          // Try to fallback to iframe as a last resort if it looks like a webpage
+          if (resolvedSrc && !isIframe) {
+             const lowerSrc = resolvedSrc.toLowerCase();
+             if (!lowerSrc.match(/\.(mp4|m3u8|webm|ogg|mkv|mov|avi)$/) || lowerSrc.includes('player') || lowerSrc.includes('embed')) {
+               console.log("[Player] Error playing as video, attempting iframe fallback");
+               setIsIframe(true);
+             } else {
+               setVideoLoading(false);
+               setLoadError(true);
+             }
+          } else {
+             setVideoLoading(false);
+             setLoadError(true);
+          }
         }}
       />
       
       {/* Custom Controls Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-between z-[200]">
-        <button className="text-white hover:text-[var(--accent)] transition-colors" onClick={() => {
-          if (videoRef.current?.paused) { videoRef.current?.play(); }
-          else { videoRef.current?.pause(); }
-        }}>
-          {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+      <div className={cn(
+        "absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/90 to-transparent transition-opacity flex items-center justify-between z-[200] gap-4",
+        showControls || !isPlaying ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}>
+        <button 
+          className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-all active:scale-90" 
+          onClick={(e) => {
+            e.stopPropagation();
+            if (videoRef.current?.paused) { videoRef.current?.play(); }
+            else { videoRef.current?.pause(); }
+          }}
+        >
+          {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
         </button>
-        <div className="flex items-center gap-4 text-white text-xs font-bold">
-           <span>{Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, '0')}</span>
-           <div className="w-32 h-1 bg-white/20 rounded-full cursor-pointer" onClick={(e) => {
-             const rect = e.currentTarget.getBoundingClientRect();
-             const percent = (e.clientX - rect.left) / rect.width;
-             if (videoRef.current) videoRef.current.currentTime = percent * duration;
-           }}>
-             <div className="h-full bg-[var(--accent)] rounded-full" style={{ width: `${(currentTime / (duration || 1)) * 100}%` }} />
+        
+        <div className="flex-1 flex items-center gap-2 sm:gap-4 text-white text-[10px] sm:text-xs font-bold">
+           <span className="tabular-nums">{Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, '0')}</span>
+           <div 
+            className="flex-1 h-1.5 sm:h-2 bg-white/20 rounded-full cursor-pointer relative group/progress" 
+            onClick={(e) => {
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              const percent = (e.clientX - rect.left) / rect.width;
+              if (videoRef.current) videoRef.current.currentTime = percent * duration;
+            }}
+           >
+             <div className="h-full bg-red-600 rounded-full relative" style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}>
+               <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full scale-0 group-hover/progress:scale-100 transition-transform" />
+             </div>
            </div>
-           <span>{Math.floor(duration / 60)}:{Math.floor(duration % 60).toString().padStart(2, '0')}</span>
+           <span className="tabular-nums">{Math.floor(duration / 60)}:{Math.floor(duration % 60).toString().padStart(2, '0')}</span>
         </div>
+
+        <button 
+          className="w-10 h-10 hidden sm:flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-all active:scale-90"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (videoRef.current) {
+              if (videoRef.current.requestFullscreen) videoRef.current.requestFullscreen();
+              else if ((videoRef.current as any).webkitRequestFullscreen) (videoRef.current as any).webkitRequestFullscreen();
+            }
+          }}
+        >
+          <Maximize size={20} />
+        </button>
       </div>
 
 
@@ -258,6 +377,14 @@ interface AnimePortalProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
 }
+
+const EMOJIS = [
+  "😀", "😂", "🥰", "😎", "🤔", "😅", "🔥", "✨", "🙌", "👍", 
+  "❤️", "💔", "💀", "🎉", "👀", "👋", "😭", "😤", "😡", "😱",
+  "😋", "🤩", "🥳", "🤡", "🤖", "👻", "👾", "👽", "💩", "😈",
+  "🤝", "💯", "✅", "❌", "⚠️", "🆘", "🎵", "🎮", "🍿", "🍔",
+  "🦄", "🐱", "🐶", "🦊", "🦁", "🐯", "🐼", "🐨", "🐸", "🦒"
+];
 
 export default function AnimePortal({ 
   selectedCategory, 
@@ -472,6 +599,8 @@ export default function AnimePortal({
     });
     return () => unsubscribe();
   }, [selectedAnime, modalMode]);
+
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1012,20 +1141,81 @@ export default function AnimePortal({
                          </h3>
                          
                          {user ? (
-                            <form onSubmit={handlePostComment} className="relative mb-12 group">
-                               <textarea 
-                                 placeholder={t('leaveComment')} 
-                                 className="w-full min-h-[120px] bg-white/[0.02] border border-white/5 rounded-3xl p-6 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:bg-white/[0.05] transition-all resize-none"
-                                 value={newComment}
-                                 onChange={e => setNewComment(e.target.value)}
-                                 required
-                               />
-                               <button 
-                                 disabled={submittingComment || !newComment.trim()}
-                                 className="absolute bottom-4 right-4 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white p-3 rounded-2xl transition-all active:scale-95 shadow-xl shadow-red-600/30"
-                               >
-                                 {submittingComment ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
-                               </button>
+                            <form onSubmit={handlePostComment} className="flex flex-col gap-3 mb-12">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="relative">
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                      className={cn(
+                                        "w-12 h-12 flex items-center justify-center rounded-2xl transition-all border",
+                                        showEmojiPicker 
+                                          ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)]" 
+                                          : "bg-white/[0.03] border-white/10 text-slate-400 hover:bg-white/10 hover:border-white/20"
+                                      )}
+                                    >
+                                      <Smile size={24} className={cn("transition-transform duration-300", showEmojiPicker && "rotate-12 scale-110")} />
+                                    </button>
+
+                                    <AnimatePresence>
+                                      {showEmojiPicker && (
+                                        <motion.div 
+                                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                          className="absolute bottom-full left-0 mb-4 p-4 bg-[#0A0A0A]/95 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-2xl z-50 w-72 sm:w-80"
+                                        >
+                                          <div className="flex items-center justify-between mb-4 px-2">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Emoji tanlang</span>
+                                            <button 
+                                              type="button" 
+                                              onClick={() => setShowEmojiPicker(false)}
+                                              className="text-slate-500 hover:text-white transition-colors"
+                                            >
+                                              <XCircle size={16} />
+                                            </button>
+                                          </div>
+                                          <div className="grid grid-cols-6 sm:grid-cols-7 gap-1 max-h-60 overflow-y-auto pr-2 no-scrollbar">
+                                            {EMOJIS.map(emoji => (
+                                              <button
+                                                key={emoji}
+                                                type="button"
+                                                onClick={() => {
+                                                  setNewComment(prev => prev + emoji);
+                                                  // Optional: keep picker open or close it
+                                                }}
+                                                className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-xl text-xl transition-all active:scale-90"
+                                              >
+                                                {emoji}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+
+                                  <div className="flex-1 flex items-center gap-1 overflow-x-auto no-scrollbar pointer-events-none opacity-40">
+                                    {EMOJIS.slice(0, 8).map(e => <span key={e} className="text-sm grayscale">{e}</span>)}
+                                    <span className="text-[8px] font-bold text-slate-600 uppercase tracking-tighter ml-2">Tezkor emoji</span>
+                                  </div>
+                                </div>
+
+                               <div className="relative group">
+                                 <textarea 
+                                   placeholder={t('leaveComment')} 
+                                   className="w-full min-h-[140px] bg-white/[0.02] border border-white/5 rounded-3xl p-6 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:bg-white/[0.05] transition-all resize-none shadow-inner"
+                                   value={newComment}
+                                   onChange={e => setNewComment(e.target.value)}
+                                   required
+                                 />
+                                 <button 
+                                   disabled={submittingComment || !newComment.trim()}
+                                   className="absolute bottom-4 right-4 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white p-4 rounded-2xl transition-all active:scale-95 shadow-xl shadow-red-600/30 flex items-center justify-center group/send"
+                                 >
+                                   {submittingComment ? <Loader2 size={22} className="animate-spin" /> : <Send size={22} className="group-hover/send:translate-x-0.5 group-hover/send:-translate-y-0.5 transition-transform" />}
+                                 </button>
+                               </div>
                             </form>
                           ) : (
                             <div className="bg-red-500/5 border-2 border-dashed border-red-500/20 p-8 rounded-3xl flex items-center justify-between gap-6 mb-12">
@@ -1125,7 +1315,7 @@ export default function AnimePortal({
                             {currentEpisode ? (
                               (() => {
                                 let url = currentEpisode.videoUrl.trim();
-                                if (url.startsWith('<iframe')) {
+                                if (url.includes('<iframe')) {
                                   const srcMatch = url.match(/src=["']([^"']+)["']/);
                                   if (srcMatch) url = srcMatch[1];
                                 }
@@ -1137,7 +1327,10 @@ export default function AnimePortal({
                                   'telegram': '/api/telegram/stream',
                                   'vk.com/': '/api/vk/stream',
                                   'd.tube/': '/api/dtube/stream',
-                                  'dtube.video': '/api/dtube/stream'
+                                  'dtube.video': '/api/dtube/stream',
+                                  'dailymotion.com': '/api/dailymotion/stream',
+                                  'geo.dailymotion.com': '/api/dailymotion/stream',
+                                  'dai.ly': '/api/dailymotion/stream'
                                 };
 
                                 const proxyEntry = Object.entries(proxyMap).find(([key]) => url.includes(key));
@@ -1147,6 +1340,7 @@ export default function AnimePortal({
                                     <UniversalVideoPlayer 
                                       src={proxyUrl}
                                       videoRef={videoRef}
+                                      videoLoading={videoLoading}
                                       setVideoLoading={setVideoLoading}
                                       setCurrentTime={setCurrentTime}
                                     />
@@ -1160,6 +1354,7 @@ export default function AnimePortal({
                                     <UniversalVideoPlayer 
                                       src={url}
                                       videoRef={videoRef}
+                                      videoLoading={videoLoading}
                                       setVideoLoading={setVideoLoading}
                                       setCurrentTime={setCurrentTime}
                                     />
@@ -1171,6 +1366,12 @@ export default function AnimePortal({
                                   embedUrl = url.replace('watch?v=', 'embed/');
                                 } else if (url.includes('ok.ru/video/')) {
                                   embedUrl = url.replace('ok.ru/video/', 'ok.ru/videoembed/');
+                                } else if (url.includes('dailymotion.com') || url.includes('dai.ly')) {
+                                  // Fallback embed for dailymotion if proxy fails or for iframe mode
+                                  const dmIdMatch = url.match(/(?:\/video\/|dai\.ly\/)([a-zA-Z0-9]+)/);
+                                  if (dmIdMatch) {
+                                    embedUrl = `https://www.dailymotion.com/embed/video/${dmIdMatch[1]}`;
+                                  }
                                 }
 
                                 return (

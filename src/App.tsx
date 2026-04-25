@@ -17,6 +17,7 @@ import { AuthModal } from './components/AuthModal';
 import NotificationSystem from './components/NotificationSystem';
 import PushNotificationInitializer from './components/PushNotificationInitializer';
 import Sidebar from './components/Sidebar';
+import BottomNav from './components/BottomNav';
 import Chat from './components/Chat';
 import { Language, useTranslation } from './i18n';
 
@@ -233,6 +234,7 @@ function AppContent({
       />
 
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isAdmin={isAdmin} />
+      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <AnimatePresence>
         {fetchError && (
@@ -251,7 +253,7 @@ function AppContent({
         )}
       </AnimatePresence>
       
-      <main className="relative px-4 lg:px-8 pt-20 sm:pt-28 min-h-screen lg:ml-24">
+      <main className="relative px-4 lg:px-8 pt-20 sm:pt-28 pb-24 lg:pb-8 min-h-screen lg:ml-24">
         <Routes>
           <Route path="/" element={
             <AnimePortal 

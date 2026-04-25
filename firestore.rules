@@ -69,6 +69,12 @@ service cloud.firestore {
              data.createdAt == request.time;
     }
 
+    function isValidNewsItem(data) {
+      return data.keys().hasAll(['text', 'language', 'createdAt']) &&
+             data.text is string && data.text.size() <= 500 &&
+             data.language in ['uz', 'ru'];
+    }
+
     function isValidUser(data) {
       return data.keys().hasAll(['uid', 'email', 'updatedAt']) &&
              data.uid == request.auth.uid &&
@@ -181,6 +187,12 @@ service cloud.firestore {
         (incoming().role == 'user')
       );
       allow delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
+    }
+
+    match /news_items/{itemId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidNewsItem(incoming()) && incoming().createdAt == request.time;
+      allow delete: if isAdmin();
     }
   }
 }

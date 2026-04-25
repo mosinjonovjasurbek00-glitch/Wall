@@ -1,12 +1,12 @@
 import { auth, logout } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Film, Play, User, Globe, Bell, Search, ChevronDown, Menu, X } from 'lucide-react';
+import { LogOut, LayoutDashboard, Film, Play, User, Globe, Bell, Search, ChevronDown, Menu, X, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CATEGORIES } from '../constants';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import NotificationMenu from './NotificationMenu';
 import ProfileModal from './ProfileModal';
@@ -38,6 +38,41 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [dynamicNews, setDynamicNews] = useState<string[]>([]);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'news_items'),
+      orderBy('createdAt', 'desc'),
+      limit(30)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items = snapshot.docs
+        .map(doc => doc.data())
+        .filter(data => data.language === language)
+        .map(data => data.text as string);
+      
+      if (items.length > 0) {
+        setDynamicNews(items);
+      } else {
+        // Fallback
+        setDynamicNews(language === 'uz' ? [
+          "Yangi anime: 'Oshi no Ko' 2-fasl premyerasi!",
+          "Solo Leveling o'zbek tilida sifatli ovozda chiqarildi!",
+          "Haftaning eng mashhur animesi: Demon Slayer",
+          "Saytimizga yangi chat tizimi qo'shildi!",
+          "Animem.uz mobil ilovasi tez kunda kutilmoqda"
+        ] : [
+          "Новое аниме: Премьера 2 сезона 'Oshi no Ko'!",
+          "Solo Leveling доступен с качественной озвучкой!",
+          "Самое популярное аниме недели: Demon Slayer",
+          "В чате нашего сайта появились новые функции!",
+          "Мобильное приложение Animem.uz ожидается скоро"
+        ]);
+      }
+    });
+    return () => unsubscribe();
+  }, [language]);
 
   useEffect(() => {
     let unsubscribe = () => {};
@@ -82,10 +117,10 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
 
   return (
     <>
-      <nav className="fixed top-0 left-0 lg:left-24 right-0 z-[100] h-16 sm:h-20 bg-[#050505]/95 backdrop-blur-xl px-4 lg:px-12 flex items-center justify-between font-sans border-b border-white/[0.05]">
+      <nav className="fixed top-0 left-0 lg:left-24 right-0 z-[120] h-16 sm:h-20 bg-[#050505]/95 backdrop-blur-2xl px-4 lg:px-12 flex items-center justify-between font-sans border-b border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
         {/* Left: Logo */}
         <div 
-          className="flex items-center gap-2 sm:gap-4 cursor-pointer group shrink-0 flex-1 lg:flex-1"
+          className="flex items-center gap-3 sm:gap-5 cursor-pointer group shrink-0"
           onClick={() => {
             navigate('/');
             setActiveTab('gallery');
@@ -94,32 +129,56 @@ export default function Navbar({ isAdmin, view, setView, selectedCategory, setSe
             setSelectedCategory('All');
           }}
         >
-          <img src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" alt="Logo" className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-red-500/30 group-hover:border-red-500/60 transition-all duration-500 shadow-[0_0_20px_rgba(220,38,38,0.2)] group-hover:scale-105" />
-          <span className="font-black text-xl sm:text-2xl tracking-tighter uppercase flex items-center text-white drop-shadow-2xl">
-            ANIMEM<span className="text-red-600">.UZ</span>
+          <div className="relative">
+            <div className="absolute inset-0 bg-red-600 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
+            <img src="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" alt="Logo" className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-red-500/40 group-hover:border-red-500/80 transition-all duration-500 shadow-xl group-hover:scale-110 relative z-10" />
+          </div>
+          <span className="font-black text-xl sm:text-3xl tracking-tighter uppercase flex items-center text-white drop-shadow-[0_2px_10px_rgba(220,38,38,0.3)] group-hover:text-red-50 transition-colors">
+            ANIMEM<span className="text-red-600 group-hover:text-red-500 transition-colors">.UZ</span>
           </span>
         </div>
 
-        {/* Center: Desktop Menu Items */}
-        <div className="hidden lg:flex items-center justify-center gap-8">
-          {['home', 'anime', 'news'].map((key) => (
-            <button 
-              key={key}
-              onClick={() => handleNavClick(key)}
-              className={cn(
-                "nav-link",
-                (key === 'home' && activeTab === 'gallery') && "text-[var(--accent)]",
-                (key === 'anime' && activeTab === 'anime') && "text-[var(--accent)]",
-                (key === 'news' && activeTab === 'news') && "text-[var(--accent)]"
-              )}
-            >
-              {t(key as any)}
-            </button>
-          ))}
+        {/* Center: News Ticker / Menu */}
+        <div className="hidden lg:flex flex-1 items-center justify-center px-4 overflow-hidden mx-4">
+          <div className="flex items-center gap-4 w-full max-w-xl bg-white/[0.03] border border-white/5 px-4 py-2 rounded-2xl relative overflow-hidden group/ticker">
+            {/* News Badge */}
+            <div className="shrink-0 flex items-center gap-2 px-2 py-0.5 bg-red-600/10 border border-red-500/20 rounded-md">
+              <Sparkles size={10} className="text-red-500 animate-pulse" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-red-500 whitespace-nowrap">
+                Hot
+              </span>
+            </div>
+
+            {/* Scrolling Ticker */}
+            <div className="flex-1 overflow-hidden relative h-5">
+              <motion.div 
+                animate={{ x: [0, -1200] }}
+                transition={{ 
+                  duration: 40, 
+                  repeat: Infinity, 
+                  ease: "linear" 
+                }}
+                className="flex items-center gap-16 whitespace-nowrap"
+              >
+                {[...dynamicNews, ...dynamicNews, ...dynamicNews].map((item, idx) => (
+                  <span key={idx} className="text-[10px] font-bold text-slate-400 hover:text-white transition-colors cursor-pointer uppercase tracking-[0.2em]">
+                    {item}
+                  </span>
+                ))}
+              </motion.div>
+              
+              {/* Fade masks */}
+              <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10" />
+              <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10" />
+            </div>
+            
+            {/* Hover Indicator */}
+            <div className="absolute inset-0 border border-red-500/0 group-hover/ticker:border-red-500/20 rounded-2xl transition-all pointer-events-none" />
+          </div>
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-3 sm:gap-6 flex-1 justify-end">
+        <div className="flex items-center gap-3 sm:gap-6 shrink-0 lg:min-w-[300px] justify-end">
           {/* Desktop Search Bar */}
           <div className="hidden xl:flex items-center relative group max-w-[280px] w-full">
             <input 
