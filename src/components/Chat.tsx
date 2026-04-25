@@ -15,7 +15,7 @@ import {
   getDocs,
   writeBatch
 } from 'firebase/firestore';
-import { Send, Smile, Image as ImageIcon, X, ShieldCheck, MessageSquare, Trash2, Eraser } from 'lucide-react';
+import { Send, Smile, Image as ImageIcon, X, ShieldCheck, MessageSquare, Trash2, Eraser, Reply } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 
@@ -28,6 +28,12 @@ interface ChatMessage {
   type: 'text' | 'sticker';
   role: 'admin' | 'user';
   createdAt: any;
+  replyTo?: {
+    id: string;
+    username: string;
+    content: string;
+    type: 'text' | 'sticker';
+  };
 }
 
 const STICKERS = [
@@ -98,6 +104,7 @@ export default function Chat() {
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -141,7 +148,7 @@ export default function Chat() {
     if (!user || !content.trim()) return;
 
     try {
-      await addDoc(collection(db, 'chat_messages'), {
+      const messageData: any = {
         userId: user.uid,
         username: user.displayName || 'Foydalanuvchi',
         photoURL: user.photoURL || '',
@@ -149,9 +156,21 @@ export default function Chat() {
         type,
         role: isAdminUser ? 'admin' : 'user',
         createdAt: serverTimestamp()
-      });
+      };
+
+      if (replyTo) {
+        messageData.replyTo = {
+          id: replyTo.id,
+          username: replyTo.username,
+          content: replyTo.content,
+          type: replyTo.type
+        };
+      }
+
+      await addDoc(collection(db, 'chat_messages'), messageData);
       setNewMessage('');
       setShowPicker('none');
+      setReplyTo(null);
     } catch (err) {
       console.error("Chat error:", err);
     }
@@ -292,6 +311,17 @@ export default function Chat() {
               </div>
 
               <div className="relative">
+                {msg.replyTo && (
+                  <div className={cn(
+                    "mb-1 p-2 rounded-xl text-[10px] border-l-2 flex flex-col gap-0.5 max-w-full truncate",
+                    msg.userId === user?.uid ? "bg-black/20 border-white/30" : "bg-white/5 border-red-500/50"
+                  )}>
+                    <span className="font-black uppercase tracking-tighter text-slate-400">{msg.replyTo.username}</span>
+                    <span className="opacity-60 truncate">
+                      {msg.replyTo.type === 'sticker' ? '🖼 Stiker' : msg.replyTo.content}
+                    </span>
+                  </div>
+                )}
                 <div className={cn(
                   "p-4 rounded-2xl text-[13px] font-medium leading-relaxed shadow-lg",
                   msg.type === 'sticker' ? "bg-transparent p-0 shadow-none" : 
@@ -305,33 +335,49 @@ export default function Chat() {
                   )}
                 </div>
                 
-                {(msg.userId === user?.uid || isAdminUser) && (
-                  <div className="absolute -top-4 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                    {deletingId === msg.id ? (
-                      <div className="flex items-center gap-1 bg-black/90 border border-red-500/30 rounded-lg p-1 animate-in slide-in-from-right-2">
+                <div className={cn(
+                  "absolute -top-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all z-10",
+                  msg.userId === user?.uid ? "right-0" : "left-0"
+                )}>
+                  <button 
+                    onClick={() => {
+                      setReplyTo(msg);
+                      const input = document.querySelector('input[placeholder="Xabar yozing..."]') as HTMLInputElement;
+                      input?.focus();
+                    }}
+                    className="p-1.5 bg-black/80 border border-white/10 rounded-lg text-slate-500 hover:text-white transition-all"
+                  >
+                    <Reply size={12} />
+                  </button>
+
+                  {(msg.userId === user?.uid || isAdminUser) && (
+                    <div className="flex items-center gap-1">
+                      {deletingId === msg.id ? (
+                        <div className="flex items-center gap-1 bg-black/90 border border-red-500/30 rounded-lg p-1 animate-in slide-in-from-right-2">
+                          <button 
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="px-2 py-0.5 bg-red-600 text-white text-[9px] font-black uppercase rounded"
+                          >
+                            Ha
+                          </button>
+                          <button 
+                            onClick={() => setDeletingId(null)}
+                            className="px-2 py-0.5 bg-white/10 text-white text-[9px] font-black uppercase rounded"
+                          >
+                            Yoq
+                          </button>
+                        </div>
+                      ) : (
                         <button 
-                          onClick={() => handleDeleteMessage(msg.id)}
-                          className="px-2 py-0.5 bg-red-600 text-white text-[9px] font-black uppercase rounded"
+                          onClick={() => setDeletingId(msg.id)}
+                          className="p-1.5 bg-black/80 border border-white/10 rounded-lg text-slate-500 hover:text-red-500 transition-all"
                         >
-                          Ha
+                          <Trash2 size={12} />
                         </button>
-                        <button 
-                          onClick={() => setDeletingId(null)}
-                          className="px-2 py-0.5 bg-white/10 text-white text-[9px] font-black uppercase rounded"
-                        >
-                          Yoq
-                        </button>
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={() => setDeletingId(msg.id)}
-                        className="p-1.5 bg-black/80 border border-white/10 rounded-lg text-slate-500 hover:text-red-500 transition-all"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               
               <span className="text-[8px] font-bold text-slate-600 uppercase mt-1.5 tracking-tighter">
@@ -344,6 +390,33 @@ export default function Chat() {
 
       {/* Input */}
       <div className="p-4 sm:p-6 bg-white/[0.01] border-t border-white/5 relative backdrop-blur-xl">
+        <AnimatePresence>
+          {replyTo && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="mb-3 p-3 bg-red-600/10 border border-red-600/20 rounded-2xl flex items-center justify-between"
+            >
+              <div className="flex flex-col gap-0.5 overflow-hidden">
+                <span className="text-[10px] font-black uppercase tracking-wider text-red-500 flex items-center gap-2">
+                  <Reply size={10} />
+                  {replyTo.username}ga javob qaytarish
+                </span>
+                <p className="text-[11px] text-slate-400 truncate pr-4">
+                  {replyTo.type === 'sticker' ? '[Stiker]' : replyTo.content}
+                </p>
+              </div>
+              <button 
+                onClick={() => setReplyTo(null)}
+                className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X size={14} className="text-slate-500" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {!user ? (
           <div className="flex items-center justify-center p-4 bg-red-600/10 rounded-2xl border border-red-600/20">
              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">Xabar yozish uchun tizimga kiring</p>
