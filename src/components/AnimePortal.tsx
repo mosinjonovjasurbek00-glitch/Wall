@@ -576,7 +576,7 @@ export default function AnimePortal({
           {/* Trending Hero Section */}
           {!loading && featuredAnime && activeTab === 'gallery' && (selectedCategory === 'All') && !searchTerm && !showWatchlistOnly && (
             <div className="mb-8 md:mb-12">
-              <div className="relative aspect-[4/5] sm:aspect-[21/9] lg:aspect-[24/10] sm:rounded-[2.5rem] overflow-hidden group shadow-2xl bg-black -mx-4 sm:mx-0">
+              <div className="relative aspect-[4/5] sm:aspect-[21/9] sm:rounded-[2.5rem] overflow-hidden group shadow-2xl bg-black -mx-4 sm:mx-0">
                 <AnimatePresence mode="wait">
                   <motion.div 
                     key={featuredAnime.id}
@@ -592,8 +592,8 @@ export default function AnimePortal({
                     />
                     <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-[#050505] via-[#050505]/80 sm:from-black sm:via-black/80 to-transparent" />
                     
-                    <div className="absolute inset-0 flex flex-col justify-end sm:justify-center p-4 sm:p-12 md:p-16 pt-8 pb-8 sm:pb-12">
-                         <div className="flex-1 max-w-2xl w-full flex flex-col justify-end sm:justify-start">
+                    <div className="absolute inset-0 flex flex-col md:flex-row md:items-center justify-end md:justify-between p-4 sm:p-12 md:p-16">
+                         <div className="flex-1 max-w-2xl w-full flex flex-col justify-end md:justify-center h-full md:h-auto">
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -637,14 +637,43 @@ export default function AnimePortal({
                             </motion.div>
                          </div>
                          
-                         {/* Poster Image on the Right */}
-                         <div className="hidden md:block w-72 h-96 rounded-3xl overflow-hidden border border-white/10 shadow-2xl relative rotate-3 hover:rotate-0 transition-transform duration-500">
-                            <img 
-                                src={featuredAnime.posterUrl} 
-                                className="w-full h-full object-cover" 
-                                referrerPolicy="no-referrer"
-                            />
-                         </div>
+                         {/* Poster Image on the Right with Animation */}
+                         <motion.div 
+                           initial={{ opacity: 0, scale: 0.8, rotate: 5, x: 50 }}
+                           animate={{ opacity: 1, scale: 1, rotate: 3, x: 0 }}
+                           transition={{ 
+                             duration: 1,
+                             delay: 0.4,
+                             type: "spring",
+                             bounce: 0.3
+                           }}
+                           whileHover={{ 
+                             rotate: 0, 
+                             scale: 1.05,
+                             transition: { duration: 0.4, ease: "easeOut" }
+                           }}
+                           className="hidden md:block w-72 h-[420px] rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative z-20 shrink-0"
+                         >
+                            <motion.div
+                              animate={{ 
+                                y: [0, -10, 0],
+                              }}
+                              transition={{ 
+                                duration: 5, 
+                                repeat: Infinity, 
+                                ease: "easeInOut" 
+                              }}
+                              className="w-full h-full"
+                            >
+                                <img 
+                                    src={featuredAnime.posterUrl} 
+                                    className="w-full h-full object-cover" 
+                                    referrerPolicy="no-referrer"
+                                    alt={featuredAnime.title}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+                            </motion.div>
+                         </motion.div>
                      </div>
                   </motion.div>
                 </AnimatePresence>
