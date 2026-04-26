@@ -20,6 +20,7 @@ interface AnimeDoc {
   year: number;
   type: 'movie' | 'series';
   views: number;
+  slug?: string;
   createdAt: any;
   language?: Language;
 }

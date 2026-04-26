@@ -23,6 +23,7 @@ interface AnimeDoc {
   type: 'movie' | 'series';
   views: number;
   isBanner?: boolean;
+  slug?: string;
   createdAt: any;
 }
 
@@ -376,6 +377,7 @@ interface AnimePortalProps {
   setActiveTab: (tab: string) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  onAuthRequired: () => void;
 }
 
 const EMOJIS = [
@@ -396,7 +398,8 @@ export default function AnimePortal({
   activeTab,
   setActiveTab,
   searchTerm,
-  setSearchTerm
+  setSearchTerm,
+  onAuthRequired
 }: AnimePortalProps) {
   const navigate = useNavigate();
   const { animeSlug: urlAnimeSlug, episodeNumber: urlEpisodeNumber, categoryName: urlCategoryName } = useParams();
@@ -639,7 +642,10 @@ export default function AnimePortal({
 
   const handleWatchlist = async (e: React.MouseEvent, animeId: string) => {
     e.stopPropagation();
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      onAuthRequired();
+      return;
+    }
     const isSaved = watchlist.has(animeId);
     const id = `${auth.currentUser.uid}_${animeId}`;
     if (isSaved) {
@@ -923,9 +929,22 @@ export default function AnimePortal({
 
                             {/* Hover Overlay */}
                             <div className="absolute inset-0 bg-gradient-to-t from-red-600/60 to-transparent opacity-0 group-hover:opacity-100 transition-all flex flex-col justify-end p-6 duration-500">
-                               <button className="w-full py-4 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-600/40 translate-y-4 group-hover:translate-y-0 transition-transform">
-                                  {t('watch')}
-                               </button>
+                               <div className="flex gap-2">
+                                  <button onClick={(e) => { e.stopPropagation(); handleOpenAnime(anime); }} className="flex-1 py-4 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-600/40 translate-y-4 group-hover:translate-y-0 transition-transform">
+                                     {t('watch')}
+                                  </button>
+                                  <button 
+                                    onClick={(e) => handleWatchlist(e, anime.id)}
+                                    className={cn(
+                                       "p-4 rounded-2xl border transition-all translate-y-4 group-hover:translate-y-0 duration-300",
+                                       watchlist.has(anime.id) 
+                                         ? "bg-red-600 border-red-500 text-white shadow-xl shadow-red-600/40" 
+                                         : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                                    )}
+                                  >
+                                     <Heart size={18} className={cn(watchlist.has(anime.id) && "fill-current")} />
+                                  </button>
+                               </div>
                             </div>
                          </div>
                          <div className="mt-5 space-y-1 px-2">
@@ -1599,7 +1618,7 @@ export default function AnimePortal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.5, y: 50 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-10 right-10 z-[150] w-14 h-14 bg-red-600 hover:bg-red-500 text-white rounded-2xl flex items-center justify-center shadow-[0_0_50px_rgba(220,38,38,0.3)] active:scale-95 transition-all border border-red-400 group"
+            className="fixed bottom-24 sm:bottom-10 right-6 sm:right-10 z-[150] w-12 h-12 sm:w-14 sm:h-14 bg-red-600 hover:bg-red-500 text-white rounded-xl sm:rounded-2xl flex items-center justify-center shadow-[0_0_50px_rgba(220,38,38,0.3)] active:scale-95 transition-all border border-red-400 group"
           >
             <motion.div
               animate={{ y: [0, -4, 0] }}

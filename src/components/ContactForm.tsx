@@ -75,39 +75,39 @@ export default function ContactForm({ isOpen, onClose, language = 'uz' }: Contac
             <div className="absolute -top-40 -right-40 w-80 h-80 bg-red-500/20 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-red-900/20 rounded-full blur-[100px] pointer-events-none" />
 
-            <div className="p-8 sm:p-12 relative z-10">
-              <div className="flex items-start justify-between mb-10">
+            <div className="p-5 sm:p-12 relative z-10">
+              <div className="flex items-start justify-between mb-6 sm:mb-10">
                 <div className="flex flex-col">
-                  <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tighter italic flex items-center gap-3">
-                    <span className="w-2 h-8 bg-red-600 rounded-full inline-block" />
+                  <h2 className="text-2xl sm:text-4xl font-black uppercase tracking-tighter italic flex items-center gap-3">
+                    <span className="w-2 h-6 sm:h-8 bg-red-600 rounded-full inline-block" />
                     {t('contactFormTitle')}
                   </h2>
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.2em] mt-3 ml-5">{t('contactFormDesc')}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-2 ml-5">{t('contactFormDesc')}</p>
                 </div>
                 <button 
                   onClick={onClose}
-                  className="p-3 text-slate-500 hover:text-white hover:bg-white/10 rounded-full transition-colors backdrop-blur-md"
+                  className="p-2 sm:p-3 text-slate-500 hover:text-white hover:bg-white/10 rounded-full transition-colors backdrop-blur-md"
                 >
-                  <X size={24} />
+                  <X size={20} className="sm:w-6 sm:h-6" />
                 </button>
               </div>
 
               {success ? (
-                <div className="py-16 text-center">
+                <div className="py-12 sm:py-16 text-center">
                   <motion.div 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="w-24 h-24 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-8 border border-red-500/20 shadow-[0_0_50px_rgba(220,38,38,0.2)]"
+                    className="w-20 h-20 sm:w-24 sm:h-24 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8 border border-red-500/20 shadow-[0_0_50px_rgba(220,38,38,0.2)]"
                   >
-                    <CheckCircle className="text-red-500 w-12 h-12" />
+                    <CheckCircle className="text-red-500 w-10 h-10 sm:w-12 sm:h-12" />
                   </motion.div>
-                  <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 italic text-white">{t('messageSent')}</h3>
-                  <p className="text-slate-400 text-sm font-medium uppercase tracking-widest leading-relaxed max-w-sm mx-auto">{t('messageSentDesc')}</p>
+                  <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter mb-3 sm:mb-4 italic text-white">{t('messageSent')}</h3>
+                  <p className="text-slate-400 text-xs sm:text-sm font-medium uppercase tracking-widest leading-relaxed max-w-sm mx-auto">{t('messageSentDesc')}</p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="space-y-1.5 sm:space-y-2">
                       <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">{t('yourName')}</label>
                       <input 
                         type="text" 
@@ -119,12 +119,12 @@ export default function ContactForm({ isOpen, onClose, language = 'uz' }: Contac
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 sm:space-y-2">
                       <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">Email</label>
                       <input 
                         type="email" 
                         required 
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 px-6 text-sm focus:border-red-500 focus:bg-white/10 transition-all outline-none text-white font-medium placeholder:text-slate-600" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 sm:h-14 px-6 text-sm focus:border-red-500 focus:bg-white/10 transition-all outline-none text-white font-medium placeholder:text-slate-600" 
                         placeholder={t('emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -132,23 +132,23 @@ export default function ContactForm({ isOpen, onClose, language = 'uz' }: Contac
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">{t('telegramOrPhone')}</label>
                     <input 
                       type="text" 
                       required 
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 px-6 text-sm focus:border-red-500 focus:bg-white/10 transition-all outline-none text-white font-medium placeholder:text-slate-600" 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 sm:h-14 px-6 text-sm focus:border-red-500 focus:bg-white/10 transition-all outline-none text-white font-medium placeholder:text-slate-600" 
                       placeholder={t('contactPlaceholder')}
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2">{t('messageText')}</label>
                     <textarea 
                       required 
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-40 px-6 py-5 text-sm focus:border-red-500 focus:bg-white/10 transition-all outline-none text-white font-medium placeholder:text-slate-600 resize-none custom-scrollbar" 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-24 sm:h-40 px-6 py-4 sm:py-5 text-sm focus:border-red-500 focus:bg-white/10 transition-all outline-none text-white font-medium placeholder:text-slate-600 resize-none custom-scrollbar" 
                       placeholder={t('messagePlaceholder')}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
@@ -169,7 +169,7 @@ export default function ContactForm({ isOpen, onClose, language = 'uz' }: Contac
                   <button 
                     type="submit" 
                     disabled={submitting}
-                    className="w-full bg-red-600 hover:bg-red-500 text-white rounded-2xl h-16 font-black text-sm uppercase tracking-widest shadow-[0_0_40px_rgba(220,38,38,0.3)] transition-all flex items-center justify-center gap-4 active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none group mt-8"
+                    className="w-full bg-red-600 hover:bg-red-500 text-white rounded-2xl h-14 sm:h-16 font-black text-sm uppercase tracking-widest shadow-[0_0_40px_rgba(220,38,38,0.3)] transition-all flex items-center justify-center gap-4 active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none group mt-4 sm:mt-8"
                   >
                     {submitting ? (
                       <Loader2 className="animate-spin" size={20} />

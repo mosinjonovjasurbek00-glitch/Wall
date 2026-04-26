@@ -207,11 +207,18 @@ async function setupServer() {
     }
   });
 
+  // Robots.txt
+  app.get("/robots.txt", (req, res) => {
+    res.type("text/plain");
+    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\n\nSitemap: https://animem.uz/sitemap.xml`);
+  });
+
   // Dynamic Sitemap Generation
   app.get("/sitemap.xml", async (req, res) => {
     try {
       const db = getDbAdmin();
-      const animeSnapshot = await db.collection('anime').get();
+      // Only fetch basic anime data to keep it fast
+      const animeSnapshot = await db.collection('anime').orderBy('updatedAt', 'desc').get();
       const animeDocs = animeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
 
       const categories = [
@@ -230,38 +237,34 @@ async function setupServer() {
       // 1. Home
       xml += `  <url>\n    <loc>${baseUrl}/</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
 
-      // 2. Categories
+      // 2. Main sections
+      xml += `  <url>\n    <loc>${baseUrl}/news</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+      xml += `  <url>\n    <loc>${baseUrl}/chat</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>always</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+
+      // 3. Categories
       categories.forEach(cat => {
-        xml += `  <url>\n    <loc>${baseUrl}/category/${encodeURIComponent(cat.toLowerCase())}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+        xml += `  <url>\n    <loc>${baseUrl}/category/${encodeURIComponent(cat.toLowerCase())}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
       });
 
-      // 3. Individual Anime and Episodes
+      // 4. Individual Anime (Only main pages to avoid timeouts)
       for (const anime of animeDocs) {
         const lastMod = anime.updatedAt ? 
-          (typeof anime.updatedAt.toMillis === 'function' ? new Date(anime.updatedAt.toMillis()).toISOString().split('T')[0] : now) : now;
+          (typeof anime.updatedAt.toMillis === 'function' ? new Date(anime.updatedAt.toMillis()).toISOString().split('T')[0] : 
+           (anime.updatedAt instanceof Date ? anime.updatedAt.toISOString().split('T')[0] : now)) : now;
         
-        // Anime details page
-        xml += `  <url>\n    <loc>${baseUrl}/anime/${anime.id}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
-
-        // Episodes (limiting to first 50 to avoid massive sitemaps for now)
-        try {
-          const epSnap = await db.collection('anime').doc(anime.id).collection('episodes').limit(50).get();
-          epSnap.forEach(epDoc => {
-            const ep = epDoc.data();
-            xml += `  <url>\n    <loc>${baseUrl}/watch/${anime.id}/${ep.episodeNumber}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.5</priority>\n  </url>\n`;
-          });
-        } catch (e) {
-          console.warn(`Could not fetch episodes for sitemap for anime ${anime.id}`);
-        }
+        xml += `  <url>\n    <loc>${baseUrl}/anime/${anime.id}</loc>\n    <lastmod>${lastMod}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
       }
 
       xml += `</urlset>`;
 
       res.header('Content-Type', 'application/xml');
-      res.send(xml);
+      res.status(200).send(xml);
     } catch (error) {
       console.error("Sitemap error:", error);
-      res.status(500).send("Error generating sitemap");
+      // Fallback minimal sitemap if Firestore Admin fails
+      const minimalXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n<url><loc>https://animem.uz/</loc><priority>1.0</priority></url>\n</urlset>`;
+      res.header('Content-Type', 'application/xml');
+      res.status(200).send(minimalXml);
     }
   });
 
@@ -410,8 +413,8 @@ async function setupServer() {
   // SEO Injection Helper
   const injectMetaTags = async (req: express.Request, html: string) => {
     const path = req.path;
-    let title = "Animem Uz - O'zbekistondagi eng yaxshi anime portali";
-    let description = "Eng so'nggi animelar o'zbek va rus tillarida. HD formatda bepul tomosha qiling!";
+    let title = "Animem Uz - O'zbekistondagi eng yirik anime portali";
+    let description = "Animem Uz - Sevimli animelaringizni o'zbek va rus tillarida, HD sifatda onlayn tomosha qiling. Eng so'nggi anime seriallar va filmlar.";
     let image = "https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg";
     let url = `https://animem.uz${path}`;
 
@@ -448,7 +451,8 @@ async function setupServer() {
       .replace(/<meta property="twitter:title" content=".*?" \/>/g, `<meta property="twitter:title" content="${title}" />`)
       .replace(/<meta property="twitter:description" content=".*?" \/>/g, `<meta property="twitter:description" content="${description}" />`)
       .replace(/<meta property="twitter:image" content=".*?" \/>/g, `<meta property="twitter:image" content="${image}" />`)
-      .replace(/<meta property="twitter:url" content=".*?" \/>/g, `<meta property="twitter:url" content="${url}" />`);
+      .replace(/<meta property="twitter:url" content=".*?" \/>/g, `<meta property="twitter:url" content="${url}" />`)
+      .replace(/<meta property="og:site_name" content=".*?" \/>/g, `<meta property="og:site_name" content="Animem Uz" />`);
   };
 
   // Debug route for Telegram Bridge
@@ -512,6 +516,21 @@ async function setupServer() {
       res.status(500).json({ error: e.message, stack: e.stack });
     }
   });
+
+  // Static files handling
+  if (process.env.NODE_ENV === "production") {
+    const distPath = path.join(process.cwd(), "dist");
+    // Serve static files with high priority
+    app.use(express.static(distPath, { 
+      index: false,
+      maxAge: '1d',
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.xml') || filePath.endsWith('.txt')) {
+          res.setHeader('Cache-Control', 'no-cache');
+        }
+      }
+    }));
+  }
 
   // CRITICAL: Middleware/Static fallback MUST be last
   if (process.env.NODE_ENV !== "production") {
