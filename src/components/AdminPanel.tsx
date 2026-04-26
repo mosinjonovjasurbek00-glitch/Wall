@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth, storage } from '../firebase';
-import { collection, addDoc, deleteDoc, doc, query, onSnapshot, serverTimestamp, where, updateDoc, getDocs, orderBy, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, query, onSnapshot, serverTimestamp, where, updateDoc, getDocs, orderBy, writeBatch, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { Helmet } from 'react-helmet-async';
 import { Plus, Trash2, Film, Check, X, AlertCircle, Loader2, Upload, Link as LinkIcon, MessageSquare, Star, Clock, Play, List, ChevronRight, ArrowLeft, Send, User, Globe, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -575,6 +576,9 @@ export default function AdminPanel({ language, setLanguage }: AdminPanelProps) {
 
   return (
     <div className="pt-32 pb-20 px-6 max-w-7xl mx-auto font-sans relative z-10">
+      <Helmet>
+        <title>Admin Panel - Animem.uz</title>
+      </Helmet>
       {/* Feedback Messages */}
       <AnimatePresence>
         {error && (

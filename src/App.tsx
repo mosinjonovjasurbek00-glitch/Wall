@@ -6,6 +6,7 @@ import { auth, db, syncUserToFirestore } from './firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc, setDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { getRedirectResult } from 'firebase/auth';
+import { Helmet } from 'react-helmet-async';
 import Navbar from './components/Navbar';
 import AnimePortal from './components/AnimePortal';
 import AdminPanel from './components/AdminPanel';
@@ -217,6 +218,10 @@ function AppContent({
 
   return (
     <div className="min-h-screen bg-[#000000] selection:bg-red-500/30 font-sans overflow-x-hidden">
+      <Helmet>
+        <title>Animem.uz - Eng so'nggi animelar markazi</title>
+        <meta name="description" content="Animem.uz - O'zbekistondagi eng yirik anime portali. Barcha animelar o'zbek tilida, sifatli ovozda va HD formatda." />
+      </Helmet>
       <Navbar 
         isAdmin={isAdmin} 
         view={view} 

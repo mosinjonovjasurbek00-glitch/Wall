@@ -704,16 +704,29 @@ export default function AnimePortal({
     return { ...anime, lastEpisode: h.episodeNumber };
   }).filter(Boolean) as any[];
 
+  const getTitle = () => {
+    if (selectedAnime) {
+      if (modalMode === 'player' && currentEpisode) {
+        return `${selectedAnime.title} - ${currentEpisode.episodeNumber}-${language === 'uz' ? 'qism' : 'серия'} - Animem.uz`;
+      }
+      return `${selectedAnime.title} - Animem.uz`;
+    }
+    if (activeTab === 'news') return `${language === 'uz' ? 'Yangiliklar' : 'Новости'} - Animem.uz`;
+    if (activeTab === 'watchlist' || activeTab === 'saved') return `${language === 'uz' ? 'Saqlanganlar' : 'Сохраненное'} - Animem.uz`;
+    if (urlCategoryName) return `${urlCategoryName} - Animem.uz`;
+    return 'Animem.uz - Eng so\'nggi animelar markazi';
+  };
+
   return (
     <div className="flex flex-col min-w-0">
       <Helmet>
-        <title>{selectedAnime ? `${selectedAnime.title} - Animem.uz` : 'Animem.uz - Eng so\'nggi animelar markazi'}</title>
+        <title>{getTitle()}</title>
         <meta name="description" content={selectedAnime ? selectedAnime.description : 'Animem.uz - O\'zbekistondagi eng yirik anime portali. Barcha animelar o\'zbek tilida, sifatli ovozda va HD formatda.'} />
-        <meta property="og:title" content={selectedAnime ? `${selectedAnime.title} - Animem.uz` : 'Animem.uz - Anime Portali'} />
+        <meta property="og:title" content={getTitle()} />
         <meta property="og:description" content={selectedAnime ? selectedAnime.description : 'Barcha animelar o\'zbek tilida.'} />
         <meta property="og:image" content={selectedAnime ? selectedAnime.posterUrl : 'https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg'} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={selectedAnime ? `${selectedAnime.title} - Animem.uz` : 'Animem.uz'} />
+        <meta name="twitter:title" content={getTitle()} />
         <meta name="twitter:description" content={selectedAnime ? selectedAnime.description : 'Animem.uzda tomosha qiling.'} />
         <meta name="twitter:image" content={selectedAnime ? selectedAnime.posterUrl : 'https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg'} />
       </Helmet>
