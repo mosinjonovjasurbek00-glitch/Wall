@@ -219,8 +219,15 @@ function AppContent({
   return (
     <div className="min-h-screen bg-[#000000] selection:bg-red-500/30 font-sans overflow-x-hidden">
       <Helmet>
-        <title>Animem.uz - Eng so'nggi animelar markazi</title>
-        <meta name="description" content="Animem.uz - O'zbekistondagi eng yirik anime portali. Barcha animelar o'zbek tilida, sifatli ovozda va HD formatda." />
+        <title>Animem.uz - O'zbekistondagi eng yirik anime portali</title>
+        <meta name="description" content="Animem.uz - O'zbekistondagi eng yirik anime portali. Barcha animelar o'zbek tilida, sifatli ovozda va HD formatda onlayn tomosha qiling." />
+        <meta name="keywords" content="anime o'zbek tilida, animem, animem uz, animem.uz, anime online, anime uz, uzbek anime, vatan anime, anime ko'rish, o'zbekcha dublyaj, anime seriallar, yangi animelar" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.animem.uz/" />
+        <meta property="og:title" content="Animem.uz - O'zbekistondagi eng yirik anime portali" />
+        <meta property="og:description" content="Eng so'nggi animelar o'zbek va rus tillarida. HD formatda bepul tomosha qiling!" />
+        <meta property="og:image" content="https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg" />
+        <link rel="canonical" href="https://www.animem.uz/" />
       </Helmet>
       <Navbar 
         isAdmin={isAdmin} 

@@ -1,8 +1,5 @@
 User-agent: *
 Allow: /
-Crawl-delay: 10
+Disallow: /admin
 
-User-agent: Googlebot
-Allow: /
-
-Sitemap: https://animem.uz/sitemap.xml
+Sitemap: https://www.animem.uz/sitemap.xml

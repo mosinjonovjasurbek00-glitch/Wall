@@ -717,6 +717,14 @@ export default function AnimePortal({
     return 'Animem.uz - Eng so\'nggi animelar markazi';
   };
 
+  const getCanonical = () => {
+    const baseUrl = 'https://www.animem.uz';
+    if (selectedAnime) return `${baseUrl}/anime/${selectedAnime.slug || selectedAnime.id}`;
+    if (activeTab === 'news') return `${baseUrl}/news`;
+    if (activeTab === 'watchlist') return `${baseUrl}/watchlist`;
+    return baseUrl;
+  };
+
   return (
     <div className="flex flex-col min-w-0">
       <Helmet>
@@ -729,6 +737,26 @@ export default function AnimePortal({
         <meta name="twitter:title" content={getTitle()} />
         <meta name="twitter:description" content={selectedAnime ? selectedAnime.description : 'Animem.uzda tomosha qiling.'} />
         <meta name="twitter:image" content={selectedAnime ? selectedAnime.posterUrl : 'https://i.pinimg.com/736x/17/c6/88/17c688c6242fe4c3293be182924e73a3.jpg'} />
+        <link rel="canonical" href={getCanonical()} />
+        <link rel="alternate" hrefLang="uz" href={getCanonical()} />
+        <link rel="alternate" hrefLang="ru" href={getCanonical()} />
+        <link rel="alternate" hrefLang="x-default" href={getCanonical()} />
+        {selectedAnime && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Movie",
+              "name": selectedAnime.title,
+              "description": selectedAnime.description,
+              "image": selectedAnime.posterUrl,
+              "genre": selectedAnime.category,
+              "author": {
+                "@type": "Organization",
+                "name": "Animem Uz"
+              }
+            })}
+          </script>
+        )}
       </Helmet>
       {/* Main Container */}
       <div className="flex-1 flex flex-col lg:flex-row min-w-0">
